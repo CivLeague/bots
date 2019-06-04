@@ -8,6 +8,7 @@ process.on("uncaughtException", (err) => {
 var _cli
 var _db;
 var _coll;
+var _subs;
 
 module.exports = {
     connectToMongo: function () {
@@ -15,6 +16,7 @@ module.exports = {
             _cli  = client;
             _db   = _cli.db('test_db');
             _coll = _db.collection('ranked');
+            _subs = _db.collection('subs');
             console.log('mongo listening');
         });
     },
@@ -28,9 +30,10 @@ module.exports = {
             _id:        discordId,
             steam_id:   steamId,
             rating:     1500,
-            round:      250,
-            volume:     0.06,
-            tau:        0.02,
+            rd:         300,
+            vol:        0.06,
+            tau:        0.6,
+            lastChange: 0,
             games:      0,
             wins:       0,
             losses:     0
@@ -46,14 +49,34 @@ module.exports = {
             $set: {
                 rating: skill,
                 lastChange: diff,
-                round:  rd,
-                volume: vol
+                rd:  rd,
+                vol: vol
             },
             $currentDate: { lastModified: true }
         });
     },
 
-    getLeaderboard: async function ( playerId ) {
+    getLeaderboard: async function () {
         return _coll.find().sort({ rating: -1 }).toArray();
+    },
+
+    getSubs: async function () {
+        return _subs.find().sort({ count: -1 }).toArray();
+    },
+
+    resetSubs: async function () {
+        _subs.drop();
+    },
+
+    getSubCount: async function ( subId ) {
+        return _subs.findOne({ _id: subId });
+    },
+
+    setSubCount: async function ( subId, num ) {
+        _subs.updateOne(
+            { _id: subId },
+            { $set: { count: num } }, 
+            { upsert: true }
+        );
     }
 }

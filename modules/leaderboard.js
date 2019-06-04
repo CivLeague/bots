@@ -62,7 +62,7 @@ class C6Leaderboard
         for ( var i = 0; i < max ; i++ ) {
             if ( i < 9 ) msg += '`#0' + (i+1) + '`\t`';
             else msg += '`#' + (i+1) + '`\t`';
-            msg += Math.round(this.glickoLb[i].rating) + '`\t<@' + this.glickoLb[i]._id + '>\t' + '`rd: ' +  Math.round(this.glickoLb[i].round) + '`\n';
+            msg += Math.round(this.glickoLb[i].rating) + '`\t<@' + this.glickoLb[i]._id + '>\t' + '`rd: ' +  Math.round(this.glickoLb[i].rd) + '`\n';
             if ( ((i+1) % 10) == 0 ) {
                 //channel.send(msg);
                 var m = await channel.fetchMessage(messages[j]);

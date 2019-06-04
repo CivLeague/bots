@@ -27,15 +27,16 @@ const cmd_forceregid = '.forceregid';
 
 const glicko2 = require('glicko2');
 const settings = {
-  tau:      0.1,
   rating:   1500,
-  rd:       175,
-  vol:      0.06
+  rd:       300,
+  vol:      0.06,
+  tau:      0.6
 };
 const glicko = new glicko2.Glicko2(settings);
 
 function GetChannelSubLog() { return util.getChannel(371831587001729036); }
 function GetChannelGlickoHistory() { return util.getChannel(569705866224467988); }
+function GetChannelGlickoDebug() { return util.getChannel(582241310220746762); }
 function GetChannelReportHistory() { return util.getChannel(291753171942899713); }
 function GetChannelReportsProcessed() { return util.getChannel(484882448115564584); }
 
@@ -152,8 +153,6 @@ class ReportBotModule
 		util.client.on('messageReactionAdd', (reaction, user) =>
 		{
 			if(reaction.message.channel.id != this.allowedChannelId) return; // only check reactions in #ranked_reporting
-			//if(!reaction.message.channel.memberPermissions(user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, true)) return; // only allow game-reporters,admins,etc... to initiate
-			///console.log('[attempt-parse]' + reaction.message.id);
 
 			const isAdmin = reaction.message.channel.memberPermissions(user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, true);
 			const isDebugEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇨';
@@ -162,9 +161,43 @@ class ReportBotModule
 			if(isDebugEmoji || (isAdmin && isReportEmoji))
 			{
 				let pm = new ParseMessage(reaction.message, user);
-				pm.run(isDebugEmoji);
+				pm.parseGameReport(isDebugEmoji);
 			}
 		});
+
+        util.client.on('message', message => {
+            if (message.channel.id != GetChannelSubLog().id)
+                return;
+
+            if (message.content == '.reportsubs') {
+                let msg = '';
+                mongoUtil.getSubs().then( subs => {
+                    for (let sub of subs) {
+                        msg += "\n[**" + sub.count + "**, <@"+sub._id+">]";
+                    }
+                    if (msg == '')
+                        msg = "there are no subs to report.";
+                    message.reply(msg);
+                });
+            }
+
+            if (message.content == ".resetsubs") {
+                mongoUtil.resetSubs();
+                message.reply("sub stats have been reset.");
+            }
+
+            if (message.content.split(' ').pop() == 'subbed') {
+                let subId = message.mentions.users.first().id;
+                mongoUtil.getSubCount(subId).then( result => {
+                    if (result) {
+                        mongoUtil.setSubCount(subId, result.count + 1);
+                    }
+                    else {
+                        mongoUtil.setSubCount(subId, 1);
+                    }
+                });
+            }
+        });
 	}
 }
 
@@ -363,26 +396,133 @@ class ParseMessage
 		{
 			this.error.add('Duels can only score 2 players, not ' + this.civCount);
 		}
-		
-		/*console.log('---[positions]---');
-		console.log(this.positions);
-		console.log('---[stats]---');
-		for(var i = 0; i < this.positions.length; ++i)
-		{
-			for(var m of this.positions[i])
-			{
-				console.log(m.stats);
-			}
-		}*/
 	}
-	
-	async run(debugMode)
+
+    async setSubPoints(pos, subId, debug) {
+		let glickoPositions = [];
+        let player = null;
+        for(let i = 0; i < pos.length; ++i) {
+            let pp = [];
+            for(let m of pos[i])
+            {
+                //glicko2
+                var p = await mongoUtil.getPlayer( m[1] );
+                if (p)
+                    player = glicko.makePlayer(p.rating, p.rd, p.vol)
+                else
+                    player = glicko.makePlayer();
+                player.oldRating = player.getRating();
+                player.subType = m.subType;
+                player.dId = m[1];
+                if (m.subType != 2) {
+                    pp.push(player);
+                }
+            }
+            glickoPositions.push(pp);
+        }
+        const game = glicko.makeRace(glickoPositions);
+        glicko.updateRatings(game);
+
+        if (debug)
+            console.log("[CHECK_MODE]");
+        else
+            console.log("[COMMIT_MODE]");
+
+        for (let i = 0; i < glickoPositions.length; i++) {
+            for (let j = 0; j < glickoPositions[i].length; j++) {
+                let pStats = glickoPositions[i][j];
+                if ( pStats.dId == subId ) {
+                    var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                    console.log( "SUB ID: " + pStats.dId );
+                    console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
+                    console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
+                    console.log( "\tRating Diff:\t" + diff );
+                    console.log( "\tRd:\t" + pStats.getRd() );
+                    console.log( "\tVol:\t" + pStats.getVol() );
+                    if (!debug && this.type != 2)
+                    {
+                        let plyr = await mongoUtil.getPlayer( pStats.dId );
+    
+                        if ( !plyr )
+                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+    
+                        if ( diff < 20 ) diff = 20;
+    
+                        await mongoUtil.updatePlayer(pStats.dId,
+                                                     Math.round(pStats.getRating()),
+                                                     diff,
+                                                     pStats.getRd(),
+                                                     pStats.getVol());
+                    }
+                }
+            }
+        }
+    }
+
+    async setOrigPoints(pos, origId, debug) {
+        let glickoPositions = [];
+        let player = null;
+        for(let i = 0; i < pos.length; ++i) {
+            let pp = [];
+            for(let m of pos[i])
+            {
+                //glicko2
+                var p = await mongoUtil.getPlayer( m[1] );
+                if (p)
+                    player = glicko.makePlayer(p.rating, p.rd, p.vol)
+                else
+                    player = glicko.makePlayer();
+                player.oldRating = player.getRating();
+                player.subType = m.subType;
+                player.dId = m[1];
+                if (m.subType != 1) {
+                    pp.push(player);
+                }
+            }
+            glickoPositions.push(pp);
+        }
+        const game = glicko.makeRace(glickoPositions);
+        glicko.updateRatings(game);
+
+        if (debug)
+            console.log("[CHECK_MODE]");
+        else
+            console.log("[COMMIT_MODE]");
+
+        for (let i = 0; i < glickoPositions.length; i++) {
+            for (let j = 0; j < glickoPositions[i].length; j++) {
+                let pStats = glickoPositions[i][j];
+                if ( pStats.dId == origId ) {
+                    var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                    console.log( "ORIG ID: " + pStats.dId );
+                    console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
+                    console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
+                    console.log( "\tRating Diff:\t" + diff );
+                    console.log( "\tRd:\t" + pStats.getRd() );
+                    console.log( "\tVol:\t" + pStats.getVol() );
+                    if (!debug && this.type != 2)
+                    {
+                        let plyr = await mongoUtil.getPlayer( pStats.dId );
+                        if ( !plyr )
+                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                        if ( diff > -20 ) diff = -20;
+                        await mongoUtil.updatePlayer(pStats.dId,
+                                                     Math.round(pStats.getRating()),
+                                                     diff,
+                                                     pStats.getRd(),
+                                                     pStats.getVol());
+                    }
+                }
+            }
+        }
+    }
+
+	async parseGameReport(debugMode)
 	{
 		// Construct Positions only for API
 		let reportedPositions = [];
 		let glickoPositions = [];
         let player = null;
-        let pMap = new Map();
 
 		for(let i = 0; i < this.positions.length; ++i)
 		{
@@ -405,41 +545,155 @@ class ParseMessage
                     console.log("did NOT find player " + m[1]);
                     player = glicko.makePlayer();
                 }
+                player.dId = m[1];
+                player.subType = m.subType;
                 player.oldRating = player.getRating();
-                pMap.set(m[1], player);
-                pp.push(player);
+                if (m.subType == 0) {
+                    pp.push(player);
+                }
+                else if (m.subType == 1) {
+                    // TODO: need to deal with team game subs
+                    if (this.type != 2)
+                        await this.setSubPoints(this.positions.slice(i), m[1], debugMode);
+
+                    pp.push(player);
+                }
+                else if (m.subType == 2) {
+                    //TODO: need to deal with team game orig
+                    if ( this.type != 2 )
+                        await this.setOrigPoints(this.positions.slice(0, i+1), m[1], debugMode);
+                    else
+                        pp.push(player);
+                }
 			}
 			reportedPositions.push(rp);
 			glickoPositions.push(pp);
 		}
         //reportedPositions = [id, civ, sub]
         //glickoPositions = correct player positions
-        const game = glicko.makeRace(glickoPositions);
-        glicko.updateRatings(game);
+
+        if (this.type != 2) {
+            const game = glicko.makeRace(glickoPositions);
+            glicko.updateRatings(game);
+        } else {
+            let teams = [];
+            for (let i = 0; i < glickoPositions.length; i++) {
+                console.log("\n\n----==== T E A M ====----\n");
+                console.log(glickoPositions[i]);
+                let ratingSum = 0;
+                let rdSum = 0;
+                let volSum = 0;
+                let numPlayers = glickoPositions[i].length;
+                console.log("\n----==== T E A M   A V G ====----\n");
+                for (const p of glickoPositions[i]) {
+                    console.log("p.oldRating = " + p.oldRating);
+                    console.log("p.rd = " + p.getRd());
+                    console.log("p.vol = " + p.getVol());
+                    console.log("ratingSum = " + ratingSum);
+                    console.log("rdSum = " + rdSum);
+                    console.log("volSum = " + volSum);
+                    ratingSum += p.oldRating;
+                    rdSum += p.getRd();
+                    volSum += p.getVol();
+                }
+                let ratingAvg = ratingSum / numPlayers;
+                let rdAvg = rdSum / numPlayers;
+                let volAvg = volSum / numPlayers;
+                console.log("\nteamAvg:\n\tratingAvg = " + ratingAvg);
+                console.log("\trdAvg = " + rdAvg);
+                console.log("\tvolAvg = " + volAvg);
+                let teamPlayer = glicko.makePlayer(ratingAvg, rdAvg, volAvg);
+                teamPlayer.oldRating = ratingAvg;
+                teams.push([teamPlayer]);
+                console.log("\n----==== TEAM PLAYER ====----\n");
+                console.log(teamPlayer);
+                console.log("rating = " + teamPlayer.getRating());
+                console.log("rd = " + teamPlayer.getRd());
+                console.log("vol = " + teamPlayer.getVol());
+            }
+            console.log("\n----==== R A C E ====----\n");
+            console.log(teams);
+            const game = glicko.makeRace(teams);
+            glicko.updateRatings(game);
+            
+            for (let i = 0; i < teams.length; i++) {
+                let t = teams[i][0];
+                t.ratingDiff = Math.round(t.getRating()) - Math.round(t.oldRating);
+                console.log("\n----==== T E A M    C O M P U T E ====----\n");
+                for (const p of glickoPositions[i]) {
+                    p.oldRd = p.getRd();
+                    p.oldVol = p.getVol();
+                    if (p.subType == 0) {
+                        p.setRating(p.oldRating + t.ratingDiff);
+                    }
+                    else if (p.subType == 1) {
+                        if (t.ratingDiff > 20)
+                            p.setRating(p.oldRating + t.ratingDiff);
+                        else
+                            p.setRating(p.oldRating + 20);
+                    }
+                    else {
+                        if (t.ratingDiff < -20)
+                            p.setRating(p.oldRating + t.ratingDiff);
+                        else
+                            p.setRating(p.oldRating - 20);
+                    }
+                    p.setRd(t.getRd());
+                    p.setVol(t.getVol());
+                    console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
+                    console.log("\toldRd = " + p.oldRd + "\n\tnewRd = " + p.getRd() + "\n");
+                    console.log("\toldVol = " + p.oldVol + "\n\tnewVol = " + p.getVol() + "\n");
+                }
+            }
+        }
 
         if (debugMode)
-            console.log("[DEBUG_MODE]");
+            console.log("[CHECK_MODE]");
         else
             console.log("[COMMIT_MODE]");
-        for (const [id, pStats] of pMap)
-        {
-            var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
-            console.log( "ID: " + id );
-            console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
-            console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
-            console.log( "\tRating Diff:\t" + diff );
-            console.log( "\tRd:\t" + pStats.getRd() );
-            console.log( "\tVol:\t" + pStats.getVol() );
-            if (!debugMode && this.type != 2)
-            {
-                let plyr = await mongoUtil.getPlayer( id );
-                if ( !plyr )
-                    await mongoUtil.createPlayer(id, id); 
-                await mongoUtil.updatePlayer(id,
-                                             Math.round(pStats.getRating()),
-                                             diff,
-                                             pStats.getRd(),
-                                             pStats.getVol());
+
+        let msg = '```[NEW GAME]```\n';
+        for (let i = 0; i < glickoPositions.length; i++) {
+            for (let j = 0; j < glickoPositions[i].length; j++) {
+                let pStats = glickoPositions[i][j];
+                if ( pStats.subType == 0 ) {
+                    var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                    console.log( "ID: " + pStats.dId );
+                    console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
+                    console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
+                    console.log( "\tRating Diff:\t" + diff );
+                    console.log( "\tRd:\t" + pStats.getRd() );
+                    console.log( "\tVol:\t" + pStats.getVol() );
+                    console.log( "\tsubType:\t" + pStats.subType );
+                    //TODO: currently FFA only
+                    if (!debugMode && this.type != 2)
+                    {
+                        let plyr = await mongoUtil.getPlayer( pStats.dId );
+                        if ( !plyr )
+                             await mongoUtil.createPlayer(pStats.dId, pStats.dId); 
+                        await mongoUtil.updatePlayer(pStats.dId,
+                                                     Math.round(pStats.getRating()),
+                                                     diff,
+                                                     pStats.getRd(),
+                                                     pStats.getVol());
+                        plyr = await mongoUtil.getPlayer( pStats.dId );
+                        msg += '<@' + plyr._id + '>\n';
+                        msg += "**[IN]**\n";
+                        msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
+                        msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
+                        msg += "\tRating Diff:\t" + diff + "\n";
+                        msg += "\tRd:\t" + pStats.getRd() + "\n";
+                        msg += "\tVol:\t" + pStats.getVol() + "\n";
+                        msg += "\tsubtype:\t" + pStats.subType + "\n";
+                        msg += "**[OUT]**\n";
+                        msg += "\tNew Rating:\t" + plyr.rating + "\n";
+                        msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
+                        msg += "\tRd:\t" + plyr.rd + "\n";
+                        msg += "\tVol:\t" + plyr.vol + "\n";
+                        GetChannelGlickoDebug().send(msg);
+                        msg = '';
+                    }
+                }
             }
         }
         // end of glicko2 test
@@ -487,7 +741,7 @@ class ParseMessage
 				else
 				{
 					this.error.isError = false;
-					this.error.add('**[DEBUG MODE] No Errors Found**');
+					this.error.add('**[CHECK MODE] No Errors Found**');
 					this.error.add('**[Result]**\n' + this.notifyConstructPlayerString());
 					this.error.send(this.message.channel, 30);	
 				}			
@@ -622,6 +876,7 @@ class ParseMessage
 	{
 		const user = this.message.mentions.users.get(id);
 		const member = this.message.guild.member(user);
+		//return (user == null ? '**Deleted User**' : (member == null ? user.username : member.displayName));
 		return (user == null ? '**Deleted User**' : (member == null ? user.username : '<@' + id + '>'));
 	}
 	
