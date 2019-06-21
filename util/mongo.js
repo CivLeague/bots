@@ -15,7 +15,7 @@ module.exports = {
         MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10 }, function (err, client) {
             _cli  = client;
             _db   = _cli.db('test_db');
-            _coll = _db.collection('ranked');
+            _coll = _db.collection('overall');
             _subs = _db.collection('subs');
             console.log('mongo listening');
         });
@@ -23,6 +23,10 @@ module.exports = {
 
     getDb: function() {
         return _db;
+    },
+
+    useDb: function( c ) {
+        _coll = _db.collection(c);
     },
     
     createPlayer: async function ( discordId, steamId ) {
@@ -56,7 +60,8 @@ module.exports = {
         });
     },
 
-    getLeaderboard: async function () {
+    getLeaderboard: async function ( collection ) {
+        _coll = _db.collection(collection);
         return _coll.find().sort({ rating: -1 }).toArray();
     },
 

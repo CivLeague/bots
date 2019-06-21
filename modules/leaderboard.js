@@ -8,7 +8,7 @@ class C6Leaderboard
 	constructor() {
 		util.client.on('ready', () =>
         {
-            this.generate();
+            //this.update('overall');
         });
 	}
 
@@ -17,7 +17,7 @@ class C6Leaderboard
 		return (wins == 0 ? 0 : (losses == 0 ? 100 : Math.round(100 * wins / (wins+losses))));
 	}
 	
-	async generate()
+	async update( db )
 	{
 		try
 		{
@@ -25,35 +25,82 @@ class C6Leaderboard
 			this.leaderboard = await util.makeRGRequest('leaderboard.php', {});
 			
 			// Publish new Leaderboard
-			this.publishLeaderboard();
+			await this.publishLeaderboard();
 
             //glicko2
-            this.glickoLb = await mongoUtil.getLeaderboard();
-            this.publishGlickoLeaderboard();
+            this.glickoLb = await mongoUtil.getLeaderboard(db);
+            await this.publishGlickoLeaderboard(db);
 		}
 		catch(err)
 		{
-			console.log('[leaderboard_err]' + err);
+			console.log('[leaderboard_err] ' + err);
 		}
 	}
 	
-    async publishGlickoLeaderboard()
+    async publishGlickoLeaderboard(db)
     {
-        const channel = util.getChannel('569706256055402537');
-		const messages = [
-			'570810132208943104',
-            '570810134490513410',
-            '570810135681695754',
-            '570810137108021248',
-            '570810138185957376',
-			'570810158293450792',
-            '570810159274655781',
-            '570810160629415947',
-            '570810161611014145',
-            '570810163053985793'
-		];
-        //let fetched = await channel.fetchMessages({limit: 100});
-        //await channel.bulkDelete(fetched);
+        var channel = null;
+        var messages = null;
+        if ( db === 'overall' ) {
+            channel = util.getChannel(569706256055402537);
+		    messages = [
+		    	'570810132208943104',
+                '570810134490513410',
+                '570810135681695754',
+                '570810137108021248',
+                '570810138185957376',
+		    	'570810158293450792',
+                '570810159274655781',
+                '570810160629415947',
+                '570810161611014145',
+                '570810163053985793'
+		    ];
+        }
+        else if ( db === 'ffa' ) {
+            channel = util.getChannel(587158329877331969);
+		    messages = [
+		    	'587469644269617162',
+                '587469644911083570',
+                '587469645632634885',
+                '587469646215643137',
+                '587469647113355274',
+		    	'587469670819299328',
+                '587469671754629121',
+                '587469672522186752',
+                '587469672853536776',
+                '587469673797517322'
+		    ];
+        }
+        else if ( db === 'team' ) {
+            channel = util.getChannel(587158165309751300);
+		    messages = [
+		    	'587469576137080863',
+                '587469577131130880',
+                '587469577810870278',
+                '587469578599137290',
+                '587469579136139285',
+		    	'587469603261775903',
+                '587469603689594912',
+                '587469604851286044',
+                '587469605656592384',
+                '587469606311034913'
+		    ];
+        }
+        else if ( db === 'duel' ) {
+            channel = util.getChannel(587158235744567306);
+		    messages = [
+		    	'587466734005518356',
+                '587466734806630400',
+                '587466735691497518',
+                '587466736022978564',
+                '587466737059102720',
+		    	'587466760899264556',
+                '587466761503375379',
+                '587466762099097621',
+                '587466762602283010',
+                '587466763588075539'
+		    ];
+        }
 
         const max = this.glickoLb.length < 100 ? this.glickoLb.length : 100;
 
@@ -64,7 +111,6 @@ class C6Leaderboard
             else msg += '`#' + (i+1) + '`\t`';
             msg += Math.round(this.glickoLb[i].rating) + '`\t<@' + this.glickoLb[i]._id + '>\t' + '`rd: ' +  Math.round(this.glickoLb[i].rd) + '`\n';
             if ( ((i+1) % 10) == 0 ) {
-                //channel.send(msg);
                 var m = await channel.fetchMessage(messages[j]);
                 m.edit(msg);
                 msg = '';

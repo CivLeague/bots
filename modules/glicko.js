@@ -161,11 +161,24 @@ class ReportBotModule
 			if(isDebugEmoji || (isAdmin && isReportEmoji))
 			{
 				let pm = new ParseMessage(reaction.message, user);
-				pm.parseGameReport(isDebugEmoji);
+                if ( pm.abort == false )
+				    pm.parseGameReport(isDebugEmoji);
 			}
 		});
 
         util.client.on('message', message => {
+            if (message.content == '.populate') {
+                let msg = 'blah'
+                for (let i = 0; i < 10; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        msg += '\nblah';
+                    }
+                    message.channel.send(msg);
+                    msg = 'blah' + (i+2);
+                }
+                return;
+            }
+
             if (message.channel.id != GetChannelSubLog().id)
                 return;
 
@@ -205,6 +218,7 @@ class ParseMessage
 {
 	constructor(message, user)
 	{
+        this.abort = false;
 		this.message = message;
 		this.user = user;
 
@@ -231,7 +245,7 @@ class ParseMessage
 				}
 				else
 				{
-					if(!this.assignType(line)) this.error.add('invalid game type [allowed] diplo, duel, war, team');
+					if(!this.assignType(line)) this.error.add('invalid game type... [allowed] ffa, diplo, duel, war, team');
 				}
 			}
 			
@@ -348,28 +362,14 @@ class ParseMessage
 			this.host = message.author.id;
 			// need to check here or host could be resolved to null (!) later when constructing playerString
 			if(message.mentions.users.get(this.host) == null) this.error.add('no host specified');			
+            //this.error.send(,30); 
+            this.abort = true;
 		}
 		
 		if(this.type == null)
 		{
-			// Hail Mary
-			if(this.assignType(message.content.toLowerCase())) { }
-			else if(message.mentions.users.size == this.positions.length)
-			{
-				if(this.positions.length == 2)
-				{
-					this.type = 3; // 2 players, default to duel
-				}
-				else
-				{
-					this.type = 0; // default to FFA diplo
-				}
-			}
-			else
-			{
-				this.type = 0; // default to FFA either way
-				//this.error.add('no game type specified');
-			}
+            this.error.add('game must include a type... [allowed] ffa, diplo, war, team, duel');
+            this.abort = true;
 		}
 				
 		// Grab ratings for all players
@@ -386,6 +386,7 @@ class ParseMessage
 				else if((this.civState == 1 && m.civ != null) || (this.civState == 2 && m.civ == null))
 				{
 					this.error.add('error with player <@' + m[1] + '> :: a game can either have no civs or all players must have a reported civ');
+                    this.abort = true;
 				}
 				
 				++this.civCount;
@@ -395,7 +396,11 @@ class ParseMessage
 		if(this.type == 3 && this.civCount != 2)
 		{
 			this.error.add('Duels can only score 2 players, not ' + this.civCount);
+            this.abort = true;
 		}
+
+        if ( this.abort == true )
+		    this.error.send(this.message.channel, 60);
 	}
 
     async setSubPoints(pos, subId, debug) {
@@ -517,7 +522,215 @@ class ParseMessage
         }
     }
 
-	async parseGameReport(debugMode)
+	async parseGameReport(debugMode) {
+        let reportedPositions = [];
+        let glickoPositions = [];
+        let player = null;
+
+        for(let i = 0; i < this.positions.length; ++i)
+        {
+            let rp = [];
+            let pp = [];
+            for(let m of this.positions[i])
+            {
+                const civId = m.civ == null ? null : util.getCiv(m.civ).dbid;
+                rp.push({id: m[1], civ: civId, sub: m.subType});
+
+                //glicko2
+                var p = await mongoUtil.getPlayer( m[1] );
+                if (p)
+                {
+                    console.log("found player " + m[1]);
+                    player = glicko.makePlayer(p.rating, p.rd, p.vol)
+                }
+                else
+                {
+                    console.log("did NOT find player " + m[1]);
+                    player = glicko.makePlayer();
+                }
+                player.dId = m[1];
+                player.subType = m.subType;
+                player.oldRating = player.getRating();
+                if (m.subType == 0) {
+                    pp.push(player);
+                }
+                else if (m.subType == 1) {
+                    if (this.type != 2)
+                        await this.setSubPoints(this.positions.slice(i), m[1], debugMode);
+
+                    pp.push(player);
+                }
+                else if (m.subType == 2) {
+                    if ( this.type != 2 )
+                        await this.setOrigPoints(this.positions.slice(0, i+1), m[1], debugMode);
+                    else
+                        pp.push(player);
+                }
+            }
+            reportedPositions.push(rp);
+            glickoPositions.push(pp);
+        }
+        //reportedPositions = [id, civ, sub]
+        //glickoPositions = correct player positions
+
+        if (this.type != 2) {
+            const game = glicko.makeRace(glickoPositions);
+            glicko.updateRatings(game);
+        } else {
+            let teams = [];
+            for (let i = 0; i < glickoPositions.length; i++) {
+                console.log("\n\n----==== T E A M ====----\n");
+                console.log(glickoPositions[i]);
+                let ratingSum = 0;
+                let rdSum = 0;
+                let volSum = 0;
+                let numPlayers = glickoPositions[i].length;
+                console.log("\n----==== T E A M   A V G ====----\n");
+                for (const p of glickoPositions[i]) {
+                    console.log("p.oldRating = " + p.oldRating);
+                    console.log("p.rd = " + p.getRd());
+                    console.log("p.vol = " + p.getVol());
+                    console.log("ratingSum = " + ratingSum);
+                    console.log("rdSum = " + rdSum);
+                    console.log("volSum = " + volSum);
+                    ratingSum += p.oldRating;
+                    rdSum += p.getRd();
+                    volSum += p.getVol();
+                }
+                let ratingAvg = ratingSum / numPlayers;
+                let rdAvg = rdSum / numPlayers;
+                let volAvg = volSum / numPlayers;
+                console.log("\nteamAvg:\n\tratingAvg = " + ratingAvg);
+                console.log("\trdAvg = " + rdAvg);
+                console.log("\tvolAvg = " + volAvg);
+                let teamPlayer = glicko.makePlayer(ratingAvg, rdAvg, volAvg);
+                teamPlayer.oldRating = ratingAvg;
+                teams.push([teamPlayer]);
+                console.log("\n----==== TEAM PLAYER ====----\n");
+                console.log(teamPlayer);
+                console.log("rating = " + teamPlayer.getRating());
+                console.log("rd = " + teamPlayer.getRd());
+                console.log("vol = " + teamPlayer.getVol());
+            }
+            console.log("\n----==== R A C E ====----\n");
+            console.log(teams);
+            const game = glicko.makeRace(teams);
+            glicko.updateRatings(game);
+
+            for (let i = 0; i < teams.length; i++) {
+                let t = teams[i][0];
+                t.ratingDiff = Math.round(t.getRating()) - Math.round(t.oldRating);
+                console.log("\n----==== T E A M    C O M P U T E ====----\n");
+                for (const p of glickoPositions[i]) {
+                    p.oldRd = p.getRd();
+                    p.oldVol = p.getVol();
+                    if (p.subType == 0) {
+                        p.setRating(p.oldRating + t.ratingDiff);
+                    }
+                    else if (p.subType == 1) {
+                        if (t.ratingDiff > 20)
+                            p.setRating(p.oldRating + t.ratingDiff);
+                        else
+                            p.setRating(p.oldRating + 20);
+                    }
+                    else {
+                        if (t.ratingDiff < -20)
+                            p.setRating(p.oldRating + t.ratingDiff);
+                        else
+                            p.setRating(p.oldRating - 20);
+                    }
+                    p.setRd(t.getRd());
+                    p.setVol(t.getVol());
+                    console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
+                    console.log("\toldRd = " + p.oldRd + "\n\tnewRd = " + p.getRd() + "\n");
+                    console.log("\toldVol = " + p.oldVol + "\n\tnewVol = " + p.getVol() + "\n");
+                }
+            }
+        }
+
+        if (debugMode)
+            console.log("[CHECK_MODE]");
+        else
+            console.log("[COMMIT_MODE]");
+
+            let msg = '```NEW GAME```\n';
+        for (let i = 0; i < glickoPositions.length; i++) {
+            for (let j = 0; j < glickoPositions[i].length; j++) {
+                let pStats = glickoPositions[i][j];
+                var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                console.log( "ID: " + pStats.dId );
+                console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
+                console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
+                console.log( "\tRating Diff:\t" + diff );
+                console.log( "\tRd:\t" + pStats.getRd() );
+                console.log( "\tVol:\t" + pStats.getVol() );
+                console.log( "\tsubType:\t" + pStats.subType );
+
+                if ( !debugMode ) {
+                    if ( this.isFFA() || this.isDuel() ) {
+                        if (pStats.subType == 0) {
+                            let plyr = await mongoUtil.getPlayer( pStats.dId );
+                            if ( !plyr )
+                                await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+
+                            await mongoUtil.updatePlayer(pStats.dId,
+                                                         Math.round(pStats.getRating()),
+                                                         diff,
+                                                         pStats.getRd(),
+                                                         pStats.getVol());
+                        }
+                    }
+                    else {
+                        let plyr = await mongoUtil.getPlayer( pStats.dId );
+                        if ( !plyr )
+                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+
+                        await mongoUtil.updatePlayer(pStats.dId,
+                                                     Math.round(pStats.getRating()),
+                                                     diff,
+                                                     pStats.getRd(),
+                                                     pStats.getVol());
+                    }
+                            let plyr = await mongoUtil.getPlayer( pStats.dId );
+                            msg += '<@' + plyr._id + '>\n';
+                            msg += "**[IN]**\n";
+                            msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
+                            msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
+                            msg += "\tRating Diff:\t" + diff + "\n";
+                            msg += "\tRd:\t" + pStats.getRd() + "\n";
+                            msg += "\tVol:\t" + pStats.getVol() + "\n";
+                            msg += "\tsubtype:\t" + pStats.subType + "\n";
+                            msg += "**[OUT]**\n";
+                            msg += "\tNew Rating:\t" + plyr.rating + "\n";
+                            msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
+                            msg += "\tRd:\t" + plyr.rd + "\n";
+                            msg += "\tVol:\t" + plyr.vol + "\n";
+                            GetChannelGlickoDebug().send(msg);
+                            msg = '';
+                }
+            }
+        }
+		if(!debugMode) {
+            if ( this.isFFA() )
+                await leaderboard.update('ffa');
+            else if ( this.isTeam() )
+                await leaderboard.update('team');
+            else if ( this.isDuel() )
+			    await leaderboard.update('duel');
+			//this.notify(response.id);
+
+    		let gMsg = '';
+    		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
+    		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
+            gMsg += await this.getGlickoReport();
+    		await GetChannelGlickoHistory().send(gMsg);
+		}
+
+        await mongoUtil.useDb('overall');
+        await this.parseGameReport4Overall(debugMode);
+	}
+
+	async parseGameReport4Overall(debugMode)
 	{
 		// Construct Positions only for API
 		let reportedPositions = [];
@@ -552,14 +765,12 @@ class ParseMessage
                     pp.push(player);
                 }
                 else if (m.subType == 1) {
-                    // TODO: need to deal with team game subs
                     if (this.type != 2)
                         await this.setSubPoints(this.positions.slice(i), m[1], debugMode);
 
                     pp.push(player);
                 }
                 else if (m.subType == 2) {
-                    //TODO: need to deal with team game orig
                     if ( this.type != 2 )
                         await this.setOrigPoints(this.positions.slice(0, i+1), m[1], debugMode);
                     else
@@ -656,43 +867,56 @@ class ParseMessage
         for (let i = 0; i < glickoPositions.length; i++) {
             for (let j = 0; j < glickoPositions[i].length; j++) {
                 let pStats = glickoPositions[i][j];
-                if ( pStats.subType == 0 ) {
-                    var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
-                    console.log( "ID: " + pStats.dId );
-                    console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
-                    console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
-                    console.log( "\tRating Diff:\t" + diff );
-                    console.log( "\tRd:\t" + pStats.getRd() );
-                    console.log( "\tVol:\t" + pStats.getVol() );
-                    console.log( "\tsubType:\t" + pStats.subType );
-                    //TODO: currently FFA only
-                    if (!debugMode && this.type != 2)
-                    {
+                var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                console.log( "ID: " + pStats.dId );
+                console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
+                console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
+                console.log( "\tRating Diff:\t" + diff );
+                console.log( "\tRd:\t" + pStats.getRd() );
+                console.log( "\tVol:\t" + pStats.getVol() );
+                console.log( "\tsubType:\t" + pStats.subType );
+
+                if ( !debugMode ) {
+                    if ( this.isFFA() || this.isDuel() ) {
+                        if (pStats.subType == 0) {
+                            let plyr = await mongoUtil.getPlayer( pStats.dId );
+                            if ( !plyr )
+                                await mongoUtil.createPlayer(pStats.dId, pStats.dId); 
+
+                            await mongoUtil.updatePlayer(pStats.dId,
+                                                         Math.round(pStats.getRating()),
+                                                         diff,
+                                                         pStats.getRd(),
+                                                         pStats.getVol());
+                        }
+                    }
+                    else {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
                         if ( !plyr )
-                             await mongoUtil.createPlayer(pStats.dId, pStats.dId); 
+                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
                                                      pStats.getRd(),
                                                      pStats.getVol());
-                        plyr = await mongoUtil.getPlayer( pStats.dId );
-                        msg += '<@' + plyr._id + '>\n';
-                        msg += "**[IN]**\n";
-                        msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
-                        msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
-                        msg += "\tRating Diff:\t" + diff + "\n";
-                        msg += "\tRd:\t" + pStats.getRd() + "\n";
-                        msg += "\tVol:\t" + pStats.getVol() + "\n";
-                        msg += "\tsubtype:\t" + pStats.subType + "\n";
-                        msg += "**[OUT]**\n";
-                        msg += "\tNew Rating:\t" + plyr.rating + "\n";
-                        msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
-                        msg += "\tRd:\t" + plyr.rd + "\n";
-                        msg += "\tVol:\t" + plyr.vol + "\n";
-                        GetChannelGlickoDebug().send(msg);
-                        msg = '';
                     }
+                            let plyr = await mongoUtil.getPlayer( pStats.dId );
+                            msg += '<@' + plyr._id + '>\n';
+                            msg += "**[IN]**\n";
+                            msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
+                            msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
+                            msg += "\tRating Diff:\t" + diff + "\n";
+                            msg += "\tRd:\t" + pStats.getRd() + "\n";
+                            msg += "\tVol:\t" + pStats.getVol() + "\n";
+                            msg += "\tsubtype:\t" + pStats.subType + "\n";
+                            msg += "**[OUT]**\n";
+                            msg += "\tNew Rating:\t" + plyr.rating + "\n";
+                            msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
+                            msg += "\tRd:\t" + plyr.rd + "\n";
+                            msg += "\tVol:\t" + plyr.vol + "\n";
+                            GetChannelGlickoDebug().send(msg);
+                            msg = '';
                 }
             }
         }
@@ -733,10 +957,8 @@ class ParseMessage
 			{				
 				if(!debugMode)
 				{
-					// Update Leaderboard
-					leaderboard.generate();
-					
-					this.notify(response.id);
+					await leaderboard.update('overall');
+					await this.notify(response.id);
 				}
 				else
 				{
@@ -763,11 +985,6 @@ class ParseMessage
 		// COULD CRASH HERE, USER NOT FOUND, so we deleted above
 		msg += this.notifyConstructPlayerString();
 
-		let gMsg = '';
-		gMsg += 'GameID: ' + gameid + '\n';
-		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
-		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
-
         if (msg.includes("**[ORIG]** "))     
         {       
             var sub = msg.split("**[ORIG]** ").pop().split(" ").shift();        
@@ -787,10 +1004,12 @@ class ParseMessage
 	    this.error.add('-Report Finished Successfully-');
 	    this.error.send(this.message.channel, 30);
 
-        if (this.type != 2) {
-            gMsg += await this.getGlickoReport();
-		    GetChannelGlickoHistory().send(gMsg);
-        }
+		let gMsg = '';
+		gMsg += 'GameID: ' + gameid + '\n';
+		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
+		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
+        gMsg += await this.getGlickoReport();
+		GetChannelGlickoHistory().send(gMsg);
 	}
 	
 	async getGlickoReport()
@@ -882,13 +1101,29 @@ class ParseMessage
 	
 	assignType(data)
 	{
-		if(data.includes('diplo') || data.includes('ffa')) this.type = 0;
-		else if(data.includes('war')) this.type = 1;
-		else if(data.includes('team') || /\dv\d/g.test(data)) this.type = 2;
-		else if(data.includes('duel') || data.includes('adcp')) this.type = 3;
+		if(data.includes('diplo') || data.includes('ffa')) {
+            this.type = 0;
+            mongoUtil.useDb('ffa');
+        }
+		else if(data.includes('war')) {
+            this.type = 1;
+            mongoUtil.useDb('ffa');
+        }
+		else if(data.includes('duel') || data.includes('adcp')) {
+            this.type = 3;
+            mongoUtil.useDb('duel');
+        }
+		else if(data.includes('team') || /\dv\d/g.test(data)) {
+            this.type = 2;
+            mongoUtil.useDb('team');
+        }
 		
 		return this.type != null;
 	}
+
+    isFFA()  { return ( this.type == 0 || this.type == 1 ); }
+    isTeam() { return this.type == 2; } 
+    isDuel() { return this.type == 3; } 
 }
 
 async function applyTags(players)
