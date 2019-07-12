@@ -1,4 +1,5 @@
 const util = require('../util/util');
+const mongoUtil = require('../util/mongo');
 const errorHandler = require('../util/errormessage');
 
 const Discord = require('discord.js');
@@ -25,7 +26,7 @@ const srv = http.createServer( (req, res) =>
 	
 	const API_ENDPOINT = '/api/v7'
 	const CLIENT_ID = '482621155136765973'
-	const CLIENT_SECRET = 'JChcdmGMNKx0DwQMXx1WMlahlAGNORQm'
+	const CLIENT_SECRET = util.getToken('discord');
 	const REDIRECT_URI = 'http://34.216.163.75'
 
 	const params = getParams(req);
@@ -82,7 +83,7 @@ const srv = http.createServer( (req, res) =>
 				
 				if(state.user != json_me.id)
 				{
-					res.end('<b>Error</b><br>You are logged into two different Discord accounts - one on the website and one in your app. Log out of the website and try again.');
+					res.end('<b>Error</b><br>You are logged into two different Discord accounts - one on the website and one in your app. Log out of the website and try again or try again from the website.');
 					return;
 				}
 				
@@ -94,8 +95,8 @@ const srv = http.createServer( (req, res) =>
 					hostname: 'discordapp.com',
 					path: API_ENDPOINT + '/users/@me/connections',
 					headers: { 'authorization': 'Bearer ' + json.access_token },
-				}, null, async(body_connections) =>
-				{				
+				}, null, (body_connections) =>
+				{
 					const json_connections = JSON.parse(body_connections);
 					//console.log('[discord_connections] ' + body_connections);
 					if(json_connections.hasOwnProperty('code'))
@@ -113,65 +114,95 @@ const srv = http.createServer( (req, res) =>
 							break;
 						}
 					}
-					
-					/*if(_steamid == null)
-					{
-						res.write('<b>Debug</b><br>' + body_connections + '<br><br>');
-						res.write('<b>Token</b><br>' + json.access_token + '<br><br>');
-						res.end('<b>Error</b><br>Failed to retreive your linked Steam Account: Please follow this link and confirm your linked Steam Account: <a href="https://cpl.rankedgaming.com/link_steam.php?id=' + json_me.id + '">https://cpl.rankedgaming.com/link_steam.php?id=' + json_me.id + '</a>');
-						return;
-					}*/
-					
-					const user = util.client.users.get(json_me.id);
-					const member = GetChannelProfileProof().guild.member(user);
-					if(member == null)
-					{
-						res.end('<b>Error</b><br>Your cached discord user was not found! Please report this problem to our staff.');
-						return;
-					}
-					
-					try
-					{
-						let response = await util.makeRGRequest('register.php', {
-							discordid: json_me.id,
-							steamid: _steamid,
-							name: json_me.username
-						});
-						
-						// Finish up HTTP reply
-						res.write('<b>Success</b><br>You may close this window and return to Discord');
 
-                        //glicko start
-                        //const mc = new MongoConnection("testDB", "test");
-                        //mc.createPlayer(discordid, steamid);
-                        //mc.disconnect();
-                        //glicko end
+                    if (_steamid == null) {
+                        res.end('<b>Error</b><br>Your steam account does not seem to be linked to discord. Please close this window and step through the instructions again');
+                        GetChannelWelcome().send("**Error:**\nYour steam account does not seem to be linked to discord. Please retry the above steps");
+                        return;
+                    }
 
-						// Notify User Channel
-						GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-						
-						// Notify Admin Channel
-						await GetChannelProfileProof().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + _steamid + '>');
-						
-						// Add Ranked Role
-						await member.addRoles([ranked, chieftain]);
-					}
-					catch( err )
-					{
-						res.write('<b>Debug</b>' + body_connections);
-						res.write('<b>Error</b><br>' + err);
-					}
-					
-					res.end();
+                    util.makeRequest(https, {
+                        method: 'GET',
+                        hostname: 'api.steampowered.com',
+                        path: '/IPlayerService/GetOwnedGames/v1/?key=' + util.getToken('steam') + '&steamid=' + _steamid
+                    }, null, (response) =>
+                    {
+                        let ownCiv = false;
+                        const json_res = JSON.parse(response);
+                        const gameCount = json_res.response.game_count;
+                        const games = json_res.response.games;
+                        if (gameCount == 0) {
+                            res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to discord for further instructions');
+                            GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
+                            return;
+                        }
+                        if (!games) {
+                            res.end('<b>Error</b><br>Your steam account\'s games list does not seem to be set to public. Please close this page and return to discord for further instructions');
+                            GetChannelWelcome().send("**Error:**\nPlease make sure your Steam games list is public:```- sign into https://steamcommunity.com/\n- click your username in the upper right corner\n- click 'View Profile'\n- click 'Edit Profile'\n- click 'My Privacy Settings'\n- Change 'Game details' from 'Friends Only' to 'Public'```After doing the above steps, try to `.register` again. If you continue to see this message, please contact a moderator in order to finish registration");
+                            return;
+                        }
+                        for (const game of games) {
+                            if (game.appid == 289070) {
+                                ownCiv = true;
+                            }
+                        }
+                        if (!ownCiv) {
+                            res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to discord for further instructions');
+                            GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
+                            return;
+                        }
+
+					    const user = util.client.users.get(json_me.id);
+					    const member = GetChannelProfileProof().guild.member(user);
+					    if(member == null)
+					    {
+					    	res.end('<b>Error</b><br>Your cached discord user was not found! Please report this problem to our staff.');
+					    	return;
+					    }
+					    
+					    try
+					    {
+					    	let response = util.makeRGRequest('register.php', {
+					    		discordid: json_me.id,
+					    		steamid: _steamid,
+					    		name: json_me.username
+					    	});
+					    	
+					    	// Finish up HTTP reply
+					    	res.write('<b>Success</b><br>You may close this window and return to Discord');
+
+                            //glicko start
+                            //const mc = new MongoConnection("testDB", "test");
+                            //mc.createPlayer(discordid, steamid);
+                            //mc.disconnect();
+                            //glicko end
+
+					    	// Notify User Channel
+					    	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
+					    	
+                            let ret = mongoUtil.registerPlayer(json_me.id, _steamid, member.user.username, member.displayName);
+                            if (!ret) {
+                                console.log('could not register new player');
+                            }
+
+					    	// Notify Admin Channel
+					    	GetChannelProfileProof().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + _steamid + '>');
+					    	
+					    	// Add Ranked Role
+					    	member.addRoles([ranked, chieftain]);
+					    }
+					    catch( err )
+					    {
+					    	res.write('<b>Debug</b>' + body_connections);
+					    	res.write('<b>Error</b><br>' + err);
+					    }
+					    
+					    res.end();
+                    });
 				});
 			});
 		});
 	}
-	/*else
-	{
-		console.log(params);
-		console.log(req.headers);
-	}*/
 });
 
 function getParams(req)
@@ -305,7 +336,7 @@ class RegisterModule
 						    await GetChannelProfileProof().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + steamid + '>');
 						    // Add Ranked and Chieftain Roles
 						    await target.addRoles([ranked, chieftain]);
-                            message.channel.send(target + ' has now been registered with default stats and given the ranked role.');
+                            message.channel.send(target + ' has now been registered with default stats and given the ranked and chieftain role.');
                         }
                         catch (err)
                         {

@@ -198,23 +198,6 @@ util.client.on('message', message =>
 				["🇮", "Information"]
 			]), {} );
 
-		bot_vote.showChoice(message.channel, '**__Map Type__**\n',
-			new Map([
-				["🇵", "Pangaea"],
-				["🇫", "Fractal"],
-				["🇨", "Continents"],
-				["🇦", "Archipelago"],
-				["🇸", "Inland Sea"],
-				["🇮", "Islands"],
-				["🔀", "Shuffle"]
-			]), {} );
-
-        bot_vote.showChoice(message.channel, '**__Age__**\n',
-            new Map([
-				["🇸", "Standard Age"],
-                ["🇳", "New Age (more mountains/hills)"]
-            ]), {} );
-
         bot_vote.showChoice(message.channel, '**__Disaster Intensity__**\n',
             new Map([
 				["0⃣", "No Disasters"],
@@ -233,6 +216,25 @@ util.client.on('message', message =>
 			]), {} );
 		}
 		
+		bot_vote.showChoice(message.channel, '**__Map Type__**\n',
+			new Map([
+				["🇵", "Pangaea"],
+				["🇫", "Fractal"],
+				["🇨", "Continents"],
+				["🇦", "Archipelago"],
+				["🇸", "Inland Sea"],
+				["🇮", "Islands"],
+				["🔀", "Shuffle"],
+				["7⃣", "Seven Seas"],
+				["🆕", "Small Continents"]
+			]), {} );
+
+        bot_vote.showChoice(message.channel, '**__Age__**\n',
+            new Map([
+				["🇸", "Standard Age"],
+                ["🇳", "New Age (more mountains/hills)"]
+            ]), {} );
+
 		if( !isModVote && !isTeamVote )
 		{
 		bot_vote.showChoice(message.channel, '**__Wonders__**\n',
@@ -283,23 +285,23 @@ util.client.on('message', message =>
 		
 		if ( isTeamVote )
 		{
-		/// Suggested Civ Bans
-		suggestedCivs = new Map([
-			/*[util.civs['Georgia']['id']],*/
-			['🚫'],
-			[util.civs['Sumeria']['id']],
-			[util.civs['Nubia']['id']],
-			[util.civs['Cree']['id']]
-		]);
+		    /// Suggested Civ Bans
+		    suggestedCivs = new Map([
+		    	/*[util.civs['Georgia']['id']],*/
+		    	['🚫'],
+		    	[util.civs['Sumeria']['id']],
+		    	[util.civs['Nubia']['id']],
+		    	[util.civs['Cree']['id']]
+		    ]);
 		}
 		else
 		{
-                /// Suggested Civ Bans
-                suggestedCivs = new Map([
-                        /*[util.civs['Georgia']['id']],*/
-                        ['🚫']
-                ]);
-                }
+            /// Suggested Civ Bans
+            suggestedCivs = new Map([
+                    /*[util.civs['Georgia']['id']],*/
+                    ['🚫']
+            ]);
+        }
 
 		bot_vote.showChoice(message.channel, '**__Civ Bans__**\n', suggestedCivs, { separator: '\n', connector: ' ', multi: true, callback: (vote) =>
 		{

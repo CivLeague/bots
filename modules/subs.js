@@ -1,5 +1,6 @@
 const util = require('../util/util');
 const Discord = require('discord.js');
+const mongoUtil = require('../util/mongo');
 
 var moderatorId = '291753249361625089';
 
@@ -9,6 +10,40 @@ class SubBotModule
 {
     constructor()
     {
+        util.client.on('message', async (message) => {
+            if (message.channel.id != GetChannelSubLog().id)
+                return;
+
+            if (message.content == '.reportsubs') {
+                let msg = '';
+                mongoUtil.getSubs().then( subs => {
+                    for (let sub of subs) {
+                        msg += "\n[**" + sub.count + "**, <@"+sub._id+">]";
+                    }
+                    if (msg == '')
+                        msg = "there are no subs to report.";
+                    message.reply(msg);
+                });
+            }
+
+            if (message.content == ".resetsubs") {
+                mongoUtil.resetSubs();
+                message.reply("sub stats have been reset.");
+            }
+
+            if (message.content.split(' ').pop() == 'subbed') {
+                let subId = message.mentions.users.first().id;
+                mongoUtil.getSubCount(subId).then( result => {
+                    if (result) {
+                        mongoUtil.setSubCount(subId, result.count + 1);
+                    }
+                    else {
+                        mongoUtil.setSubCount(subId, 1);
+                    }
+                });
+            }
+        });
+        /*
         util.client.on('message', async message => {
             if(message.author.bot) return;
             if(message.channel.type === "dm") return;
@@ -36,6 +71,7 @@ class SubBotModule
                 message.delete();
             }
         })
+        */
     }
 }
 

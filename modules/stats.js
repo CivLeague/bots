@@ -160,10 +160,34 @@ class StatsBotModule
 
             try
             {
-                var player = await mongoUtil.getPlayer(target.id)
-                var skill = player.rating;
-                message.channel.send(
-                    target + '\n\n' + '**__Stats__**\n**\nRating: **' + skill);
+                let msg = '';
+                if ( content.includes('ffa') )
+                    mongoUtil.useDb('ffa');
+                else if ( content.includes('team') )
+                    mongoUtil.useDb('team');
+                else if ( content.includes('duel') )
+                    mongoUtil.useDb('duel');
+                else mongoUtil.useDb('overall');
+
+                var player = await mongoUtil.getPlayer(target.id);
+                if ( player ) {
+                    var skill = player.rating;
+                    let games = player.games;
+                    let wins  = player.wins;
+                    let losses= player.losses;
+                    let wp    = Math.round(wins*100/games);
+
+                    msg += target;
+                    msg += '```js\nRating: ' + skill;
+                    msg += '\nGames:  ' + games;
+                    msg += '\nWin %:  ' + wp + '%';
+                    msg += '\nWins:   ' + wins;
+                    msg += '\nLosses: ' + losses + '```';
+                }
+                else {
+                    msg += target + ' doesn\'t have any stats yet';
+                }
+                message.channel.send(msg);
             }
             catch(err)
             {

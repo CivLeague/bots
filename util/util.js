@@ -71,6 +71,9 @@ class C6Util
 	{
 		this.client.login(tokens[t]);
 	}
+    getToken(t) {
+        return tokens[t];
+    }
 
 	loadJSON(file)
 	{

@@ -1,14 +1,16 @@
+const util = require('./util');
 const MongoClient = require('mongodb').MongoClient;
-const url = 'mongodb://cplbot:brokenarrow@localhost:27017/test_db';
+const url = 'mongodb://cplbot:' + util.getToken('mongo') + '@localhost:27017/';
 
 process.on("uncaughtException", (err) => {
-  console.log("mongoUtil " +  err);
+  console.log(err);
 });
 
 var _cli
 var _db;
 var _coll;
 var _subs;
+var _players;
 
 module.exports = {
     connectToMongo: function () {
@@ -17,8 +19,24 @@ module.exports = {
             _db   = _cli.db('test_db');
             _coll = _db.collection('overall');
             _subs = _db.collection('subs');
+            _players = _cli.db('players');
             console.log('mongo listening');
         });
+    },
+
+    registerPlayer: async function( discordId, steamId, userName, displayName ) {
+        try {
+            await _players.collection('members').insertOne({
+                discord_id:     discordId,
+                steam_id:       steamId,
+                user_name:      userName,
+                display_name:   displayName
+            });
+        } catch (e) {
+            console.log(e);
+            return false;
+        };
+        return true;
     },
 
     getDb: function() {
@@ -30,7 +48,7 @@ module.exports = {
     },
     
     createPlayer: async function ( discordId, steamId ) {
-        _coll.insertOne({
+        await _coll.insertOne({
             _id:        discordId,
             steam_id:   steamId,
             rating:     1500,
@@ -45,16 +63,19 @@ module.exports = {
     },
 
     getPlayer: async function ( playerId ) {
-        return _coll.findOne({ _id: playerId });
+        return await _coll.findOne({ _id: playerId });
     },
     
-    updatePlayer: async function(playerId, skill, diff, rd, vol) {
-        _coll.updateOne({ _id : playerId }, {
+    updatePlayer: async function(playerId, skill, diff, rd, vol, g, w, l) {
+        await _coll.updateOne({ _id : playerId }, {
             $set: {
                 rating: skill,
                 lastChange: diff,
                 rd:  rd,
-                vol: vol
+                vol: vol,
+                games: g,
+                wins: w,
+                losses: l
             },
             $currentDate: { lastModified: true }
         });
@@ -62,7 +83,7 @@ module.exports = {
 
     getLeaderboard: async function ( collection ) {
         _coll = _db.collection(collection);
-        return _coll.find().sort({ rating: -1 }).toArray();
+        return await _coll.find().sort({ rating: -1 }).toArray();
     },
 
     getSubs: async function () {

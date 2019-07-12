@@ -46,7 +46,7 @@ const querystring = require('querystring');
 
 // SubType: 1 (SUBBING player)
 // SubType: 2 (LEAVER player)
-// GameType: [0] Diplo [1] War [2] Team
+// GameType: [0] Diplo   [1] War   [2] Team   [3] Duel
 function GetGameType(id)
 {
 	if(id == 0) return "Diplo";
@@ -55,10 +55,6 @@ function GetGameType(id)
 	else if(id == 3) return "Duel";
 	else return "N/A";
 }
-
-/*var test = [ 'B', 'C' ];
-test.splice(0, 1, 'A', test[0]);
-console.log(test);*/
 
 function eloWin(ratingWinner, ratingLoser)
 {
@@ -165,52 +161,6 @@ class ReportBotModule
 				    pm.parseGameReport(isDebugEmoji);
 			}
 		});
-
-        util.client.on('message', message => {
-            if (message.content == '.populate') {
-                let msg = 'blah'
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 9; j++) {
-                        msg += '\nblah';
-                    }
-                    message.channel.send(msg);
-                    msg = 'blah' + (i+2);
-                }
-                return;
-            }
-
-            if (message.channel.id != GetChannelSubLog().id)
-                return;
-
-            if (message.content == '.reportsubs') {
-                let msg = '';
-                mongoUtil.getSubs().then( subs => {
-                    for (let sub of subs) {
-                        msg += "\n[**" + sub.count + "**, <@"+sub._id+">]";
-                    }
-                    if (msg == '')
-                        msg = "there are no subs to report.";
-                    message.reply(msg);
-                });
-            }
-
-            if (message.content == ".resetsubs") {
-                mongoUtil.resetSubs();
-                message.reply("sub stats have been reset.");
-            }
-
-            if (message.content.split(' ').pop() == 'subbed') {
-                let subId = message.mentions.users.first().id;
-                mongoUtil.getSubCount(subId).then( result => {
-                    if (result) {
-                        mongoUtil.setSubCount(subId, result.count + 1);
-                    }
-                    else {
-                        mongoUtil.setSubCount(subId, 1);
-                    }
-                });
-            }
-        });
 	}
 }
 
@@ -359,10 +309,7 @@ class ParseMessage
 		
 		if(this.host == null)
 		{
-			this.host = message.author.id;
-			// need to check here or host could be resolved to null (!) later when constructing playerString
-			if(message.mentions.users.get(this.host) == null) this.error.add('no host specified');			
-            //this.error.send(,30); 
+            this.error.add('game must include a tagged host');
             this.abort = true;
 		}
 		
@@ -438,26 +385,39 @@ class ParseMessage
                 let pStats = glickoPositions[i][j];
                 if ( pStats.dId == subId ) {
                     var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                    if ( diff < 20 ) {
+                        diff = 20;
+                        pStats.setRating(pStats.oldRating + 20);
+                    }
                     console.log( "SUB ID: " + pStats.dId );
                     console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                     console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
                     console.log( "\tRating Diff:\t" + diff );
                     console.log( "\tRd:\t" + pStats.getRd() );
                     console.log( "\tVol:\t" + pStats.getVol() );
+                        let plyr = await mongoUtil.getPlayer( pStats.dId );
+                        if ( !plyr ) {
+                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            plyr = await mongoUtil.getPlayer( pStats.dId );
+                        }
+                        console.log(plyr);
                     if (!debug && this.type != 2)
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
-    
-                        if ( !plyr )
+                        if ( !plyr ) {
                             await mongoUtil.createPlayer(pStats.dId, pStats.dId);
-    
-                        if ( diff < 20 ) diff = 20;
+                            plyr = await mongoUtil.getPlayer( pStats.dId );
+                        }
     
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
                                                      pStats.getRd(),
-                                                     pStats.getVol());
+                                                     pStats.getVol(),
+                                                     plyr.games + 1,
+                                                     plyr.wins + 1,
+                                                     plyr.losses
+                                                    );
                     }
                 }
             }
@@ -499,6 +459,10 @@ class ParseMessage
                 let pStats = glickoPositions[i][j];
                 if ( pStats.dId == origId ) {
                     var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                    if ( diff > -20 ) {
+                        diff = -20;
+                        pStats.setRating(pStats.oldRating - 20);
+                    }
                     console.log( "ORIG ID: " + pStats.dId );
                     console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                     console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -508,14 +472,20 @@ class ParseMessage
                     if (!debug && this.type != 2)
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
-                        if ( !plyr )
+                        if ( !plyr ) {
                             await mongoUtil.createPlayer(pStats.dId, pStats.dId);
-                        if ( diff > -20 ) diff = -20;
+                            plyr = await mongoUtil.getPlayer( pStats.dId );
+                        }
+    
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
                                                      pStats.getRd(),
-                                                     pStats.getVol());
+                                                     pStats.getVol(),
+                                                     plyr.games + 1,
+                                                     plyr.wins,
+                                                     plyr.losses + 1
+                                                     );
                     }
                 }
             }
@@ -612,38 +582,35 @@ class ParseMessage
                 console.log("rd = " + teamPlayer.getRd());
                 console.log("vol = " + teamPlayer.getVol());
             }
+
             console.log("\n----==== R A C E ====----\n");
             console.log(teams);
-            const game = glicko.makeRace(teams);
-            glicko.updateRatings(game);
+            for (let i = 0; i < glickoPositions.length; i++) {
+                for (const p of glickoPositions[i]) {
+                    var g = [];
+                    for (let j = 0; j < glickoPositions.length; j++) {
+                        if (j == i) {
+                            g.push([p]);
+                        } else {
+                            g.push([glicko.makePlayer(teams[j][0].getRating(), teams[j][0].getRd(), teams[j][0].getVol())]);
+                        }
+                    }
+                    const game = glicko.makeRace(g);
+                    glicko.updateRatings(game);
+                }
+            }
 
             for (let i = 0; i < teams.length; i++) {
-                let t = teams[i][0];
-                t.ratingDiff = Math.round(t.getRating()) - Math.round(t.oldRating);
                 console.log("\n----==== T E A M    C O M P U T E ====----\n");
                 for (const p of glickoPositions[i]) {
+                    p.ratingDiff = Math.round(p.getRating()) - Math.round(p.oldRating);
                     p.oldRd = p.getRd();
                     p.oldVol = p.getVol();
-                    if (p.subType == 0) {
-                        p.setRating(p.oldRating + t.ratingDiff);
-                    }
-                    else if (p.subType == 1) {
-                        if (t.ratingDiff > 20)
-                            p.setRating(p.oldRating + t.ratingDiff);
-                        else
+                    if ( p.subType == 1 && p.ratingDiff < 20 )
                             p.setRating(p.oldRating + 20);
-                    }
-                    else {
-                        if (t.ratingDiff < -20)
-                            p.setRating(p.oldRating + t.ratingDiff);
-                        else
+                    else if ( p.subType == 2 && p.ratingDiff > -20 )
                             p.setRating(p.oldRating - 20);
-                    }
-                    p.setRd(t.getRd());
-                    p.setVol(t.getVol());
                     console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
-                    console.log("\toldRd = " + p.oldRd + "\n\tnewRd = " + p.getRd() + "\n");
-                    console.log("\toldVol = " + p.oldVol + "\n\tnewVol = " + p.getVol() + "\n");
                 }
             }
         }
@@ -658,6 +625,7 @@ class ParseMessage
             for (let j = 0; j < glickoPositions[i].length; j++) {
                 let pStats = glickoPositions[i][j];
                 var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                if ( this.isTeam() || pStats.subType != 1 ) {
                 console.log( "ID: " + pStats.dId );
                 console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                 console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -665,33 +633,78 @@ class ParseMessage
                 console.log( "\tRd:\t" + pStats.getRd() );
                 console.log( "\tVol:\t" + pStats.getVol() );
                 console.log( "\tsubType:\t" + pStats.subType );
+                }
 
                 if ( !debugMode ) {
                     if ( this.isFFA() || this.isDuel() ) {
                         if (pStats.subType == 0) {
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
-                            if ( !plyr )
+                            if ( !plyr ) {
                                 await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                                plyr = await mongoUtil.getPlayer( pStats.dId );
+                            }
+
+                            var wins;
+                            var losses;
+                            if (diff > 0) {
+                                wins = plyr.wins + 1;
+                                losses = plyr.losses;
+                            }
+                            else if ( diff < 0 ) {
+                                wins = plyr.wins;
+                                losses = plyr.losses + 1;
+                            }
+                            else {
+                                wins = plyr.wins;
+                                losses = plyr.losses;
+                            }
 
                             await mongoUtil.updatePlayer(pStats.dId,
                                                          Math.round(pStats.getRating()),
                                                          diff,
                                                          pStats.getRd(),
-                                                         pStats.getVol());
+                                                         pStats.getVol(),
+                                                         plyr.games + 1,
+                                                         wins,
+                                                         losses
+                                                         );
                         }
                     }
                     else {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
-                        if ( !plyr )
+                        if ( !plyr ) {
                             await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            plyr = await mongoUtil.getPlayer( pStats.dId );
+                        }
+    
+
+                        var wins;
+                        var losses;
+                        if (diff > 0) {
+                            wins = plyr.wins + 1;
+                            losses = plyr.losses;
+                        }
+                        else if ( diff < 0 ) {
+                            wins = plyr.wins;
+                            losses = plyr.losses + 1;
+                        }
+                        else {
+                            wins = plyr.wins;
+                            losses = plyr.losses;
+                        }
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
                                                      pStats.getRd(),
-                                                     pStats.getVol());
+                                                     pStats.getVol(),
+                                                     plyr.games + 1,
+                                                     wins,
+                                                     losses
+                                                     );
                     }
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
+                            if (plyr) {
                             msg += '<@' + plyr._id + '>\n';
                             msg += "**[IN]**\n";
                             msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
@@ -707,6 +720,7 @@ class ParseMessage
                             msg += "\tVol:\t" + plyr.vol + "\n";
                             GetChannelGlickoDebug().send(msg);
                             msg = '';
+                            }
                 }
             }
         }
@@ -726,7 +740,7 @@ class ParseMessage
     		await GetChannelGlickoHistory().send(gMsg);
 		}
 
-        await mongoUtil.useDb('overall');
+        mongoUtil.useDb('overall');
         await this.parseGameReport4Overall(debugMode);
 	}
 
@@ -824,36 +838,32 @@ class ParseMessage
             }
             console.log("\n----==== R A C E ====----\n");
             console.log(teams);
-            const game = glicko.makeRace(teams);
-            glicko.updateRatings(game);
-            
+            for (let i = 0; i < glickoPositions.length; i++) {
+                for (const p of glickoPositions[i]) {
+                    var g = [];
+                    for (let j = 0; j < glickoPositions.length; j++) {
+                        if (j == i) {
+                            g.push([p]);
+                        } else {
+                            g.push([glicko.makePlayer(teams[j][0].getRating(), teams[j][0].getRd(), teams[j][0].getVol())]);
+                        }
+                    }
+                    const game = glicko.makeRace(g);
+                    glicko.updateRatings(game);
+                }
+            }
+
             for (let i = 0; i < teams.length; i++) {
-                let t = teams[i][0];
-                t.ratingDiff = Math.round(t.getRating()) - Math.round(t.oldRating);
                 console.log("\n----==== T E A M    C O M P U T E ====----\n");
                 for (const p of glickoPositions[i]) {
+                    p.ratingDiff = Math.round(p.getRating()) - Math.round(p.oldRating);
                     p.oldRd = p.getRd();
                     p.oldVol = p.getVol();
-                    if (p.subType == 0) {
-                        p.setRating(p.oldRating + t.ratingDiff);
-                    }
-                    else if (p.subType == 1) {
-                        if (t.ratingDiff > 20)
-                            p.setRating(p.oldRating + t.ratingDiff);
-                        else
+                    if ( p.subType == 1 && p.ratingDiff < 20 )
                             p.setRating(p.oldRating + 20);
-                    }
-                    else {
-                        if (t.ratingDiff < -20)
-                            p.setRating(p.oldRating + t.ratingDiff);
-                        else
+                    else if ( p.subType == 2 && p.ratingDiff > -20 )
                             p.setRating(p.oldRating - 20);
-                    }
-                    p.setRd(t.getRd());
-                    p.setVol(t.getVol());
                     console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
-                    console.log("\toldRd = " + p.oldRd + "\n\tnewRd = " + p.getRd() + "\n");
-                    console.log("\toldVol = " + p.oldVol + "\n\tnewVol = " + p.getVol() + "\n");
                 }
             }
         }
@@ -868,6 +878,7 @@ class ParseMessage
             for (let j = 0; j < glickoPositions[i].length; j++) {
                 let pStats = glickoPositions[i][j];
                 var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                if ( this.isTeam() || pStats.subType != 1 ) {
                 console.log( "ID: " + pStats.dId );
                 console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                 console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -875,33 +886,78 @@ class ParseMessage
                 console.log( "\tRd:\t" + pStats.getRd() );
                 console.log( "\tVol:\t" + pStats.getVol() );
                 console.log( "\tsubType:\t" + pStats.subType );
+                }
 
                 if ( !debugMode ) {
                     if ( this.isFFA() || this.isDuel() ) {
                         if (pStats.subType == 0) {
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
-                            if ( !plyr )
-                                await mongoUtil.createPlayer(pStats.dId, pStats.dId); 
+                            if ( !plyr ) {
+                                await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                                plyr = await mongoUtil.getPlayer( pStats.dId );
+                            }
+    
+
+                            var wins;
+                            var losses;
+                            if (diff > 0) {
+                                wins = plyr.wins + 1;
+                                losses = plyr.losses;
+                            }
+                            else if ( diff < 0 ) {
+                                wins = plyr.wins;
+                                losses = plyr.losses + 1;
+                            }
+                            else {
+                                wins = plyr.wins;
+                                losses = plyr.losses;
+                            }
 
                             await mongoUtil.updatePlayer(pStats.dId,
                                                          Math.round(pStats.getRating()),
                                                          diff,
                                                          pStats.getRd(),
-                                                         pStats.getVol());
+                                                         pStats.getVol(),
+                                                         plyr.games + 1,
+                                                         wins,
+                                                         losses
+                                                         );
                         }
                     }
                     else {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
-                        if ( !plyr )
+                        if ( !plyr ) {
                             await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            plyr = await mongoUtil.getPlayer( pStats.dId );
+                        }
+
+                        var wins;
+                        var losses;
+                        if (diff > 0) {
+                            wins = plyr.wins + 1;
+                            losses = plyr.losses;
+                        }
+                        else if ( diff < 0 ) {
+                            wins = plyr.wins;
+                            losses = plyr.losses + 1;
+                        }
+                        else {
+                            wins = plyr.wins;
+                            losses = plyr.losses;
+                        }
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
                                                      pStats.getRd(),
-                                                     pStats.getVol());
+                                                     pStats.getVol(),
+                                                     plyr.games + 1,
+                                                     wins,
+                                                     losses
+                                                     );
                     }
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
+                            if (plyr) {
                             msg += '<@' + plyr._id + '>\n';
                             msg += "**[IN]**\n";
                             msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
@@ -917,6 +973,7 @@ class ParseMessage
                             msg += "\tVol:\t" + plyr.vol + "\n";
                             GetChannelGlickoDebug().send(msg);
                             msg = '';
+                            }
                 }
             }
         }
@@ -1109,11 +1166,11 @@ class ParseMessage
             this.type = 1;
             mongoUtil.useDb('ffa');
         }
-		else if(data.includes('duel') || data.includes('adcp')) {
+		else if(data.includes('duel') || data.includes('adcp') || data.includes('dual')) {
             this.type = 3;
             mongoUtil.useDb('duel');
         }
-		else if(data.includes('team') || /\dv\d/g.test(data)) {
+		else if(data.includes('team') ) {
             this.type = 2;
             mongoUtil.useDb('team');
         }
