@@ -808,7 +808,7 @@ class ParseMessage
 		gMsg += 'GameID: ' + gameid + '\n';
 		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
 		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
-        gMsg += this.getGlickoReport().then( report => {
+        this.getGlickoReport().then( report => {
             gMsg += report;
 		    GetChannelGlickoHistory().send(gMsg);
         });
