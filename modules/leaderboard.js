@@ -18,23 +18,7 @@ class C6Leaderboard
                 var channel = null;
                 var messages = null;
                 var db = null;
-                if ( message.channel == util.getChannel(569706256055402537) ) {
-                    db = 'overall';
-                    channel = util.getChannel(569706256055402537);
-                    messages = [
-                        '570810132208943104',
-                        '570810134490513410',
-                        '570810135681695754',
-                        '570810137108021248',
-                        '570810138185957376',
-                        '570810158293450792',
-                        '570810159274655781',
-                        '570810160629415947',
-                        '570810161611014145',
-                        '570810163053985793'
-                    ];
-                }
-                else if ( message.channel == util.getChannel(587158329877331969) ) {
+                if ( message.channel == util.getChannel(587158329877331969) ) {
                     db = 'ffa';
                     channel = util.getChannel(587158329877331969);
                     messages = [
@@ -64,22 +48,6 @@ class C6Leaderboard
                         '587469604851286044',
                         '587469605656592384',
                         '587469606311034913'
-                    ];
-                }
-                else if ( message.channel == util.getChannel(587158235744567306) ) {
-                    db = 'duel';
-                    channel = util.getChannel(587158235744567306);
-                    messages = [
-                        '587466734005518356',
-                        '587466734806630400',
-                        '587466735691497518',
-                        '587466736022978564',
-                        '587466737059102720',
-                        '587466760899264556',
-                        '587466761503375379',
-                        '587466762099097621',
-                        '587466762602283010',
-                        '587466763588075539'
                     ];
                 }
                 else return;
@@ -130,22 +98,7 @@ class C6Leaderboard
         this.glickoLb = await mongoUtil.getLeaderboard(db);
         var channel = null;
         var messages = null;
-        if ( db === 'overall' ) {
-            channel = util.getChannel(569706256055402537);
-		    messages = [
-		    	'570810132208943104',
-                '570810134490513410',
-                '570810135681695754',
-                '570810137108021248',
-                '570810138185957376',
-		    	'570810158293450792',
-                '570810159274655781',
-                '570810160629415947',
-                '570810161611014145',
-                '570810163053985793'
-		    ];
-        }
-        else if ( db === 'ffa' ) {
+        if ( db === 'ffa' ) {
             channel = util.getChannel(587158329877331969);
 		    messages = [
 		    	'587469644269617162',
@@ -175,91 +128,29 @@ class C6Leaderboard
                 '587469606311034913'
 		    ];
         }
-        else if ( db === 'duel' ) {
-            channel = util.getChannel(587158235744567306);
-		    messages = [
-		    	'587466734005518356',
-                '587466734806630400',
-                '587466735691497518',
-                '587466736022978564',
-                '587466737059102720',
-		    	'587466760899264556',
-                '587466761503375379',
-                '587466762099097621',
-                '587466762602283010',
-                '587466763588075539'
-		    ];
+        else {
+            return;
         }
 
         const max = this.glickoLb.length < 100 ? this.glickoLb.length : 100;
 
+        //score decay
+        let currDate = new Date();
+        for ( var i = 0; i < max ; i++ ) {
+            let lastDate = new Date( this.glickoLb[i].lastModified );
+            if ( currDate - lastDate > 2628000000 ) {
+                console.log(this.glickoLb[i]._id + " decaying 50 points.");
+                console.log("old:\t" + this.glickoLb[i].rating);
+                await mongoUtil.updateTime( this.glickoLb[i]._id, this.glickoLb[i].rating - 50 );
+                let p = await mongoUtil.getPlayer( this.glickoLb[i]._id );
+                console.log("new:\t" + p.rating);
+            }
+        }
+
+        //actual leaderboard message
         let msg = ''
         let j = 0;
         for ( var i = 0; i < max ; i++ ) {
-/*
-            if ( i < 9 ) msg += '#0' + (i+1) + '\t';
-            else msg += '#' + (i+1) + '\t';
-
-            msg += Math.round(this.glickoLb[i].rating);
-
-            let wins = this.glickoLb[i].wins;
-            if (wins < 10) {
-                msg += '\t[   ' + wins;
-            }
-            else if (wins < 100) {
-                msg += '\t[  ' + wins;
-            }
-            else {
-                msg += '\t[ ' + wins;
-            }
-
-            let losses = this.glickoLb[i].losses;
-            if (losses < 10) {
-                msg += ' - ' + losses + '   ]';
-            }
-            else if (losses < 100) {
-                msg += ' - ' + losses + '  ]';
-            }
-            else {
-                msg += ' - ' + losses + ' ]';
-            }
-
-            let winPercent = Math.round(wins*100/this.glickoLb[i].games);
-            if (winPercent < 10) {
-                msg += '    ' + winPercent + '%';
-            }
-            else if (winPercent < 100) {
-                msg += '   ' + winPercent + '%';
-            }
-            else {
-                msg += '  ' + winPercent + '%';
-            }
-
-            let name = null;
-            //let user = await util.client.users.get(this.glickoLb[i]._id);
-            let user = await util.client.guilds.get('291751672106188800').members.get(this.glickoLb[i]._id);
-            if (user) name = user.displayName;
-            else name = 'DeletedUser';
-            msg += '\t' + name + '\t' + 'rd: ' +  Math.round(this.glickoLb[i].rd) + '\n';
-
-            if ( ((i+1) % 10) == 0 ) {
-                var m = await channel.fetchMessage(messages[j]);
-                m.edit('```js\n' + msg + '```');
-                msg = '';
-                j++;
-            }
-        }
-
-        if (msg != '') {
-            m = await channel.fetchMessage(messages[j]);
-            while ( ((i+1) % 10) != 1 ) {
-                if ( i < 9 ) msg += '#0' + (i+1) + '\n';
-                else msg += '#' + (i+1) + '\n';
-                i++;
-            }
-            m.edit('```js\n' + msg + '```');
-        }
-*/
             if ( i < 9 ) msg += '`#0' + (i+1) + '`\t`';
             else msg += '`#' + (i+1) + '`\t`';
             msg += Math.round(this.glickoLb[i].rating) + '`';

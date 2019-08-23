@@ -229,10 +229,16 @@ util.client.on('message', message =>
 				["🆕", "Small Continents"]
 			]), {} );
 
-        bot_vote.showChoice(message.channel, '**__Age__**\n',
+        bot_vote.showChoice(message.channel, '**__World Age__**\n',
             new Map([
 				["🇸", "Standard Age"],
                 ["🇳", "New Age (more mountains/hills)"]
+            ]), {} );
+
+        bot_vote.showChoice(message.channel, '**__Resources__**\n',
+            new Map([
+				["🇸", "Standard"],
+                ["🇦", "Abundant"]
             ]), {} );
 
 		if( !isModVote && !isTeamVote )
@@ -279,7 +285,8 @@ util.client.on('message', message =>
 		bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
 			new Map([
 				["➕", "Allowed"],
-				["➖", "Not Allowed"]
+				["➖", "Not Allowed"],
+                ["🇷", "All Random Civs"]
 			]), {} );
 		}
 		
@@ -288,10 +295,7 @@ util.client.on('message', message =>
 		    /// Suggested Civ Bans
 		    suggestedCivs = new Map([
 		    	/*[util.civs['Georgia']['id']],*/
-		    	['🚫'],
-		    	[util.civs['Sumeria']['id']],
-		    	[util.civs['Nubia']['id']],
-		    	[util.civs['Cree']['id']]
+		    	['🚫']
 		    ]);
 		}
 		else

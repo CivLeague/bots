@@ -17,7 +17,7 @@ module.exports = {
         MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10 }, function (err, client) {
             _cli  = client;
             _db   = _cli.db('test_db');
-            _coll = _db.collection('overall');
+            _coll = _db.collection('ffa');
             _subs = _db.collection('subs');
             _players = _cli.db('players');
             console.log('mongo listening');
@@ -47,10 +47,9 @@ module.exports = {
         _coll = _db.collection(c);
     },
     
-    createPlayer: async function ( discordId, steamId ) {
+    createPlayer: async function ( discordId ) {
         await _coll.insertOne({
             _id:        discordId,
-            steam_id:   steamId,
             rating:     1500,
             rd:         300,
             vol:        0.06,
@@ -62,12 +61,12 @@ module.exports = {
         });
     },
 
-    getPlayer: async function ( playerId ) {
-        return await _coll.findOne({ _id: playerId });
+    getPlayer: async function ( discordId ) {
+        return await _coll.findOne({ _id: discordId });
     },
     
-    updatePlayer: async function(playerId, skill, diff, rd, vol, g, w, l) {
-        await _coll.updateOne({ _id : playerId }, {
+    updatePlayer: async function ( discordId, skill, diff, rd, vol, g, w, l ) {
+        await _coll.updateOne({ _id : discordId }, {
             $set: {
                 rating: skill,
                 lastChange: diff,
@@ -76,6 +75,15 @@ module.exports = {
                 games: g,
                 wins: w,
                 losses: l
+            },
+            $currentDate: { lastModified: true }
+        });
+    },
+
+    updateTime: async function ( discordId, skill ) {
+        await _coll.updateOne({ _id : discordId }, {
+            $set: {
+                rating: skill
             },
             $currentDate: { lastModified: true }
         });

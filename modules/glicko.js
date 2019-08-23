@@ -397,7 +397,7 @@ class ParseMessage
                     console.log( "\tVol:\t" + pStats.getVol() );
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
                         if ( !plyr ) {
-                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            await mongoUtil.createPlayer( pStats.dId );
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
                         console.log(plyr);
@@ -405,7 +405,7 @@ class ParseMessage
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
                         if ( !plyr ) {
-                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            await mongoUtil.createPlayer( pStats.dId );
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
     
@@ -473,7 +473,7 @@ class ParseMessage
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
                         if ( !plyr ) {
-                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            await mongoUtil.createPlayer( pStats.dId );
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
     
@@ -620,7 +620,7 @@ class ParseMessage
         else
             console.log("[COMMIT_MODE]");
 
-            let msg = '```NEW GAME```\n';
+        let msg = '```NEW GAME```\n';
         for (let i = 0; i < glickoPositions.length; i++) {
             for (let j = 0; j < glickoPositions[i].length; j++) {
                 let pStats = glickoPositions[i][j];
@@ -640,7 +640,7 @@ class ParseMessage
                         if (pStats.subType == 0) {
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
                             if ( !plyr ) {
-                                await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                                await mongoUtil.createPlayer( pStats.dId );
                                 plyr = await mongoUtil.getPlayer( pStats.dId );
                             }
 
@@ -673,7 +673,7 @@ class ParseMessage
                     else {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
                         if ( !plyr ) {
-                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
+                            await mongoUtil.createPlayer( pStats.dId );
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
     
@@ -724,261 +724,6 @@ class ParseMessage
                 }
             }
         }
-		if(!debugMode) {
-            if ( this.isFFA() )
-                await leaderboard.update('ffa');
-            else if ( this.isTeam() )
-                await leaderboard.update('team');
-            else if ( this.isDuel() )
-			    await leaderboard.update('duel');
-			//this.notify(response.id);
-
-    		let gMsg = '';
-    		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
-    		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
-            gMsg += await this.getGlickoReport();
-    		await GetChannelGlickoHistory().send(gMsg);
-		}
-
-        mongoUtil.useDb('overall');
-        await this.parseGameReport4Overall(debugMode);
-	}
-
-	async parseGameReport4Overall(debugMode)
-	{
-		// Construct Positions only for API
-		let reportedPositions = [];
-		let glickoPositions = [];
-        let player = null;
-
-		for(let i = 0; i < this.positions.length; ++i)
-		{
-			let rp = [];
-			let pp = [];
-			for(let m of this.positions[i])
-			{
-				const civId = m.civ == null ? null : util.getCiv(m.civ).dbid;
-				rp.push({id: m[1], civ: civId, sub: m.subType});
-
-                //glicko2
-                var p = await mongoUtil.getPlayer( m[1] );
-                if (p)
-                {
-                    console.log("found player " + m[1]);
-                    player = glicko.makePlayer(p.rating, p.rd, p.vol)
-                }
-                else
-                {
-                    console.log("did NOT find player " + m[1]);
-                    player = glicko.makePlayer();
-                }
-                player.dId = m[1];
-                player.subType = m.subType;
-                player.oldRating = player.getRating();
-                if (m.subType == 0) {
-                    pp.push(player);
-                }
-                else if (m.subType == 1) {
-                    if (this.type != 2)
-                        await this.setSubPoints(this.positions.slice(i), m[1], debugMode);
-
-                    pp.push(player);
-                }
-                else if (m.subType == 2) {
-                    if ( this.type != 2 )
-                        await this.setOrigPoints(this.positions.slice(0, i+1), m[1], debugMode);
-                    else
-                        pp.push(player);
-                }
-			}
-			reportedPositions.push(rp);
-			glickoPositions.push(pp);
-		}
-        //reportedPositions = [id, civ, sub]
-        //glickoPositions = correct player positions
-
-        if (this.type != 2) {
-            const game = glicko.makeRace(glickoPositions);
-            glicko.updateRatings(game);
-        } else {
-            let teams = [];
-            for (let i = 0; i < glickoPositions.length; i++) {
-                console.log("\n\n----==== T E A M ====----\n");
-                console.log(glickoPositions[i]);
-                let ratingSum = 0;
-                let rdSum = 0;
-                let volSum = 0;
-                let numPlayers = glickoPositions[i].length;
-                console.log("\n----==== T E A M   A V G ====----\n");
-                for (const p of glickoPositions[i]) {
-                    console.log("p.oldRating = " + p.oldRating);
-                    console.log("p.rd = " + p.getRd());
-                    console.log("p.vol = " + p.getVol());
-                    console.log("ratingSum = " + ratingSum);
-                    console.log("rdSum = " + rdSum);
-                    console.log("volSum = " + volSum);
-                    ratingSum += p.oldRating;
-                    rdSum += p.getRd();
-                    volSum += p.getVol();
-                }
-                let ratingAvg = ratingSum / numPlayers;
-                let rdAvg = rdSum / numPlayers;
-                let volAvg = volSum / numPlayers;
-                console.log("\nteamAvg:\n\tratingAvg = " + ratingAvg);
-                console.log("\trdAvg = " + rdAvg);
-                console.log("\tvolAvg = " + volAvg);
-                let teamPlayer = glicko.makePlayer(ratingAvg, rdAvg, volAvg);
-                teamPlayer.oldRating = ratingAvg;
-                teams.push([teamPlayer]);
-                console.log("\n----==== TEAM PLAYER ====----\n");
-                console.log(teamPlayer);
-                console.log("rating = " + teamPlayer.getRating());
-                console.log("rd = " + teamPlayer.getRd());
-                console.log("vol = " + teamPlayer.getVol());
-            }
-            console.log("\n----==== R A C E ====----\n");
-            console.log(teams);
-            for (let i = 0; i < glickoPositions.length; i++) {
-                for (const p of glickoPositions[i]) {
-                    var g = [];
-                    for (let j = 0; j < glickoPositions.length; j++) {
-                        if (j == i) {
-                            g.push([p]);
-                        } else {
-                            g.push([glicko.makePlayer(teams[j][0].getRating(), teams[j][0].getRd(), teams[j][0].getVol())]);
-                        }
-                    }
-                    const game = glicko.makeRace(g);
-                    glicko.updateRatings(game);
-                }
-            }
-
-            for (let i = 0; i < teams.length; i++) {
-                console.log("\n----==== T E A M    C O M P U T E ====----\n");
-                for (const p of glickoPositions[i]) {
-                    p.ratingDiff = Math.round(p.getRating()) - Math.round(p.oldRating);
-                    p.oldRd = p.getRd();
-                    p.oldVol = p.getVol();
-                    if ( p.subType == 1 && p.ratingDiff < 20 )
-                            p.setRating(p.oldRating + 20);
-                    else if ( p.subType == 2 && p.ratingDiff > -20 )
-                            p.setRating(p.oldRating - 20);
-                    console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
-                }
-            }
-        }
-
-        if (debugMode)
-            console.log("[CHECK_MODE]");
-        else
-            console.log("[COMMIT_MODE]");
-
-        let msg = '```[NEW GAME]```\n';
-        for (let i = 0; i < glickoPositions.length; i++) {
-            for (let j = 0; j < glickoPositions[i].length; j++) {
-                let pStats = glickoPositions[i][j];
-                var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
-                if ( this.isTeam() || pStats.subType != 1 ) {
-                console.log( "ID: " + pStats.dId );
-                console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
-                console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
-                console.log( "\tRating Diff:\t" + diff );
-                console.log( "\tRd:\t" + pStats.getRd() );
-                console.log( "\tVol:\t" + pStats.getVol() );
-                console.log( "\tsubType:\t" + pStats.subType );
-                }
-
-                if ( !debugMode ) {
-                    if ( this.isFFA() || this.isDuel() ) {
-                        if (pStats.subType == 0) {
-                            let plyr = await mongoUtil.getPlayer( pStats.dId );
-                            if ( !plyr ) {
-                                await mongoUtil.createPlayer(pStats.dId, pStats.dId);
-                                plyr = await mongoUtil.getPlayer( pStats.dId );
-                            }
-    
-
-                            var wins;
-                            var losses;
-                            if (diff > 0) {
-                                wins = plyr.wins + 1;
-                                losses = plyr.losses;
-                            }
-                            else if ( diff < 0 ) {
-                                wins = plyr.wins;
-                                losses = plyr.losses + 1;
-                            }
-                            else {
-                                wins = plyr.wins;
-                                losses = plyr.losses;
-                            }
-
-                            await mongoUtil.updatePlayer(pStats.dId,
-                                                         Math.round(pStats.getRating()),
-                                                         diff,
-                                                         pStats.getRd(),
-                                                         pStats.getVol(),
-                                                         plyr.games + 1,
-                                                         wins,
-                                                         losses
-                                                         );
-                        }
-                    }
-                    else {
-                        let plyr = await mongoUtil.getPlayer( pStats.dId );
-                        if ( !plyr ) {
-                            await mongoUtil.createPlayer(pStats.dId, pStats.dId);
-                            plyr = await mongoUtil.getPlayer( pStats.dId );
-                        }
-
-                        var wins;
-                        var losses;
-                        if (diff > 0) {
-                            wins = plyr.wins + 1;
-                            losses = plyr.losses;
-                        }
-                        else if ( diff < 0 ) {
-                            wins = plyr.wins;
-                            losses = plyr.losses + 1;
-                        }
-                        else {
-                            wins = plyr.wins;
-                            losses = plyr.losses;
-                        }
-
-                        await mongoUtil.updatePlayer(pStats.dId,
-                                                     Math.round(pStats.getRating()),
-                                                     diff,
-                                                     pStats.getRd(),
-                                                     pStats.getVol(),
-                                                     plyr.games + 1,
-                                                     wins,
-                                                     losses
-                                                     );
-                    }
-                            let plyr = await mongoUtil.getPlayer( pStats.dId );
-                            if (plyr) {
-                            msg += '<@' + plyr._id + '>\n';
-                            msg += "**[IN]**\n";
-                            msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
-                            msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
-                            msg += "\tRating Diff:\t" + diff + "\n";
-                            msg += "\tRd:\t" + pStats.getRd() + "\n";
-                            msg += "\tVol:\t" + pStats.getVol() + "\n";
-                            msg += "\tsubtype:\t" + pStats.subType + "\n";
-                            msg += "**[OUT]**\n";
-                            msg += "\tNew Rating:\t" + plyr.rating + "\n";
-                            msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
-                            msg += "\tRd:\t" + plyr.rd + "\n";
-                            msg += "\tVol:\t" + plyr.vol + "\n";
-                            GetChannelGlickoDebug().send(msg);
-                            msg = '';
-                            }
-                }
-            }
-        }
-        // end of glicko2 test
-
 
 		// Send to API
 		let response = null;
@@ -1010,11 +755,10 @@ class ParseMessage
 		/// process all ELO games
 		this.error.send(this.message.channel, 60).then( async(errors) =>
 		{
-			if(errors == false)
+			if (!errors)
 			{				
 				if(!debugMode)
 				{
-					await leaderboard.update('overall');
 					await this.notify(response.id);
 				}
 				else
@@ -1037,7 +781,7 @@ class ParseMessage
 		msg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
 		
 		// also delete original message?
-		await this.message.delete();
+		this.message.delete();
 		
 		// COULD CRASH HERE, USER NOT FOUND, so we deleted above
 		msg += this.notifyConstructPlayerString();
@@ -1055,7 +799,6 @@ class ParseMessage
 			'GameID: ' + gameid + '\n' +
 			'\n' + this.message.content
 		);
-        await applyTags(this.message.mentions.members.array());
 
 		//GetChannelReportHistory().send(message);
 	    this.error.add('-Report Finished Successfully-');
@@ -1065,8 +808,17 @@ class ParseMessage
 		gMsg += 'GameID: ' + gameid + '\n';
 		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
 		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
-        gMsg += await this.getGlickoReport();
-		GetChannelGlickoHistory().send(gMsg);
+        gMsg += this.getGlickoReport().then( report => {
+            gMsg += report;
+		    GetChannelGlickoHistory().send(gMsg);
+        });
+
+        applyTags(this.message.mentions.members.array());
+
+        if ( this.isTeam() )
+            leaderboard.update('team');
+        else
+            leaderboard.update('ffa');
 	}
 	
 	async getGlickoReport()
@@ -1158,7 +910,11 @@ class ParseMessage
 	
 	assignType(data)
 	{
-		if(data.includes('diplo') || data.includes('ffa')) {
+		if ( data.includes('team') ) {
+            this.type = 2;
+            mongoUtil.useDb('team');
+        }
+		else if ( data.includes('diplo') || data.includes('ffa') ) {
             this.type = 0;
             mongoUtil.useDb('ffa');
         }
@@ -1169,10 +925,6 @@ class ParseMessage
 		else if(data.includes('duel') || data.includes('adcp') || data.includes('dual')) {
             this.type = 3;
             mongoUtil.useDb('duel');
-        }
-		else if(data.includes('team') ) {
-            this.type = 2;
-            mongoUtil.useDb('team');
         }
 		
 		return this.type != null;

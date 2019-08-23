@@ -18,11 +18,14 @@ class SubBotModule
                 let msg = '';
                 mongoUtil.getSubs().then( subs => {
                     for (let sub of subs) {
-                        msg += "\n[**" + sub.count + "**, <@"+sub._id+">]";
+                        if ( sub.count > 2 ) {
+                            msg += "\n[**" + sub.count + "**, <@"+sub._id+">]";
+                        }
                     }
                     if (msg == '')
                         msg = "there are no subs to report.";
                     message.reply(msg);
+                    console.log(msg);
                 });
             }
 

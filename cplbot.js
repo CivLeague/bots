@@ -1,5 +1,4 @@
 const moduleRegister = require('./modules/register');
-//const moduleReports = require('./modules/reports');
 const moduleReports = require('./modules/glicko');
 const moduleStats = require('./modules/stats');
 const moduleSubs = require('./modules/subs');

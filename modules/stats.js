@@ -161,13 +161,9 @@ class StatsBotModule
             try
             {
                 let msg = '';
-                if ( content.includes('ffa') )
-                    mongoUtil.useDb('ffa');
-                else if ( content.includes('team') )
+                if ( content.includes('team') )
                     mongoUtil.useDb('team');
-                else if ( content.includes('duel') )
-                    mongoUtil.useDb('duel');
-                else mongoUtil.useDb('overall');
+                else mongoUtil.useDb('ffa');
 
                 var player = await mongoUtil.getPlayer(target.id);
                 if ( player ) {

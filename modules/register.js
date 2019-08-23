@@ -3,6 +3,9 @@ const mongoUtil = require('../util/mongo');
 const errorHandler = require('../util/errormessage');
 
 const Discord = require('discord.js');
+const SteamAPI = require('steamapi');
+const steam = new SteamAPI(util.getToken('steam'));
+
 
 const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
@@ -10,7 +13,6 @@ const cmd_forceregister = '.forceregister';
 function GetChannelProfileProof() { return util.getChannel(342377106971295744); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const moderatorId = '291753249361625089';
-const gamereporterId = '368927954463621132';
 const ranked = '401892311975591946';
 const chieftain = '542774298180452377';
 
@@ -95,10 +97,9 @@ const srv = http.createServer( (req, res) =>
 					hostname: 'discordapp.com',
 					path: API_ENDPOINT + '/users/@me/connections',
 					headers: { 'authorization': 'Bearer ' + json.access_token },
-				}, null, (body_connections) =>
+				}, null, async (body_connections) =>
 				{
 					const json_connections = JSON.parse(body_connections);
-					//console.log('[discord_connections] ' + body_connections);
 					if(json_connections.hasOwnProperty('code'))
 					{
 						res.end('<b>Error</b><br>' + json_connections.message);
@@ -121,83 +122,89 @@ const srv = http.createServer( (req, res) =>
                         return;
                     }
 
+                    console.log('_steamid: ' + _steamid);
+
                     util.makeRequest(https, {
                         method: 'GET',
-                        hostname: 'api.steampowered.com',
-                        path: '/IPlayerService/GetOwnedGames/v1/?key=' + util.getToken('steam') + '&steamid=' + _steamid
-                    }, null, (response) =>
+                        hostname: 'steamid.io',
+                        path: '/lookup/' + _steamid
+                    }, null, async (result) =>
                     {
-                        let ownCiv = false;
-                        const json_res = JSON.parse(response);
-                        const gameCount = json_res.response.game_count;
-                        const games = json_res.response.games;
-                        if (gameCount == 0) {
-                            res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to discord for further instructions');
-                            GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
-                            return;
-                        }
-                        if (!games) {
-                            res.end('<b>Error</b><br>Your steam account\'s games list does not seem to be set to public. Please close this page and return to discord for further instructions');
-                            GetChannelWelcome().send("**Error:**\nPlease make sure your Steam games list is public:```- sign into https://steamcommunity.com/\n- click your username in the upper right corner\n- click 'View Profile'\n- click 'Edit Profile'\n- click 'My Privacy Settings'\n- Change 'Game details' from 'Friends Only' to 'Public'```After doing the above steps, try to `.register` again. If you continue to see this message, please contact a moderator in order to finish registration");
-                            return;
-                        }
-                        for (const game of games) {
-                            if (game.appid == 289070) {
-                                ownCiv = true;
+                        let realid = result.split('data-steamid64').pop().slice(2, 19);
+                        console.log('realid: ' + realid);
+
+                        util.makeRequest(https, {
+                            method: 'GET',
+                            hostname: 'api.steampowered.com',
+                            path: '/IPlayerService/GetOwnedGames/v1/?key=' + util.getToken('steam') + '&steamid=' + realid
+                        }, null, async (response) =>
+                        {
+                            let ownCiv = false;
+                            const json_res = JSON.parse(response);
+                            const gameCount = json_res.response.game_count;
+                            const games = json_res.response.games;
+                            if (gameCount == 0) {
+                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
+                                GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
+                                return;
                             }
-                        }
-                        if (!ownCiv) {
-                            res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to discord for further instructions');
-                            GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
-                            return;
-                        }
-
-					    const user = util.client.users.get(json_me.id);
-					    const member = GetChannelProfileProof().guild.member(user);
-					    if(member == null)
-					    {
-					    	res.end('<b>Error</b><br>Your cached discord user was not found! Please report this problem to our staff.');
-					    	return;
-					    }
-					    
-					    try
-					    {
-					    	let response = util.makeRGRequest('register.php', {
-					    		discordid: json_me.id,
-					    		steamid: _steamid,
-					    		name: json_me.username
-					    	});
-					    	
-					    	// Finish up HTTP reply
-					    	res.write('<b>Success</b><br>You may close this window and return to Discord');
-
-                            //glicko start
-                            //const mc = new MongoConnection("testDB", "test");
-                            //mc.createPlayer(discordid, steamid);
-                            //mc.disconnect();
-                            //glicko end
-
-					    	// Notify User Channel
-					    	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-					    	
-                            let ret = mongoUtil.registerPlayer(json_me.id, _steamid, member.user.username, member.displayName);
-                            if (!ret) {
-                                console.log('could not register new player');
+                            if (!games) {
+                                res.end('<b>Error</b><br>Your steam account\'s games list does not seem to be set to public. Please close this page and return to Discord for further instructions');
+                                GetChannelWelcome().send("**Error:**\nPlease make sure your Steam games list is public:```- sign into https://steamcommunity.com/\n- click your username in the upper right corner\n- click 'View Profile'\n- click 'Edit Profile'\n- click 'My Privacy Settings'\n- change 'Game details' from 'Friends Only' to 'Public'```After doing the above steps, try to `.register` again. If you continue to see this message, please contact a moderator in order to finish registration");
+                                return;
+                            }
+                            for (const game of games) {
+                                if (game.appid == 289070) {
+                                    ownCiv = true;
+                                }
+                            }
+                            if (!ownCiv) {
+                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
+                                GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
+                                return;
                             }
 
-					    	// Notify Admin Channel
-					    	GetChannelProfileProof().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + _steamid + '>');
-					    	
-					    	// Add Ranked Role
-					    	member.addRoles([ranked, chieftain]);
-					    }
-					    catch( err )
-					    {
-					    	res.write('<b>Debug</b>' + body_connections);
-					    	res.write('<b>Error</b><br>' + err);
-					    }
-					    
-					    res.end();
+					        const user = util.client.users.get(json_me.id);
+					        const member = GetChannelProfileProof().guild.member(user);
+					        if(member == null)
+					        {
+					        	res.end('<b>Error</b><br>Your cached discord user was not found! Please report this problem to our staff.');
+					        	return;
+					        }
+					        
+					        try
+					        {
+					        	let response = await util.makeRGRequest('register.php', {
+					        		discordid: json_me.id,
+					        		steamid: realid,
+					        		name: json_me.username
+					        	});
+					        	
+					        	// Finish up HTTP reply
+					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
+
+					        	// Notify User Channel
+					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
+					        	
+                                let ret = await mongoUtil.registerPlayer(json_me.id, realid, member.user.username, member.displayName);
+                                if (!ret) {
+                                    console.log('could not register new player:\n\tdiscord:\t' + json_me.id + '\n\tsteam:\t' + realid);
+                                }
+
+					        	// Notify Admin Channel
+					        	GetChannelProfileProof().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+					        	
+					        	// Add Ranked Role
+					        	member.addRoles([ranked, chieftain]);
+					        }
+					        catch( err )
+					        {
+					        	res.write('<b>Debug</b>' + body_connections);
+					        	res.write('<b>Error</b><br>' + err);
+					        }
+					        
+					        res.end();
+                        });
                     });
 				});
 			});
@@ -240,26 +247,11 @@ class RegisterModule
 	async handle(message)
 	{
 		const content = message.content;
-		if(message.author.bot == true) return; // ignore bot messages, so its own messages really - otherwise we end up in an infinite spam loop of errors
-		
-		/*var error = errorHandler.create();
-		importer.importAll(message, error).then( () =>
-		{
-			error.send(message.channel, 30);
-		});
-		return;*/
-		
-		/*if(content == '.test')
-		{
-			console.log('[guest] ' + message.guild.roles.find('name', 'Guest').id);
-			console.log('[member] ' + message.guild.roles.find('name', 'Member').id);
-			console.log('[ranked] ' + message.guild.roles.find('name', 'Ranked').id);
-		}*/
+		if ( message.author.bot ) return;
 		
 		if( content.startsWith(cmd_register) )
 		{
 			const target = message.author;
-			//const target = message.mentions.users.size == 0 ? message.author : message.mentions.users.value().next();
 			
 			let error = errorHandler.create();
 			try
@@ -271,7 +263,6 @@ class RegisterModule
 				}
 				else
 				{
-					//error.add('[**Important**] If you are an existing CPL player and your stats are not yet in the new stats system. Please do **not** use **' + cmd_register + '** just wait for one of your games to be reported. Otherwise your myleague stats will not be imported.');
 					const state_string = JSON.stringify({ user: target.id, chan: message.channel.id });
 					message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
 				}
@@ -282,32 +273,42 @@ class RegisterModule
 				message.channel.send(err);
 			}
 			
-			//error.send(message.channel, 60);
-			
-			/*util.makeRGRequest('toimport.php', {[target.id]: ''})
-			.then( body_rgc =>
-			{
-				if(body_rgc == 'OK')
-				{
-					error.add(target + ' is already registered.');
-				}
-				else
-				{
-					}
-				
-				error.send(message.channel, 60);
-			})
-			.catch( body_rgc => {
-				error.add(body_rgc);
-				error.send(message.channel, 60);
-			});*/
-			
 			return;
 		}
-		else if( content.startsWith(cmd_forceregister) &&
-                (message.member.roles.has(moderatorId) || message.member.roles.has(gamereporterId)) )
+        else if ( content.startsWith('.sharecheck') && message.member.roles.has(moderatorId) )
+        {
+            message.delete();
+            let steamlink = message.content.split(' ').pop();
+            let steamid = await steam.resolve(steamlink);
+
+            util.makeRequest(https, {
+                method: 'GET',
+                hostname: 'steamid.io',
+                path: '/lookup/' + steamid
+            }, null, async (response) =>
+            {
+                let realid = response.split('data-steamid64').pop().slice(2, 19);
+                util.makeRequest(https, {
+                    method: 'GET',
+                    hostname: 'api.steampowered.com',
+                    path: '/IPlayerService/IsPlayingSharedGame/v0001/?key=' + util.getToken('steam') + '&steamid=' + realid + '&appid_playing=289070'
+                }, null, async (res) =>
                 {
-                        if(message.mentions.members.size == 0)
+                    const json_res = JSON.parse(res);
+                    const steamid = json_res.response.lender_steamid;
+                    if (steamid == 0) {
+                        message.reply("the game is not being shared from someone or there was an error");
+                    }
+                    else {
+                        message.reply("\nLender's steam link: <https://steamcommunity.com/profiles/" + steamid + ">");
+                    }
+                });
+            });
+        }
+		else if( content.startsWith(cmd_forceregister) && message.member.roles.has(moderatorId) )
+                {
+                        message.delete();
+                        if ( message.mentions.members.size == 0 )
                         {
                                 message.channel.send('**Error:**' + cmd_forceregister + ' requires that one user be tagged');
                                 return;
@@ -323,30 +324,48 @@ class RegisterModule
                         let error = errorHandler.create();
                         try
                         {
-                            const steamid = message.content.split(' ').pop().split('https://steamcommunity.com/profiles/').pop();
-                            await util.makeRGRequest('register.php', {
-                                discordid: target.id,
-                                steamid: steamid,
-                                name: target.displayName,
-                                rating: 1500,
-                                wins: 0,
-                                losses: 0
-                            });
+                            console.log(message.content); 
+                            let steamlink = message.content.split(' ').pop();
+                            let steamid = await steam.resolve(steamlink);
+                            console.log('steamID64:' + steamid); 
 
-						    await GetChannelProfileProof().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + steamid + '>');
-						    // Add Ranked and Chieftain Roles
-						    await target.addRoles([ranked, chieftain]);
-                            message.channel.send(target + ' has now been registered with default stats and given the ranked and chieftain role.');
+                            util.makeRequest(https, {
+                                method: 'GET',
+                                hostname: 'steamid.io',
+                                path: '/lookup/' + steamid
+                            }, null, async (response) =>
+                            {
+                                let realid = response.split('data-steamid64').pop().slice(2, 19);
+                                console.log('real steamID64:' + realid); 
+
+                                await util.makeRGRequest('register.php', {
+                                    discordid: target.id,
+                                    steamid: realid,
+                                    name: target.displayName,
+                                    rating: 1500,
+                                    wins: 0,
+                                    losses: 0
+                                });
+
+						        GetChannelProfileProof().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+
+						        // Add Ranked and Chieftain Roles
+                                try {
+						            target.addRoles([ranked, chieftain]);
+                                }
+                                catch (err) {
+                                    console.log(err);
+                                }
+
+                                message.channel.send(target + ' has now been registered with default stats and given the ranked and chieftain role.');
+                            });
                         }
                         catch (err)
                         {
                             console.log(err);
                             message.channel.send("**Error**\n" + err);
                         }
-                        //catch(err) { error.add(err); }
 
-                        //error.send(message.channel, 30);
-                        await message.delete();
                         return;
                 }
 		/// DEVELOPER ONLY
