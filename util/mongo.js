@@ -57,12 +57,21 @@ module.exports = {
             lastChange: 0,
             games:      0,
             wins:       0,
-            losses:     0
+            losses:     0,
+            resets:     1
         });
     },
 
     getPlayer: async function ( discordId ) {
         return await _coll.findOne({ _id: discordId });
+    },
+    
+    findDiscord: async function ( discordId ) {
+        return await _players.collection('members').findOne({ discord_id: discordId });
+    },
+    
+    findSteam: async function ( steamId ) {
+        return await _players.collection('members').findOne({ steam_id: steamId });
     },
     
     updatePlayer: async function ( discordId, skill, diff, rd, vol, g, w, l ) {
@@ -80,7 +89,23 @@ module.exports = {
         });
     },
 
-    updateTime: async function ( discordId, skill ) {
+    resetStats: async function ( discordId ) {
+        await _coll.updateOne({ _id : discordId }, {
+            $set: {
+                rating:     1500,
+                lastChange: 0,
+                rd:         300,
+                vol:        0.06,
+                games:      0,
+                wins:       0,
+                losses:     0,
+                resets:     0
+            },
+            $currentDate: { lastModified: true }
+        });
+    },
+
+    setSkill: async function ( discordId, skill ) {
         await _coll.updateOne({ _id : discordId }, {
             $set: {
                 rating: skill

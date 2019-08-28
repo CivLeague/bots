@@ -11,13 +11,17 @@ const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
 
 function GetChannelProfileProof() { return util.getChannel(342377106971295744); }
+function GetChannelSteamProfiles() { return util.getChannel(615805208848498688); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const moderatorId = '291753249361625089';
 const ranked = '401892311975591946';
+const glicko = '615780983047979008';
 const chieftain = '542774298180452377';
 
 const http = require('http');
 const https = require('https');
+
+var reregister = false;
 
 // Create an HTTP server
 const srv = http.createServer( (req, res) =>
@@ -117,8 +121,8 @@ const srv = http.createServer( (req, res) =>
 					}
 
                     if (_steamid == null) {
-                        res.end('<b>Error</b><br>Your steam account does not seem to be linked to discord. Please close this window and step through the instructions again');
                         GetChannelWelcome().send("**Error:**\nYour steam account does not seem to be linked to discord. Please retry the above steps");
+                        res.end('<b>Error</b><br>Your steam account does not seem to be linked to discord. Please close this window and step through the instructions again');
                         return;
                     }
 
@@ -133,6 +137,14 @@ const srv = http.createServer( (req, res) =>
                         let realid = result.split('data-steamid64').pop().slice(2, 19);
                         console.log('realid: ' + realid);
 
+                        let sExists = await mongoUtil.findSteam( realid );
+                        if ( sExists ) {
+                            console.log('SteamId (' + realid + ') already registered');
+                            console.log('username:\t' + member.user.username + '\ndisplayName:\t' + member.displayName);
+                            message.reply( '\n**Error**: you are already registered.' );
+                            return;
+                        }
+
                         util.makeRequest(https, {
                             method: 'GET',
                             hostname: 'api.steampowered.com',
@@ -144,13 +156,13 @@ const srv = http.createServer( (req, res) =>
                             const gameCount = json_res.response.game_count;
                             const games = json_res.response.games;
                             if (gameCount == 0) {
-                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
-                                GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
+                                GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration.");
+                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions.');
                                 return;
                             }
                             if (!games) {
-                                res.end('<b>Error</b><br>Your steam account\'s games list does not seem to be set to public. Please close this page and return to Discord for further instructions');
-                                GetChannelWelcome().send("**Error:**\nPlease make sure your Steam games list is public:```- sign into https://steamcommunity.com/\n- click your username in the upper right corner\n- click 'View Profile'\n- click 'Edit Profile'\n- click 'My Privacy Settings'\n- change 'Game details' from 'Friends Only' to 'Public'```After doing the above steps, try to `.register` again. If you continue to see this message, please contact a moderator in order to finish registration");
+                                GetChannelWelcome().send("**Error:**\nPlease make sure your Steam games list is public:```- sign into https://steamcommunity.com/\n- click your username in the upper right corner\n- click 'View Profile'\n- click 'Edit Profile'\n- click 'My Privacy Settings'\n- change 'Game details' from 'Friends Only' to 'Public'```After doing the above steps, try to `.register` again. If you continue to see this message, please contact a moderator in order to finish registration.");
+                                res.end('<b>Error</b><br>Your steam account\'s games list does not seem to be set to public. Please close this page and return to Discord for further instructions.');
                                 return;
                             }
                             for (const game of games) {
@@ -160,42 +172,49 @@ const srv = http.createServer( (req, res) =>
                             }
                             if (!ownCiv) {
                                 res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
-                                GetChannelWelcome().send("**Error:**\nYour steam account does not seem to own Civ 6. Please contact a moderator in order to finish registration");
+                                GetChannelWelcome().send("**Error:** your steam account does not seem to own Civ 6. Please contact a moderator.");
                                 return;
                             }
 
 					        const user = util.client.users.get(json_me.id);
-					        const member = GetChannelProfileProof().guild.member(user);
+					        const member = GetChannelSteamProfiles().guild.member(user);
 					        if(member == null)
 					        {
-					        	res.end('<b>Error</b><br>Your cached discord user was not found! Please report this problem to our staff.');
+					        	res.end('<b>Error</b><br>Your cached discord user was not found! Please contact a moderator.');
+                                GetChannelWelcome().send('**Error**: discord user not found. Please contact a moderator.');
 					        	return;
 					        }
 					        
 					        try
 					        {
-					        	let response = await util.makeRGRequest('register.php', {
-					        		discordid: json_me.id,
-					        		steamid: realid,
-					        		name: json_me.username
-					        	});
+                                if (!reregister) {
+					        	    let response = await util.makeRGRequest('register.php', {
+					        	    	discordid: json_me.id,
+					        	    	steamid: realid,
+					        	    	name: json_me.username
+					        	    });
+                                }
 					        	
 					        	// Finish up HTTP reply
 					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
-
-					        	// Notify User Channel
-					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
 					        	
                                 let ret = await mongoUtil.registerPlayer(json_me.id, realid, member.user.username, member.displayName);
                                 if (!ret) {
                                     console.log('could not register new player:\n\tdiscord:\t' + json_me.id + '\n\tsteam:\t' + realid);
+                                    GetChannelWelcome().send( '\n**Error**: an error occured during registration. Please contact a moderator.' );
+                                    return;
                                 }
 
-					        	// Notify Admin Channel
-					        	GetChannelProfileProof().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
-					        	
-					        	// Add Ranked Role
-					        	member.addRoles([ranked, chieftain]);
+					        	GetChannelSteamProfiles().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+                                if (reregister) {
+					        	    GetChannelWelcome().send('<@' + json_me.id + '>, you have been re-registered successfully.');
+                                    member.addRole(glicko);
+                                }
+                                else {
+					        	    GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
+                                    member.addRole(glicko);
+                                    member.addRoles([ranked, chieftain]);
+                                }
 					        }
 					        catch( err )
 					        {
@@ -251,6 +270,7 @@ class RegisterModule
 		
 		if( content.startsWith(cmd_register) )
 		{
+            reregister = false;
 			const target = message.author;
 			
 			let error = errorHandler.create();
@@ -275,7 +295,21 @@ class RegisterModule
 			
 			return;
 		}
-        else if ( content.startsWith('.sharecheck') && message.member.roles.has(moderatorId) )
+        else if ( content.startsWith('.reregister') ) {
+            reregister = true;
+            const target = message.author;
+            let dExists = await mongoUtil.findDiscord( target.id );
+            if ( dExists ) {
+                console.log(target.username + ' (' + target.id + ') already registered');
+                message.reply( '\n**Error**: you are already registered.' );
+                return;
+            }
+            else {
+                const state_string = JSON.stringify({ user: target.id, chan: message.channel.id });
+                message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
+            }
+        }
+        else if ( content.startsWith('.check') && message.member.roles.has(moderatorId) )
         {
             message.delete();
             let steamlink = message.content.split(' ').pop();
@@ -297,7 +331,7 @@ class RegisterModule
                     const json_res = JSON.parse(res);
                     const steamid = json_res.response.lender_steamid;
                     if (steamid == 0) {
-                        message.reply("the game is not being shared from someone or there was an error");
+                        message.reply("if they have the game open now, it's not a shared copy");
                     }
                     else {
                         message.reply("\nLender's steam link: <https://steamcommunity.com/profiles/" + steamid + ">");
@@ -306,80 +340,94 @@ class RegisterModule
             });
         }
 		else if( content.startsWith(cmd_forceregister) && message.member.roles.has(moderatorId) )
+        {
+            message.delete();
+            if ( message.mentions.members.size == 0 )
+            {
+                    message.channel.send('**Error:**' + cmd_forceregister + ' requires that one user be tagged').then( msg => {
+                        msg.delete(20000);
+                    });
+                    return;
+            }
+		    else if ( message.mentions.members.size > 1 )
+            {
+                    message.channel.send('**Error:**' + cmd_forceregister + ' can only use one @DiscordName at a time').then( msg => {
+                        msg.delete(20000);
+                    });
+                    return;
+            }
+
+            const target = message.mentions.members.values().next().value;
+
+            let error = errorHandler.create();
+            try
+            {
+                console.log(message.content); 
+                let steamlink = message.content.split(' ').pop();
+                let steamid = await steam.resolve(steamlink);
+                console.log('steamID64:' + steamid); 
+
+                util.makeRequest(https, {
+                    method: 'GET',
+                    hostname: 'steamid.io',
+                    path: '/lookup/' + steamid
+                }, null, async (response) =>
                 {
-                        message.delete();
-                        if ( message.mentions.members.size == 0 )
-                        {
-                                message.channel.send('**Error:**' + cmd_forceregister + ' requires that one user be tagged');
-                                return;
-                        }
-			            else if ( message.mentions.members.size > 1 )
-                        {
-                                message.channel.send('**Error:**' + cmd_forceregister + ' can only use one @DiscordName at a time');
-                                return;
-                        }
+                    let realid = response.split('data-steamid64').pop().slice(2, 19);
+                    console.log('real steamID64:' + realid); 
 
-                        const target = message.mentions.members.values().next().value;
+                    let dExists = await mongoUtil.findDiscord( target.id );
+                    if ( dExists ) {
+                        console.log(target.displayName + ' (' + target.id + ') discord already registered');
+                        message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
+                            msg.delete(20000);
+                        });
+                    }
 
-                        let error = errorHandler.create();
-                        try
-                        {
-                            console.log(message.content); 
-                            let steamlink = message.content.split(' ').pop();
-                            let steamid = await steam.resolve(steamlink);
-                            console.log('steamID64:' + steamid); 
+                    let sExists = await mongoUtil.findSteam( realid );
+                    if ( sExists ) {
+                        console.log(target.displayName + ' (' + realid + ') steam already registered');
+                        message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
+                            msg.delete(20000);
+                        });
+                    }
 
-                            util.makeRequest(https, {
-                                method: 'GET',
-                                hostname: 'steamid.io',
-                                path: '/lookup/' + steamid
-                            }, null, async (response) =>
-                            {
-                                let realid = response.split('data-steamid64').pop().slice(2, 19);
-                                console.log('real steamID64:' + realid); 
+                    let ret = await mongoUtil.registerPlayer(target.id, realid, target.user.username, target.displayName);
+                    if (!ret) {
+                        console.log('could not register new player:\n\tdiscord:\t' + target.id + '\n\tsteam:\t' + realid);
+                    }
+                    else {
+                        target.addRole(glicko);
+			            GetChannelSteamProfiles().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+                        message.channel.send(target + ' has now been registered with default stats and has been given the glicko role.');
+                    }
 
-                                await util.makeRGRequest('register.php', {
-                                    discordid: target.id,
-                                    steamid: realid,
-                                    name: target.displayName,
-                                    rating: 1500,
-                                    wins: 0,
-                                    losses: 0
-                                });
-
-						        GetChannelProfileProof().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
-
-						        // Add Ranked and Chieftain Roles
-                                try {
-						            target.addRoles([ranked, chieftain]);
-                                }
-                                catch (err) {
-                                    console.log(err);
-                                }
-
-                                message.channel.send(target + ' has now been registered with default stats and given the ranked and chieftain role.');
-                            });
-                        }
-                        catch (err)
-                        {
-                            console.log(err);
-                            message.channel.send("**Error**\n" + err);
-                        }
-
-                        return;
-                }
-		/// DEVELOPER ONLY
-		/*if( content.startsWith('.unregister') )
-		{
-			const target = message.author;
-			if(statsDB.contains(target.id))
-			{
-				statsDB.del(target.id);
-				let error = errorHandler.create();
-				error.add('Stats for ' + target + ' purged.');
-				error.send(message.channel, 30);
-			}
-		}*/
+                    try {
+                        await util.makeRGRequest('register.php', {
+                            discordid: target.id,
+                            steamid: realid,
+                            name: target.displayName,
+                            rating: 1500,
+                            wins: 0,
+                            losses: 0
+                        });
+                        message.channel.send(target + ' has now been registered with default stats and should have been given the ranked and chieftain role.');
+			            GetChannelProfileProof().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+                        target.addRole(glicko);
+			            target.addRoles([ranked, chieftain]);
+                    }
+                    catch (err) {
+                        console.log(err);
+                    }
+                });
+            }
+            catch (err)
+            {
+                console.log(err);
+                message.channel.send("**Error**\n" + err);
+            }
+            return;
+        }
 	}
 }
 

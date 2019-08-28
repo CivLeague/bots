@@ -30,12 +30,12 @@ class StatsBotModule
 		if(message.author.bot == true) return; // ignore bot messages
 		if ( !isBotChannel(message.channel) ) return;
 		
+        let error = errorHandler.create();
 		const content = message.content.toLowerCase();
+        const cmd_stats_reset_confirm = ' i am sure';
+
 		if( content.startsWith(cmd_stats_reset) )
 		{
-			const cmd_stats_reset_confirm = ' i am sure';
-			let error = errorHandler.create();
-
 			if( content.toLowerCase() != cmd_stats_reset + cmd_stats_reset_confirm )
 			{
 				error.add('**' + cmd_stats_reset + '** has to be used as **' + cmd_stats_reset + cmd_stats_reset_confirm + '**\nYou get **one** reset per lifetime. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
@@ -58,6 +58,24 @@ class StatsBotModule
 				error.send(message.channel, 30);
 			}
 		}
+        else if (content.startsWith('.resetstats')) {
+			if( content != '.resetstats main' && content != '.resetstats team' ) {
+				error.add('Type  `.resetstats main`  or  `.resetstats team`  to confirm you really want to do this. You only get one reset for main leaderboard stats and one reset for team leaderboard stats. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
+				error.send(message.channel, 30);
+				return;
+            }
+
+            let db = content.split(' ').pop();
+            await mongoUtil.useDb(db);
+            let player = await mongoUtil.getPlayer( message.author.id );
+            if ( player.resets ) {
+                mongoUtil.resetStats( message.author.id ).then( result => {
+                    message.reply("your " + db + " stats have been reset.");
+                });
+            }
+            else
+                message.reply("you have already used your " + db + " stats reset.");
+        }
 		else if( content.startsWith(cmd_stats) )
 		{
 			let target = null;

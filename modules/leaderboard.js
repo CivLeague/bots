@@ -139,9 +139,9 @@ class C6Leaderboard
         for ( var i = 0; i < max ; i++ ) {
             let lastDate = new Date( this.glickoLb[i].lastModified );
             if ( currDate - lastDate > 2628000000 ) {
-                console.log(this.glickoLb[i]._id + " decaying 50 points.");
+                console.log(this.glickoLb[i]._id + " decaying 150 points.");
                 console.log("old:\t" + this.glickoLb[i].rating);
-                await mongoUtil.updateTime( this.glickoLb[i]._id, this.glickoLb[i].rating - 50 );
+                await mongoUtil.setSkill( this.glickoLb[i]._id, this.glickoLb[i].rating - 150 );
                 let p = await mongoUtil.getPlayer( this.glickoLb[i]._id );
                 console.log("new:\t" + p.rating);
             }
