@@ -11,7 +11,7 @@ const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
 
 function GetChannelProfileProof() { return util.getChannel(342377106971295744); }
-function GetChannelSteamProfiles() { return util.getChannel(615805208848498688); }
+function GetChannelSteamLog() { return util.getChannel(615805208848498688); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const moderatorId = '291753249361625089';
 const ranked = '401892311975591946';
@@ -177,7 +177,7 @@ const srv = http.createServer( (req, res) =>
                             }
 
 					        const user = util.client.users.get(json_me.id);
-					        const member = GetChannelSteamProfiles().guild.member(user);
+					        const member = GetChannelSteamLog().guild.member(user);
 					        if(member == null)
 					        {
 					        	res.end('<b>Error</b><br>Your cached discord user was not found! Please contact a moderator.');
@@ -205,15 +205,14 @@ const srv = http.createServer( (req, res) =>
                                     return;
                                 }
 
-					        	GetChannelSteamProfiles().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+					        	GetChannelSteamLog().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
                                 if (reregister) {
 					        	    GetChannelWelcome().send('<@' + json_me.id + '>, you have been re-registered successfully.');
                                     member.addRole(glicko);
                                 }
                                 else {
 					        	    GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                    member.addRole(glicko);
-                                    member.addRoles([ranked, chieftain]);
+                                    member.addRoles([glicko, ranked, chieftain]);
                                 }
 					        }
 					        catch( err )
@@ -296,8 +295,13 @@ class RegisterModule
 			return;
 		}
         else if ( content.startsWith('.reregister') ) {
-            reregister = true;
             const target = message.author;
+            if ( !message.member.roles.has(ranked) ) {
+                message.reply( '\n**Error**: you need to .register, not re-register');
+                return;
+            }
+            reregister = true;
+
             let dExists = await mongoUtil.findDiscord( target.id );
             if ( dExists ) {
                 console.log(target.username + ' (' + target.id + ') already registered');
@@ -398,7 +402,7 @@ class RegisterModule
                     }
                     else {
                         target.addRole(glicko);
-			            GetChannelSteamProfiles().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+			            GetChannelSteamLog().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
                         message.channel.send(target + ' has now been registered with default stats and has been given the glicko role.');
                     }
 

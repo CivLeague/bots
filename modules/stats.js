@@ -152,7 +152,7 @@ class StatsBotModule
 		}
         else if( content.startsWith(cmd_gstats) )
         {
-            if ( message.channel != GetBotTesting()) return;
+            if ( !isBotChannel(message.channel) ) return;
 
             let target = null;
             if(message.mentions.members.size == 0)

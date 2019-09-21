@@ -151,8 +151,9 @@ class C6Leaderboard
         let msg = ''
         let j = 0;
         for ( var i = 0; i < max ; i++ ) {
-            if ( i < 9 ) msg += '`#0' + (i+1) + '`\t`';
-            else msg += '`#' + (i+1) + '`\t`';
+            if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
+            else if ( i < 99 ) msg += '`#' + (i+1) + '`     `';
+            else msg += '`#' + (i+1) + '`   `';
             msg += Math.round(this.glickoLb[i].rating) + '`';
             let wins = this.glickoLb[i].wins;
             if (wins < 10) {
@@ -196,6 +197,7 @@ class C6Leaderboard
                 j++;
             }
         }
+        //blanks in case not enough players on leaderboard
         if (msg != '') {
             m = await channel.fetchMessage(messages[j]);
             while ( ((i+1) % 10) != 1 ) {
