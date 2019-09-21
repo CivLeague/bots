@@ -188,6 +188,7 @@ class C6Util
 		this.createSplit(allowed, split1, split2, 'Australia', 'Netherlands');
 		this.createSplit(allowed, split1, split2, 'France', 'Scythia');
 		this.createSplit(allowed, split1, split2, 'America', 'Mapuche');
+		this.createSplit(allowed, split1, split2, 'Russia', 'Canada');
 		this.createSplit(allowed, split1, split2, 'Japan', 'Norway'); //needs revision
 		// brazil? -where?
 		/// end split
@@ -274,6 +275,8 @@ class C6Util
 		reactions = Array.from(reactions);
 		for( let i of reactions )
 		{
+            if ( i == "🤏" )
+                i = "621827736695996417";
 			// TODO: error detection here
 			await message.react(i);
 		}

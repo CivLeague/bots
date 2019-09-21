@@ -9,6 +9,10 @@ for(let i in util.civs) voting.setCustomEmoji(util.civs[i]['tag'], util.civs[i][
 voting.setGlobalTimeout(1800);
 //voting.setGlobalTimeout(60); //debug: 10 seconds
 
+function GetBotCommands() { return util.getChannel(304782408526594049); }
+function GetBotTesting()  { return util.getChannel(351127558143868928); }
+function isBotChannel(channel) { return channel == GetBotCommands() || channel == GetBotTesting(); }
+
 voting.on('finished', async(vote, channel) =>
 {	
 	/// Parse results to actual bans
@@ -87,23 +91,20 @@ voting.on('timeout', async(vote) =>
 
 util.client.on('message', message =>
 {
+    if ( !isBotChannel( message.channel ) ) return;
 	const content = message.content;
 	
-	const isModVote = content.startsWith('.votemod')
-			  || content.startsWith('.modvote')
-			  || content.startsWith('!votemod')
-			  || content.startsWith('!modvote');
 	const isTeamVote = content.startsWith('.teamvote')
 			   || content.startsWith('!teamvote');
 
-	if( content.startsWith('.vote') || isModVote  || isTeamVote)
+	if( content.startsWith('.vote') || isTeamVote)
 	{
 		//get host and voice channel info
 		const host = message.author;
 		const vchannel = message.member.voiceChannel;
 		if (!vchannel)
 		{
-            message.reply("You must be in a voicechannel to use the votebot!");
+            message.reply("you must be in a voicechannel to use the votebot!");
             return;
 		}
 		//grab list of players in voice channel that are not part of the game
@@ -165,12 +166,8 @@ util.client.on('message', message =>
 		//}
 		
 		const bot_vote = voting.createVote(players);
-		bot_vote.isModVote = isModVote;
 		bot_vote.isTeamVote = isTeamVote;
-		if( isModVote )
-		{
-			bot_vote.show(message.channel, '**__Modded Game__** - This game is played using the Better Balanced Game mod, type .modinfo for more details');
-		}
+		bot_vote.show(message.channel, '**__Modded Game__** - This game is played using the Better Balanced Game mod, type .modinfo for more details');
 		
 		if ( !isTeamVote )
 		{
@@ -197,7 +194,38 @@ util.client.on('message', message =>
 				["🇷", "Renaissance"],
 				["🇮", "Information"]
 			]), {} );
+        }
 
+        //show for everyone
+		bot_vote.showChoice(message.channel, '**__Map Type__**\n',
+			new Map([
+				["🇵", "Pangaea"],
+				["🇫", "Fractal"],
+				["🇨", "Continents"],
+				["🇦", "Archipelago"],
+				["🇸", "Inland Sea"],
+				["🇮", "Islands"],
+				["🔀", "Shuffle"],
+				["7⃣", "Seven Seas"],
+				["🤏", "Small Continents"],
+				["🇹", "Terra"],
+				["🏹", "Continents and Islands"]
+			]), {} );
+
+        bot_vote.showChoice(message.channel, '**__World Age__**\n',
+            new Map([
+				["🇸", "Standard Age"],
+                ["🇳", "New Age (more mountains/hills)"]
+            ]), {} );
+
+        bot_vote.showChoice(message.channel, '**__Resources__**\n',
+            new Map([
+				["🇸", "Standard"],
+                ["🇦", "Abundant"]
+            ]), {} );
+		
+		if ( !isTeamVote )
+		{
         bot_vote.showChoice(message.channel, '**__Disaster Intensity__**\n',
             new Map([
 				["0⃣", "No Disasters"],
@@ -214,62 +242,7 @@ util.client.on('message', message =>
 				["2⃣", "2 Capture (Raze rest)"],
 				["➖", "No Limit"]
 			]), {} );
-		}
-		
-		bot_vote.showChoice(message.channel, '**__Map Type__**\n',
-			new Map([
-				["🇵", "Pangaea"],
-				["🇫", "Fractal"],
-				["🇨", "Continents"],
-				["🇦", "Archipelago"],
-				["🇸", "Inland Sea"],
-				["🇮", "Islands"],
-				["🔀", "Shuffle"],
-				["7⃣", "Seven Seas"],
-				["🆕", "Small Continents"]
-			]), {} );
 
-        bot_vote.showChoice(message.channel, '**__World Age__**\n',
-            new Map([
-				["🇸", "Standard Age"],
-                ["🇳", "New Age (more mountains/hills)"]
-            ]), {} );
-
-        bot_vote.showChoice(message.channel, '**__Resources__**\n',
-            new Map([
-				["🇸", "Standard"],
-                ["🇦", "Abundant"]
-            ]), {} );
-
-		if( !isModVote && !isTeamVote )
-		{
-		bot_vote.showChoice(message.channel, '**__Wonders__**\n',
-			new Map([
-				["🇦", { pre: "Apadana", post: "Apadana (**BANNED**)"}],
-				["🇻", { pre: "Venitian Arsenal", post: "Venitian Arsenal (**BANNED**)"}],
-				["🇲", { pre: "Mausoleum", post: "Mausoleum (**BANNED**)"}]
-			]), { multi: true, separator: '\n' });
-		
-		bot_vote.showChoice(message.channel, '**__Religions__**\n',
-			new Map([
-				["🇨", { pre: "Crusader", post: "Crusader (**BANNED**)"}],
-				["🇩", { pre: "Defender of the Faith", post: "Defender of the Faith (**BANNED**)"}],
-				["🇫", { pre: "God of the Forge Pantheon", post: "God of the Forge Pantheon (**BANNED**)"}],
-				["🇭", { pre: "God of the Harvest Pantheon", post: "God of the Harvest Pantheon (**BANNED**)"}]
-			]), { multi: true, separator: '\n' });
-		
-		// CCG HERE
-		bot_vote.showChoice(message.channel, '**__Classical Era Great General Combat Bonus__**\n',
-			new Map([
-				["➖", "No ban"],
-				["➕", "The ban only refers to the use of the Classical Great Generals in a combat setting. You may use the Great General for its movement bonus, it's retire ability, and scouting the map."],
-				["🇦", "Classical GG In Borders Rules: You may not move a classical general unit out of your territory. If you capture or settle a city not connected to your empire you may teleport the GG to that city but it must remain within your borders. If a GG is suddenly not in your borders due to a city being taken it must retreat ASAP."],
-				["🇧", "Classical Great Generals cannot use it's combat bonus with Classical Era Units. Can be used with Medieval Era units."]]
-			), { separator: '\n' });
-		}
-		
-		if ( !isTeamVote )
-		{
 		bot_vote.showChoice(message.channel, '**__Barbarians__**\t\t',
 			new Map([
 				["➕", "Banned"],
@@ -290,22 +263,11 @@ util.client.on('message', message =>
 			]), {} );
 		}
 		
-		if ( isTeamVote )
-		{
-		    /// Suggested Civ Bans
-		    suggestedCivs = new Map([
-		    	/*[util.civs['Georgia']['id']],*/
-		    	['🚫']
-		    ]);
-		}
-		else
-		{
-            /// Suggested Civ Bans
-            suggestedCivs = new Map([
-                    /*[util.civs['Georgia']['id']],*/
-                    ['🚫']
-            ]);
-        }
+        /// Suggested Civ Bans
+        suggestedCivs = new Map([
+                /*[util.civs['Georgia']['id']],*/
+                ['🚫']
+        ]);
 
 		bot_vote.showChoice(message.channel, '**__Civ Bans__**\n', suggestedCivs, { separator: '\n', connector: ' ', multi: true, callback: (vote) =>
 		{
@@ -314,7 +276,7 @@ util.client.on('message', message =>
 			vote.setOption('🚫', '');
 		}});
 		
-		bot_vote.showFinal(message.channel, '**__Waiting For__**\n');
+        bot_vote.showFinal(message.channel, '**__Waiting For__**\n');
 	}
 });
 
