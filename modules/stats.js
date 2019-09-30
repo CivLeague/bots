@@ -59,6 +59,7 @@ class StatsBotModule
 			}
 		}
         else if (content.startsWith('.resetstats')) {
+            message.delete();
 			if( content != '.resetstats main' && content != '.resetstats team' ) {
 				error.add('Type  `.resetstats main`  or  `.resetstats team`  to confirm you really want to do this. You only get one reset for main leaderboard stats and one reset for team leaderboard stats. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
 				error.send(message.channel, 30);
@@ -68,13 +69,16 @@ class StatsBotModule
             let db = content.split(' ').pop();
             await mongoUtil.useDb(db);
             let player = await mongoUtil.getPlayer( message.author.id );
+            if ( !player ) {
+                message.reply("you don't have any stats to reset in the " + db + " database.").then(msg => { msg.delete(20000) });
+            }
             if ( player.resets ) {
                 mongoUtil.resetStats( message.author.id ).then( result => {
-                    message.reply("your " + db + " stats have been reset.");
+                    message.reply("your " + db + " stats have been reset.").then(msg => { msg.delete(20000) });
                 });
             }
             else
-                message.reply("you have already used your " + db + " stats reset.");
+                message.reply("you have already used your " + db + " stats reset.").then(msg => { msg.delete(20000) });
         }
 		else if( content.startsWith(cmd_stats) )
 		{

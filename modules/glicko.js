@@ -83,6 +83,227 @@ function getMatches(regxp, data)
 	return result;
 }
 
+function checkCivs(civs) {
+    let result = [];
+    for ( const c of civs ) {
+        console.log("c === " + c);
+        switch ( c ) {
+            case "america":
+            case "teddy":
+            case "usa":
+                result.push('america');
+                break;
+            case "arabia":
+            case "saladin":
+                result.push('arabia');
+                break;
+            case "australia":
+                result.push('australia');
+                break;
+            case "aztec":
+            case "montezuma":
+            case "monte":
+                result.push('aztec');
+                break;
+            case "brazil":
+            case "brasil":
+            case "pedro":
+                result.push('brazil');
+                break;
+            case "china":
+                result.push('china');
+                break;
+            case "egypt":
+            case "cleopatra":
+            case "cleo":
+                result.push('egypt');
+                break;
+            case "vengland":
+            case "victoria":
+                result.push('england');
+                break;
+            case "eengland":
+            case "englande":
+            case "eleanore":
+                result.push('eengland');
+                break;
+            case "france":
+            case "catherine":
+                result.push('france');
+                break;
+            case "efrance":
+            case "francee":
+            case "eleanorf":
+                result.push('efrance');
+                break;
+            case "germany":
+            case "frederick":
+                result.push('germany');
+                break;
+            case "gorgo":
+                result.push('gorgo');
+                break;
+            case "pericles":
+                result.push('pericles');
+                break;
+            case "gandhi":
+                result.push('gandhi');
+                break;
+            case "chandragupta":
+            case "chandra":
+                result.push('chandra');
+                break;
+            case "indonesia":
+            case "indo":
+            case "gitarja":
+                result.push('indo');
+                break;
+            case "japan":
+            case "hojo":
+                result.push('japan');
+                break;
+            case "khmer":
+                result.push('khmer');
+                break;
+            case "kongo":
+                result.push('kongo');
+                break;
+            case "macedon":
+            case "macedonia":
+            case "alexander":
+            case "alex":
+                result.push('macedon');
+                break;
+            case "norway":
+            case "harald":
+            case "harold":
+                result.push('norway');
+                break;
+            case "nubia":
+            case "amanitore":
+                result.push('nubia');
+                break;
+            case "persia":
+            case "cyrus":
+                result.push('persia');
+                break;
+            case "poland":
+            case "jadwiga":
+                result.push('poland');
+                break;
+            case "rome":
+            case "trajan":
+                result.push('rome');
+                break;
+            case "russia":
+            case "peter":
+                result.push('russia');
+                break;
+            case "scythia":
+            case "tomyris":
+            case "tomy":
+                result.push('scythia');
+                break;
+            case "spain":
+            case "philip":
+            case "phillip":
+                result.push('spain');
+                break;
+            case "sumeria":
+            case "gilgamesh":
+            case "gilga":
+                result.push('sumeria');
+                break;
+            case "cree":
+            case "poundmaker":
+                result.push('cree');
+                break;
+            case "georgia":
+            case "tamar":
+                result.push('georgia');
+                break;
+            case "korea":
+            case "seondeok":
+                result.push('korea');
+                break;
+            case "mapuche":
+            case "lautaro":
+                result.push('mapuche');
+                break;
+            case "mongolia":
+            case "mongols":
+            case "mongol":
+            case "genghis":
+            case "khan":
+                result.push('mongols');
+                break;
+            case "netherlands":
+            case "netherland":
+            case "dutch":
+            case "wilhelmina":
+            case "wilma":
+                result.push('dutch');
+                break;
+            case "scotland":
+            case "scots":
+            case "robert":
+                result.push('scotland');
+                break;
+            case "zulu":
+            case "shaka":
+                result.push('zulu');
+                break;
+            case "canada":
+            case "wilfrid":
+            case "wilfred":
+                result.push('canada');
+                break;
+            case "hungary":
+            case "matthias":
+                result.push('hungary');
+                break;
+            case "inca":
+                result.push('inca');
+                break;
+            case "mali":
+            case "mansa":
+                result.push('mali');
+                break;
+            case "maori":
+            case "kupe":
+                result.push('maori');
+                break;
+            case "ottomans":
+            case "ottoman":
+            case "ottomons":
+            case "ottomon":
+            case "suleiman":
+                result.push('ottoman');
+                break;
+            case "phoenicia":
+            case "dido":
+                result.push('dido');
+                break;
+            case "sweden":
+            case "kristina":
+                result.push('sweden');
+                break;
+            case "england":
+                return "england";
+                break;
+            case "greece":
+                return "greece";
+                break;
+            default:
+                if (c != "" && c != "tie" && c != "sub" && c != "for") {
+                    return "could not match `" + c +"` to a civ";
+                }
+                break;
+        }
+    }
+    return result;
+}
+
 function getCivs(arr)
 {
 	let result = [];
@@ -275,20 +496,46 @@ class ParseMessage
 					// also replace 'sub' and 'for' ???
 					//console.log('[clean]' + cleanstr);
 
-					const civsMatched = getCivs( cleanstr.split(' '));
-					//console.log('[matched]' + civsMatched);
+					const civsMatched = checkCivs( cleanstr.split(' '));
+					console.log('[civsMatched]' + civsMatched);
+                    if ( typeof civsMatched == "string" ) {
+                        if (civsMatched == "england") {
+					    	this.error.add('`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria`, `EleanorE`, or `EleanorF`');
+                            this.abort = true;
+		                    this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "greece") {
+                            this.error.add('`Greece` is too ambiguous on line:\n' + line + '\n\nPlease use `Gorgo` or `Pericles`');
+                            this.abort = true;
+                            this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched.startsWith("could")) {
+                            this.error.add(civsMatched + " on line:\n" + line);
+                            this.abort = true;
+                            this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                    }
+					//console.log('[matched]' + checkCivs( cleanstr.split(' ') ) );
+                    
+					//const civsMatched = getCivs( cleanstr.split(' '));
+					//console.log('[civsMatched]' + civsMatched);
 					
 					if(civsMatched.length == 0)
 					{
-						// ignore no-civs for reports ... ?
-						for(var i = 0; i < matches.length; ++i)
-						{
-							matches[i].civ = null;
-						}
+						this.error.add('no civ found for [line] ' + line);
+                        this.abort = true;
+		                this.error.send(this.message.channel, 60);
+                        return;
 					}
 					else if(civsMatched.length != matches.length - matches_subs.length)
 					{
 						this.error.add('invalid amount of civs [' + civsMatched + '] found for [line] ' + line);
+                        this.abort = true;
+		                this.error.send(this.message.channel, 60);
+                        return;
 					}
 					else
 					{
@@ -326,6 +573,7 @@ class ParseMessage
 		{
 			for(var m of this.positions[i])
 			{
+                console.log('CIV: ' + m.civ);
 				if(this.civState == 0)
 				{
 					this.civState = m.civ == null ? 1 : 2;
@@ -365,6 +613,7 @@ class ParseMessage
                     player = glicko.makePlayer();
                 player.oldRating = player.getRating();
                 player.subType = m.subType;
+                player.civ = m.civ;
                 player.dId = m[1];
                 if (m.subType != 2) {
                     pp.push(player);
@@ -395,6 +644,7 @@ class ParseMessage
                     console.log( "\tRating Diff:\t" + diff );
                     console.log( "\tRd:\t" + pStats.getRd() );
                     console.log( "\tVol:\t" + pStats.getVol() );
+                    console.log( "\tCiv:\t" + pStats.civ );
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
                         if ( !plyr ) {
                             await mongoUtil.createPlayer( pStats.dId );
@@ -409,6 +659,35 @@ class ParseMessage
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
     
+                        /*
+                        civs = [
+                        { name: 'rome', wins: 4, losses: 2 },
+                        { name: 'mali', wins: 2, losses: 0 },
+                        { name: 'inca', wins: 8, losses: 3 }
+                        ];
+                        */
+                        let thisCiv = null;
+                        if (plyr.civs) {
+                            for ( let k = 0; k < plyr.civs.length; k++ ) {
+                                if (pStats.civ == plyr.civs[k].name) {
+                                    thisCiv = plyr.civs[k];
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            plyr.civs = [];
+                        }
+                        if ( !thisCiv ) {
+                            plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
+                            console.log("plyr.civs.length " + plyr.civs.length);
+                            console.log("plyr.civs " + plyr.civs);
+                            thisCiv = plyr.civs[plyr.civs.length - 1];
+                        }
+                        console.log("thisCiv " + thisCiv);
+
+                        thisCiv.wins = thisCiv.wins + 1;
+
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
@@ -416,8 +695,10 @@ class ParseMessage
                                                      pStats.getVol(),
                                                      plyr.games + 1,
                                                      plyr.wins + 1,
-                                                     plyr.losses
+                                                     plyr.losses,
+                                                     plyr.civs
                                                     );
+                        await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
                 }
             }
@@ -439,6 +720,7 @@ class ParseMessage
                     player = glicko.makePlayer();
                 player.oldRating = player.getRating();
                 player.subType = m.subType;
+                player.civ = m.civ;
                 player.dId = m[1];
                 if (m.subType != 1) {
                     pp.push(player);
@@ -469,6 +751,7 @@ class ParseMessage
                     console.log( "\tRating Diff:\t" + diff );
                     console.log( "\tRd:\t" + pStats.getRd() );
                     console.log( "\tVol:\t" + pStats.getVol() );
+                    console.log( "\tCiv:\t" + pStats.civ );
                     if (!debug && this.type != 2)
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
@@ -477,6 +760,35 @@ class ParseMessage
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
     
+                        /*
+                        civs = [
+                        { name: 'rome', wins: 4, losses: 2 },
+                        { name: 'mali', wins: 2, losses: 0 },
+                        { name: 'inca', wins: 8, losses: 3 }
+                        ];
+                        */
+                        let thisCiv = null;
+                        if (plyr.civs) {
+                            for ( let k = 0; k < plyr.civs.length; k++ ) {
+                                if (pStats.civ == plyr.civs[k].name) {
+                                    thisCiv = plyr.civs[k];
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            plyr.civs = [];
+                        }
+                        if ( !thisCiv ) {
+                            plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
+                            console.log("plyr.civs.length " + plyr.civs.length);
+                            console.log("plyr.civs " + plyr.civs);
+                            thisCiv = plyr.civs[plyr.civs.length - 1];
+                        }
+                        console.log("thisCiv " + thisCiv);
+
+                        thisCiv.losses = thisCiv.losses + 1;
+
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
@@ -484,8 +796,10 @@ class ParseMessage
                                                      pStats.getVol(),
                                                      plyr.games + 1,
                                                      plyr.wins,
-                                                     plyr.losses + 1
-                                                     );
+                                                     plyr.losses + 1,
+                                                     plyr.civs
+                                                    );
+                        await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
                 }
             }
@@ -503,7 +817,9 @@ class ParseMessage
             let pp = [];
             for(let m of this.positions[i])
             {
-                const civId = m.civ == null ? null : util.getCiv(m.civ).dbid;
+                const civId = null
+                //const civId = m.civ == null ? null : util.getCiv(m.civ).dbid;
+                console.log("civ == " + m.civ);
                 rp.push({id: m[1], civ: civId, sub: m.subType});
 
                 //glicko2
@@ -519,6 +835,7 @@ class ParseMessage
                     player = glicko.makePlayer();
                 }
                 player.dId = m[1];
+                player.civ = m.civ;
                 player.subType = m.subType;
                 player.oldRating = player.getRating();
                 if (m.subType == 0) {
@@ -633,6 +950,7 @@ class ParseMessage
                 console.log( "\tRd:\t" + pStats.getRd() );
                 console.log( "\tVol:\t" + pStats.getVol() );
                 console.log( "\tsubType:\t" + pStats.subType );
+                console.log( "\tCiv:\t" + pStats.civ );
                 }
 
                 if ( !debugMode ) {
@@ -644,15 +962,44 @@ class ParseMessage
                                 plyr = await mongoUtil.getPlayer( pStats.dId );
                             }
 
+                            /*
+                            civs = [
+                            { name: 'rome', wins: 4, losses: 2 },
+                            { name: 'mali', wins: 2, losses: 0 },
+                            { name: 'inca', wins: 8, losses: 3 }
+                            ];
+                            */
+                            let thisCiv = null;
+                            if (plyr.civs) {
+                                for ( let k = 0; k < plyr.civs.length; k++ ) {
+                                    if (pStats.civ == plyr.civs[k].name) {
+                                        thisCiv = plyr.civs[k];
+                                        break;
+                                    }
+                                }
+                            }
+                            else {
+                                plyr.civs = [];
+                            }
+                            if ( !thisCiv ) {
+                                plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
+                                console.log("plyr.civs.length " + plyr.civs.length);
+                                console.log("plyr.civs " + plyr.civs);
+                                thisCiv = plyr.civs[plyr.civs.length - 1];
+                            }
+                            console.log("thisCiv " + thisCiv);
+
                             var wins;
                             var losses;
                             if (diff > 0) {
                                 wins = plyr.wins + 1;
                                 losses = plyr.losses;
+                                thisCiv.wins = thisCiv.wins + 1;
                             }
                             else if ( diff < 0 ) {
                                 wins = plyr.wins;
                                 losses = plyr.losses + 1;
+                                thisCiv.losses = thisCiv.losses + 1;
                             }
                             else {
                                 wins = plyr.wins;
@@ -666,8 +1013,10 @@ class ParseMessage
                                                          pStats.getVol(),
                                                          plyr.games + 1,
                                                          wins,
-                                                         losses
-                                                         );
+                                                         losses,
+                                                         plyr.civs
+                                                        );
+                            await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                         }
                     }
                     else {
@@ -676,17 +1025,45 @@ class ParseMessage
                             await mongoUtil.createPlayer( pStats.dId );
                             plyr = await mongoUtil.getPlayer( pStats.dId );
                         }
-    
+
+                        /*
+                        civs = [
+                        { name: 'rome', wins: 4, losses: 2 },
+                        { name: 'mali', wins: 2, losses: 0 },
+                        { name: 'inca', wins: 8, losses: 3 }
+                        ];
+                        */
+                        let thisCiv = null;
+                        if (plyr.civs) {
+                            for ( let k = 0; k < plyr.civs.length; k++ ) {
+                                if (pStats.civ == plyr.civs[k].name) {
+                                    thisCiv = plyr.civs[k];
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            plyr.civs = [];
+                        }
+                        if ( !thisCiv ) {
+                            plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
+                            console.log("plyr.civs.length " + plyr.civs.length);
+                            console.log("plyr.civs " + plyr.civs);
+                            thisCiv = plyr.civs[plyr.civs.length - 1];
+                        }
+                        console.log("thisCiv " + thisCiv);
 
                         var wins;
                         var losses;
                         if (diff > 0) {
                             wins = plyr.wins + 1;
                             losses = plyr.losses;
+                            thisCiv.wins = thisCiv.wins + 1;
                         }
                         else if ( diff < 0 ) {
                             wins = plyr.wins;
                             losses = plyr.losses + 1;
+                            thisCiv.losses = thisCiv.losses + 1;
                         }
                         else {
                             wins = plyr.wins;
@@ -700,8 +1077,10 @@ class ParseMessage
                                                      pStats.getVol(),
                                                      plyr.games + 1,
                                                      wins,
-                                                     losses
-                                                     );
+                                                     losses,
+                                                     plyr.civs
+                                                    );
+                        await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
                             if (plyr) {
@@ -819,6 +1198,7 @@ class ParseMessage
             leaderboard.update('team');
         else
             leaderboard.update('ffa');
+            //leaderboard.update('main');
 	}
 	
 	async getGlickoReport()
@@ -913,18 +1293,22 @@ class ParseMessage
 		if ( data.includes('team') ) {
             this.type = 2;
             mongoUtil.useDb('team');
+            //mongoUtil.useStatsColl('team');
         }
 		else if ( data.includes('diplo') || data.includes('ffa') ) {
             this.type = 0;
             mongoUtil.useDb('ffa');
+            //mongoUtil.useStatsColl('main');
         }
 		else if(data.includes('war')) {
             this.type = 1;
             mongoUtil.useDb('ffa');
+            //mongoUtil.useStatsColl('main');
         }
 		else if(data.includes('duel') || data.includes('adcp') || data.includes('dual')) {
             this.type = 3;
             mongoUtil.useDb('duel');
+            //mongoUtil.useStatsColl('main');
         }
 		
 		return this.type != null;
