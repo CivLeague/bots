@@ -7,8 +7,7 @@ process.on("uncaughtException", (err) => {
 });
 
 var _cli
-var _db;
-//var _stats;
+var _stats;
 var _coll;
 var _subs;
 var _civs;
@@ -17,22 +16,20 @@ var _players;
 module.exports = {
     connectToMongo: function () {
         MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10 }, function (err, client) {
-            _cli  = client;
-            _db   = _cli.db('test_db');
-            //_stats   = _cli.db('stats');
-            _coll = _db.collection('ffa'); //set default db
-            //_coll = _stats.collection('main'); //set default collection
-            _subs = _db.collection('subs');
-            //_subs = _cli.db('subs');
+            _cli     = client;
+            _stats   = _cli.db('stats');
+            _coll    = _stats.collection('main'); //set default collection
             _civs    = _cli.db('civs').collection('civs');
-            _players = _cli.db('players');
+            _players = _cli.db('players').collection('players');
+            _subs    = _stats.collection('subs');
+            //_subs    = _cli.db('subs');
             console.log('mongo listening');
         });
     },
 
     registerPlayer: async function( discordId, steamId, userName, displayName ) {
         try {
-            await _players.collection('members').insertOne({
+            await _players.insertOne({
                 discord_id:     discordId,
                 steam_id:       steamId,
                 user_name:      userName,
@@ -45,16 +42,12 @@ module.exports = {
         return true;
     },
 
-    //getStatsDb: function() {
-    getDb: function() {
-        return _db;
-        //return _stats;
+    getStatsDb: function() {
+        return _stats;
     },
 
-    //useStatsColl: function( c ) {
-    useDb: function( c ) {
-        _coll = _db.collection(c);
-        //_coll = _stats.collection(c);
+    useStatsColl: function( c ) {
+        _coll = _stats.collection(c);
     },
     
     createPlayer: async function ( discordId ) {
@@ -77,11 +70,11 @@ module.exports = {
     },
     
     findDiscord: async function ( discordId ) {
-        return await _players.collection('members').findOne({ discord_id: discordId });
+        return await _players.findOne({ discord_id: discordId });
     },
     
     findSteam: async function ( steamId ) {
-        return await _players.collection('members').findOne({ steam_id: steamId });
+        return await _players.findOne({ steam_id: steamId });
     },
     
     updateCiv: async function ( civ, place, skill ) {
@@ -173,9 +166,12 @@ module.exports = {
     },
 
     getLeaderboard: async function ( collection ) {
-        //_coll = _stats.collection(collection);
-        _coll = _db.collection(collection);
+        _coll = _stats.collection(collection);
         return await _coll.find().sort({ rating: -1 }).toArray();
+    },
+
+    getCivsLeaderboard: async function ( ) {
+        return await _civs.find().sort({ avgPlace: 1 }).toArray();
     },
 
     getSubs: async function () {

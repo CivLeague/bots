@@ -67,7 +67,7 @@ class StatsBotModule
             }
 
             let db = content.split(' ').pop();
-            await mongoUtil.useDb(db);
+            await mongoUtil.useStatsColl(db);
             let player = await mongoUtil.getPlayer( message.author.id );
             if ( !player ) {
                 message.reply("you don't have any stats to reset in the " + db + " database.").then(msg => { msg.delete(20000) });
@@ -184,8 +184,8 @@ class StatsBotModule
             {
                 let msg = '';
                 if ( content.includes('team') )
-                    mongoUtil.useDb('team');
-                else mongoUtil.useDb('ffa');
+                    mongoUtil.useStatsColl('team');
+                else mongoUtil.useStatsColl('main');
 
                 var player = await mongoUtil.getPlayer(target.id);
                 if ( player ) {

@@ -19,7 +19,7 @@ class C6Leaderboard
                 var messages = null;
                 var db = null;
                 if ( message.channel == util.getChannel(587158329877331969) ) {
-                    db = 'ffa';
+                    db = 'main';
                     channel = util.getChannel(587158329877331969);
                     messages = [
                         '587469644269617162',
@@ -50,7 +50,53 @@ class C6Leaderboard
                         '587469606311034913'
                     ];
                 }
-                else return;
+                else if ( message.channel == util.getChannel(628114954477764618) ) {
+                    this.glickoLb = await mongoUtil.getCivsLeaderboard();
+                    channel = util.getChannel(628114954477764618);
+                    messages = [
+                        '628117031794769950',
+                        '628117032432566273',
+                        '628117033443262464',
+                        '628117034173202435',
+                        '628117034948886529'
+                    ];
+
+                    let msg = ''
+                    let j = 0;
+                    for ( var i = 0; i < this.glickoLb.length ; i++ ) {
+                        if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
+                        else msg += '`#' + (i+1) + '`     `';
+
+                        let name = this.glickoLb[i].name;
+                        let avgP = this.glickoLb[i].avgPlace.toFixed(2);
+                        let avgS = Math.round(this.glickoLb[i].avgSkill);
+                        let games = this.glickoLb[i].games;
+
+                        msg += name;
+                        let spaces = 12 - name.length;
+                        for ( let k = 0; k < spaces; k++ ) {
+                            msg += ' ';
+                        }
+                        msg += 'Avg Finish: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '`\n';
+
+                        if ( ((i+1) % 10) == 0 ) {
+                            var m = await channel.fetchMessage(messages[j]);
+                            m.edit(msg);
+                            msg = '';
+                            j++;
+                        }
+                    }
+
+                    if (msg != '') {
+                        m = await channel.fetchMessage(messages[j]);
+                        m.edit(msg);
+                    }
+                    return;
+                }
+                else {
+                    console.log("unknown db: " + db);
+                    return;
+                }
 
                 for ( var j = 0; j < 10 ; j++ ) {
                     let m = await channel.fetchMessage(messages[j]);
@@ -86,19 +132,67 @@ class C6Leaderboard
 
             //glicko2
             await this.publishGlickoLeaderboard(db);
+
+            //civs
+            await this.publishCivsLeaderboard();
 		}
 		catch(err)
 		{
 			console.log('[leaderboard_err] ' + err);
 		}
 	}
-	
+
+    async publishCivsLeaderboard() {
+        this.glickoLb = await mongoUtil.getCivsLeaderboard();
+        var channel = null;
+        var messages = null;
+        channel = util.getChannel(628114954477764618);
+        messages = [
+            '628117031794769950',
+            '628117032432566273',
+            '628117033443262464',
+            '628117034173202435',
+            '628117034948886529'
+        ];
+
+        //actual leaderboard message
+        let msg = ''
+        let j = 0;
+        for ( var i = 0; i < this.glickoLb.length ; i++ ) {
+            if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
+            else msg += '`#' + (i+1) + '`     `';
+
+            let name = this.glickoLb[i].name;
+            let avgP = this.glickoLb[i].avgPlace.toFixed(2);
+            let avgS = Math.round(this.glickoLb[i].avgSkill);
+            let games = this.glickoLb[i].games;
+
+            msg += name;
+            let spaces = 12 - name.length;
+            for ( let k = 0; k < spaces; k++ ) {
+                msg += ' ';
+            }
+            msg += 'Avg Finish: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '`\n';
+
+            if ( ((i+1) % 10) == 0 ) {
+                var m = await channel.fetchMessage(messages[j]);
+                m.edit(msg);
+                msg = '';
+                j++;
+            }
+        }
+        //blanks in case not enough players on leaderboard
+        if (msg != '') {
+            m = await channel.fetchMessage(messages[j]);
+            m.edit(msg);
+        }
+    }
     async publishGlickoLeaderboard(db)
     {
         this.glickoLb = await mongoUtil.getLeaderboard(db);
         var channel = null;
         var messages = null;
-        if ( db === 'ffa' ) {
+        if ( db === 'main' ) {
             channel = util.getChannel(587158329877331969);
 		    messages = [
 		    	'587469644269617162',
@@ -129,6 +223,7 @@ class C6Leaderboard
 		    ];
         }
         else {
+            console.log("unknown db: " + db);
             return;
         }
 

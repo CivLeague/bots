@@ -91,202 +91,202 @@ function checkCivs(civs) {
             case "america":
             case "teddy":
             case "usa":
-                result.push('america');
+                result.push('America');
                 break;
             case "arabia":
             case "saladin":
-                result.push('arabia');
+                result.push('Arabia');
                 break;
             case "australia":
-                result.push('australia');
+                result.push('Australia');
                 break;
             case "aztec":
             case "montezuma":
             case "monte":
-                result.push('aztec');
+                result.push('Aztec');
                 break;
             case "brazil":
             case "brasil":
             case "pedro":
-                result.push('brazil');
+                result.push('Brazil');
                 break;
             case "china":
-                result.push('china');
+                result.push('China');
                 break;
             case "egypt":
             case "cleopatra":
             case "cleo":
-                result.push('egypt');
+                result.push('Egypt');
                 break;
             case "vengland":
             case "victoria":
-                result.push('england');
+                result.push('Victoria');
                 break;
             case "eengland":
             case "englande":
             case "eleanore":
-                result.push('eengland');
+                result.push('EleanorE');
                 break;
             case "france":
             case "catherine":
-                result.push('france');
+                result.push('France');
                 break;
             case "efrance":
             case "francee":
             case "eleanorf":
-                result.push('efrance');
+                result.push('EleanorF');
                 break;
             case "germany":
             case "frederick":
-                result.push('germany');
+                result.push('Germany');
                 break;
             case "gorgo":
-                result.push('gorgo');
+                result.push('Gorgo');
                 break;
             case "pericles":
-                result.push('pericles');
+                result.push('Pericles');
                 break;
             case "gandhi":
-                result.push('gandhi');
+                result.push('Gandhi');
                 break;
             case "chandragupta":
             case "chandra":
-                result.push('chandra');
+                result.push('Chandra');
                 break;
             case "indonesia":
             case "indo":
             case "gitarja":
-                result.push('indo');
+                result.push('Indo');
                 break;
             case "japan":
             case "hojo":
-                result.push('japan');
+                result.push('Japan');
                 break;
             case "khmer":
-                result.push('khmer');
+                result.push('Khmer');
                 break;
             case "kongo":
-                result.push('kongo');
+                result.push('Kongo');
                 break;
             case "macedon":
             case "macedonia":
             case "alexander":
             case "alex":
-                result.push('macedon');
+                result.push('Macedon');
                 break;
             case "norway":
             case "harald":
             case "harold":
-                result.push('norway');
+                result.push('Norway');
                 break;
             case "nubia":
             case "amanitore":
-                result.push('nubia');
+                result.push('Nubia');
                 break;
             case "persia":
             case "cyrus":
-                result.push('persia');
+                result.push('Persia');
                 break;
             case "poland":
             case "jadwiga":
-                result.push('poland');
+                result.push('Poland');
                 break;
             case "rome":
             case "trajan":
-                result.push('rome');
+                result.push('Rome');
                 break;
             case "russia":
             case "peter":
-                result.push('russia');
+                result.push('Russia');
                 break;
             case "scythia":
             case "tomyris":
             case "tomy":
-                result.push('scythia');
+                result.push('Scythia');
                 break;
             case "spain":
             case "philip":
             case "phillip":
-                result.push('spain');
+                result.push('Spain');
                 break;
             case "sumeria":
             case "gilgamesh":
             case "gilga":
-                result.push('sumeria');
+                result.push('Sumeria');
                 break;
             case "cree":
             case "poundmaker":
-                result.push('cree');
+                result.push('Cree');
                 break;
             case "georgia":
             case "tamar":
-                result.push('georgia');
+                result.push('Georgia');
                 break;
             case "korea":
             case "seondeok":
-                result.push('korea');
+                result.push('Korea');
                 break;
             case "mapuche":
             case "lautaro":
-                result.push('mapuche');
+                result.push('Mapuche');
                 break;
             case "mongolia":
             case "mongols":
             case "mongol":
             case "genghis":
             case "khan":
-                result.push('mongols');
+                result.push('Mongols');
                 break;
             case "netherlands":
             case "netherland":
             case "dutch":
             case "wilhelmina":
             case "wilma":
-                result.push('dutch');
+                result.push('Dutch');
                 break;
             case "scotland":
             case "scots":
             case "robert":
-                result.push('scotland');
+                result.push('Scotland');
                 break;
             case "zulu":
             case "shaka":
-                result.push('zulu');
+                result.push('Zulu');
                 break;
             case "canada":
             case "wilfrid":
             case "wilfred":
-                result.push('canada');
+                result.push('Canada');
                 break;
             case "hungary":
             case "matthias":
-                result.push('hungary');
+                result.push('Hungary');
                 break;
             case "inca":
-                result.push('inca');
+                result.push('Inca');
                 break;
             case "mali":
             case "mansa":
-                result.push('mali');
+                result.push('Mali');
                 break;
             case "maori":
             case "kupe":
-                result.push('maori');
+                result.push('Maori');
                 break;
             case "ottomans":
             case "ottoman":
             case "ottomons":
             case "ottomon":
             case "suleiman":
-                result.push('ottoman');
+                result.push('Ottoman');
                 break;
             case "phoenicia":
             case "dido":
-                result.push('dido');
+                result.push('Dido');
                 break;
             case "sweden":
             case "kristina":
-                result.push('sweden');
+                result.push('Sweden');
                 break;
             case "england":
                 return "england";
@@ -698,7 +698,7 @@ class ParseMessage
                                                      plyr.losses,
                                                      plyr.civs
                                                     );
-                        await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
+                        //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
                 }
             }
@@ -1197,8 +1197,7 @@ class ParseMessage
         if ( this.isTeam() )
             leaderboard.update('team');
         else
-            leaderboard.update('ffa');
-            //leaderboard.update('main');
+            leaderboard.update('main');
 	}
 	
 	async getGlickoReport()
@@ -1292,23 +1291,19 @@ class ParseMessage
 	{
 		if ( data.includes('team') ) {
             this.type = 2;
-            mongoUtil.useDb('team');
-            //mongoUtil.useStatsColl('team');
+            mongoUtil.useStatsColl('team');
         }
 		else if ( data.includes('diplo') || data.includes('ffa') ) {
             this.type = 0;
-            mongoUtil.useDb('ffa');
-            //mongoUtil.useStatsColl('main');
+            mongoUtil.useStatsColl('main');
         }
 		else if(data.includes('war')) {
             this.type = 1;
-            mongoUtil.useDb('ffa');
-            //mongoUtil.useStatsColl('main');
+            mongoUtil.useStatsColl('main');
         }
 		else if(data.includes('duel') || data.includes('adcp') || data.includes('dual')) {
             this.type = 3;
-            mongoUtil.useDb('duel');
-            //mongoUtil.useStatsColl('main');
+            mongoUtil.useStatsColl('main');
         }
 		
 		return this.type != null;
