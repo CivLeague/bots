@@ -17,6 +17,7 @@ class SubBotModule
             if (message.content == '.reportsubs') {
                 let msg = '';
                 mongoUtil.getSubs().then( subs => {
+                    console.log(subs);
                     for (let sub of subs) {
                         if ( sub.count > 2 ) {
                             msg += "\n[**" + sub.count + "**, <@"+sub._id+">]";

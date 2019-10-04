@@ -8,21 +8,25 @@ process.on("uncaughtException", (err) => {
 
 var _cli
 var _stats;
+
+var _main;
+var _team;
 var _coll;
-var _subs;
 var _civs;
 var _players;
+var _subs;
 
 module.exports = {
     connectToMongo: function () {
         MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10 }, function (err, client) {
             _cli     = client;
             _stats   = _cli.db('stats');
+            _main    = _stats.collection('main');
+            _team    = _stats.collection('team');
             _coll    = _stats.collection('main'); //set default collection
             _civs    = _cli.db('civs').collection('civs');
             _players = _cli.db('players').collection('players');
-            _subs    = _stats.collection('subs');
-            //_subs    = _cli.db('subs');
+            _subs    = _cli.db('subs').collection('subs');
             console.log('mongo listening');
         });
     },
@@ -69,11 +73,20 @@ module.exports = {
         return await _coll.findOne({ _id: discordId });
     },
     
-    findDiscord: async function ( discordId ) {
+    getHighScore: async function ( discordId ) {
+        let main = await _main.findOne({ _id: discordId });
+        let team = await _team.findOne({ _id: discordId });
+        if ( !main ) return team.rating;
+        if ( !team ) return main.rating;
+        if ( main.rating > team.rating ) return main.rating;
+        else return team.rating;
+    },
+    
+    findByDiscord: async function ( discordId ) {
         return await _players.findOne({ discord_id: discordId });
     },
     
-    findSteam: async function ( steamId ) {
+    findBySteam: async function ( steamId ) {
         return await _players.findOne({ steam_id: steamId });
     },
     
@@ -176,17 +189,14 @@ module.exports = {
 
     getSubs: async function () {
         return _subs.find().sort({ count: -1 }).toArray();
-        //return _subs.collection.find().sort({ count: -1 }).toArray();
     },
 
     resetSubs: async function () {
         _subs.drop();
-        //_subs.collection.drop();
     },
 
     getSubCount: async function ( subId ) {
         return _subs.findOne({ _id: subId });
-        //return _subs.collection.findOne({ _id: subId });
     },
 
     setSubCount: async function ( subId, num ) {
@@ -195,12 +205,5 @@ module.exports = {
             { $set: { count: num } }, 
             { upsert: true }
         );
-        /*
-        _subs.collection.updateOne(
-            { _id: subId },
-            { $set: { count: num } }, 
-            { upsert: true }
-        );
-        */
     }
 }

@@ -10,18 +10,14 @@ const steam = new SteamAPI(util.getToken('steam'));
 const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
 
-function GetChannelProfileProof() { return util.getChannel(342377106971295744); }
 function GetChannelSteamLog() { return util.getChannel(615805208848498688); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const moderatorId = '291753249361625089';
-const ranked = '401892311975591946';
-const glicko = '615780983047979008';
-const chieftain = '542774298180452377';
+const ranked = '615780983047979008';
+const chieftain = '628464491129995264';
 
 const http = require('http');
 const https = require('https');
-
-var reregister = false;
 
 // Create an HTTP server
 const srv = http.createServer( (req, res) =>
@@ -137,7 +133,7 @@ const srv = http.createServer( (req, res) =>
                         let realid = result.split('data-steamid64').pop().slice(2, 19);
                         console.log('realid: ' + realid);
 
-                        let sExists = await mongoUtil.findSteam( realid );
+                        let sExists = await mongoUtil.findBySteam( realid );
                         if ( sExists ) {
                             console.log('SteamId (' + realid + ') already registered');
                             console.log('username:\t' + member.user.username + '\ndisplayName:\t' + member.displayName);
@@ -187,14 +183,6 @@ const srv = http.createServer( (req, res) =>
 					        
 					        try
 					        {
-                                if (!reregister) {
-					        	    let response = await util.makeRGRequest('register.php', {
-					        	    	discordid: json_me.id,
-					        	    	steamid: realid,
-					        	    	name: json_me.username
-					        	    });
-                                }
-					        	
 					        	// Finish up HTTP reply
 					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
 					        	
@@ -206,14 +194,8 @@ const srv = http.createServer( (req, res) =>
                                 }
 
 					        	GetChannelSteamLog().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
-                                if (reregister) {
-					        	    GetChannelWelcome().send('<@' + json_me.id + '>, you have been re-registered successfully.');
-                                    member.addRole(glicko);
-                                }
-                                else {
-					        	    GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                    member.addRoles([glicko, ranked, chieftain]);
-                                }
+					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
+                                member.addRoles([ranked, chieftain]);
 					        }
 					        catch( err )
 					        {
@@ -269,40 +251,9 @@ class RegisterModule
 		
 		if( content.startsWith(cmd_register) )
 		{
-            reregister = false;
-			const target = message.author;
-			
-			let error = errorHandler.create();
-			try
-			{
-				let registered = await util.makeRGRequest('toimport.php', {[target.id]: ''});
-				if(registered.length == 0)
-				{
-					message.channel.send(target + ' is already registered.');
-				}
-				else
-				{
-					const state_string = JSON.stringify({ user: target.id, chan: message.channel.id });
-					message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
-				}
-			}
-			catch(err)
-			{
-                console.log(err);
-				message.channel.send(err);
-			}
-			
-			return;
-		}
-        else if ( content.startsWith('.reregister') ) {
             const target = message.author;
-            if ( !message.member.roles.has(ranked) ) {
-                message.reply( '\n**Error**: you need to .register, not re-register');
-                return;
-            }
-            reregister = true;
 
-            let dExists = await mongoUtil.findDiscord( target.id );
+            let dExists = await mongoUtil.findByDiscord( target.id );
             if ( dExists ) {
                 console.log(target.username + ' (' + target.id + ') already registered');
                 message.reply( '\n**Error**: you are already registered.' );
@@ -380,7 +331,7 @@ class RegisterModule
                     let realid = response.split('data-steamid64').pop().slice(2, 19);
                     console.log('real steamID64:' + realid); 
 
-                    let dExists = await mongoUtil.findDiscord( target.id );
+                    let dExists = await mongoUtil.findByDiscord( target.id );
                     if ( dExists ) {
                         console.log(target.displayName + ' (' + target.id + ') discord already registered');
                         message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
@@ -388,7 +339,7 @@ class RegisterModule
                         });
                     }
 
-                    let sExists = await mongoUtil.findSteam( realid );
+                    let sExists = await mongoUtil.findBySteam( realid );
                     if ( sExists ) {
                         console.log(target.displayName + ' (' + realid + ') steam already registered');
                         message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
@@ -401,27 +352,9 @@ class RegisterModule
                         console.log('could not register new player:\n\tdiscord:\t' + target.id + '\n\tsteam:\t' + realid);
                     }
                     else {
-                        target.addRole(glicko);
-			            GetChannelSteamLog().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
-                        message.channel.send(target + ' has now been registered with default stats and has been given the glicko role.');
-                    }
-
-                    try {
-                        await util.makeRGRequest('register.php', {
-                            discordid: target.id,
-                            steamid: realid,
-                            name: target.displayName,
-                            rating: 1500,
-                            wins: 0,
-                            losses: 0
-                        });
-                        message.channel.send(target + ' has now been registered with default stats and should have been given the ranked and chieftain role.');
-			            GetChannelProfileProof().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
-                        target.addRole(glicko);
 			            target.addRoles([ranked, chieftain]);
-                    }
-                    catch (err) {
-                        console.log(err);
+			            GetChannelSteamLog().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+                        message.channel.send(target + ' has now been registered with default stats and given the ranked role.');
                     }
                 });
             }

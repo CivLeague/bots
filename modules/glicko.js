@@ -10,14 +10,14 @@ const RealUtil = require('util');
 
 const http = require('http');
 
-const deity     = '542772456507834398';
-const immortal  = '542772781050494986';
-const emperor   = '542773500222373889';
-const king      = '542773610738089995';
-const prince    = '542773602370715658';
-const warlord   = '542774101014478878';
-const chieftain = '542774298180452377';
-const settler   = '542774526778540044';
+const deity     = '628461624524800000';
+const immortal  = '628464081346625536';
+const emperor   = '628464280118755351';
+const king      = '628464338985943040';
+const prince    = '628464428593184778';
+const warlord   = '628464457491939339';
+const chieftain = '628464491129995264';
+const settler   = '628464552882995200';
 const difficulties = [settler, chieftain, warlord, prince, king, emperor, immortal, deity];
 
 const cmd_separator = ' ';
@@ -37,9 +37,7 @@ const glicko = new glicko2.Glicko2(settings);
 function GetChannelSubLog() { return util.getChannel(371831587001729036); }
 function GetChannelGlickoHistory() { return util.getChannel(569705866224467988); }
 function GetChannelGlickoDebug() { return util.getChannel(582241310220746762); }
-function GetChannelReportHistory() { return util.getChannel(291753171942899713); }
 function GetChannelReportsProcessed() { return util.getChannel(484882448115564584); }
-
 
 // ONLY FOR TESTING
 const querystring = require('querystring');
@@ -127,9 +125,9 @@ function checkCivs(civs) {
             case "eleanore":
                 result.push('EleanorE');
                 break;
-            case "france":
             case "catherine":
-                result.push('France');
+            case "katherine":
+                result.push('Catherine');
                 break;
             case "efrance":
             case "francee":
@@ -151,12 +149,12 @@ function checkCivs(civs) {
                 break;
             case "chandragupta":
             case "chandra":
-                result.push('Chandra');
+                result.push('Chandragupta');
                 break;
             case "indonesia":
             case "indo":
             case "gitarja":
-                result.push('Indo');
+                result.push('Indonesia');
                 break;
             case "japan":
             case "hojo":
@@ -235,14 +233,14 @@ function checkCivs(civs) {
             case "mongol":
             case "genghis":
             case "khan":
-                result.push('Mongols');
+                result.push('Mongolia');
                 break;
             case "netherlands":
             case "netherland":
             case "dutch":
             case "wilhelmina":
             case "wilma":
-                result.push('Dutch');
+                result.push('Netherlands');
                 break;
             case "scotland":
             case "scots":
@@ -278,11 +276,13 @@ function checkCivs(civs) {
             case "ottomons":
             case "ottomon":
             case "suleiman":
-                result.push('Ottoman');
+                result.push('Ottomans');
                 break;
             case "phoenicia":
+            case "phonicia":
+            case "phonecia":
             case "dido":
-                result.push('Dido');
+                result.push('Phoenicia');
                 break;
             case "sweden":
             case "kristina":
@@ -290,6 +290,9 @@ function checkCivs(civs) {
                 break;
             case "england":
                 return "england";
+                break;
+            case "france":
+                return "france";
                 break;
             case "greece":
                 return "greece";
@@ -416,15 +419,21 @@ class ParseMessage
 				}
 				else
 				{
-					if(!this.assignType(line)) this.error.add('invalid game type... [allowed] ffa, diplo, duel, war, team');
+					if ( !this.assignType(line) )
+                        this.error.add('invalid game type... [allowed] ffa, diplo, duel, war, team');
 				}
+                continue;
 			}
 			
 			// regxp is also used later down where cleanstr is, not just for getMatches
 			const regxp = /<@!?(\d+)>/g;
 			const matches = getMatches(regxp, line);
 			
-			if(matches.length != 0)
+            if ( matches.length == 0 ) {
+                this.error.add('No player found on line:\n' + line);
+                this.abort = true;
+            }
+			else
 			{
 				const groupMatch = matches[0][1];
 				//for(const m of matches) console.log(m);
@@ -503,6 +512,12 @@ class ParseMessage
 					    	this.error.add('`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria`, `EleanorE`, or `EleanorF`');
                             this.abort = true;
 		                    this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "france") {
+                            this.error.add('`France` is too ambiguous on line:\n' + line + '\n\nPlease use `Catherine` or `EleanorF`');
+                            this.abort = true;
+                            this.error.send(this.message.channel, 60);
                             return;
                         }
                         else if (civsMatched == "greece") {
@@ -638,6 +653,13 @@ class ParseMessage
                         diff = 20;
                         pStats.setRating(pStats.oldRating + 20);
                     }
+			        for (var k = 0; k < this.positions.length; ++k) {
+				        for(var m of this.positions[k]) {
+                            if (m[1] == pStats.dId) {
+                                m.diff = diff;
+                            }
+                        }
+                    }
                     console.log( "SUB ID: " + pStats.dId );
                     console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                     console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -745,6 +767,13 @@ class ParseMessage
                         diff = -20;
                         pStats.setRating(pStats.oldRating - 20);
                     }
+			        for (var k = 0; k < this.positions.length; ++k) {
+				        for(var m of this.positions[k]) {
+                            if (m[1] == pStats.dId) {
+                                m.diff = diff;
+                            }
+                        }
+                    }
                     console.log( "ORIG ID: " + pStats.dId );
                     console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                     console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -807,7 +836,6 @@ class ParseMessage
     }
 
 	async parseGameReport(debugMode) {
-        let reportedPositions = [];
         let glickoPositions = [];
         let player = null;
 
@@ -820,7 +848,6 @@ class ParseMessage
                 const civId = null
                 //const civId = m.civ == null ? null : util.getCiv(m.civ).dbid;
                 console.log("civ == " + m.civ);
-                rp.push({id: m[1], civ: civId, sub: m.subType});
 
                 //glicko2
                 var p = await mongoUtil.getPlayer( m[1] );
@@ -852,12 +879,11 @@ class ParseMessage
                         await this.setOrigPoints(this.positions.slice(0, i+1), m[1], debugMode);
                     else
                         pp.push(player);
+
                 }
             }
-            reportedPositions.push(rp);
             glickoPositions.push(pp);
         }
-        //reportedPositions = [id, civ, sub]
         //glickoPositions = correct player positions
 
         if (this.type != 2) {
@@ -943,14 +969,21 @@ class ParseMessage
                 let pStats = glickoPositions[i][j];
                 var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
                 if ( this.isTeam() || pStats.subType != 1 ) {
-                console.log( "ID: " + pStats.dId );
-                console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
-                console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
-                console.log( "\tRating Diff:\t" + diff );
-                console.log( "\tRd:\t" + pStats.getRd() );
-                console.log( "\tVol:\t" + pStats.getVol() );
-                console.log( "\tsubType:\t" + pStats.subType );
-                console.log( "\tCiv:\t" + pStats.civ );
+			        for (var k = 0; k < this.positions.length; ++k) {
+				        for(var m of this.positions[k]) {
+                            if (m[1] == pStats.dId) {
+                                m.diff = diff;
+                            }
+                        }
+                    }
+                    console.log( "ID: " + pStats.dId );
+                    console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
+                    console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
+                    console.log( "\tRating Diff:\t" + diff );
+                    console.log( "\tRd:\t" + pStats.getRd() );
+                    console.log( "\tVol:\t" + pStats.getVol() );
+                    console.log( "\tsubType:\t" + pStats.subType );
+                    console.log( "\tCiv:\t" + pStats.civ );
                 }
 
                 if ( !debugMode ) {
@@ -1103,93 +1136,52 @@ class ParseMessage
                 }
             }
         }
-
-		// Send to API
-		let response = null;
-		try
-		{
-			response = await util.makeRGRequest('report.php', {
-				commit: debugMode ? 0 : 1,
-				host: this.host,
-				type: this.type,
-				reported: this.message.createdTimestamp,
-				r: JSON.stringify(reportedPositions)
-			});
-			
-			let ratingChangesIndex = 0;
-			
-			for(let i = 0; i < this.positions.length; ++i)
-			{
-				for(var m of this.positions[i])
-				{
-					m.ratingChange = response.ratingChanges[ratingChangesIndex++];
-				}
-			}
-		}
-		catch(err)
-		{
-			this.error.add(err);
-		}
-		
-		/// process all ELO games
-		this.error.send(this.message.channel, 60).then( async(errors) =>
-		{
-			if (!errors)
-			{				
-				if(!debugMode)
-				{
-					await this.notify(response.id);
-				}
-				else
-				{
-					this.error.isError = false;
-					this.error.add('**[CHECK MODE] No Errors Found**');
-					this.error.add('**[Result]**\n' + this.notifyConstructPlayerString());
-					this.error.send(this.message.channel, 30);	
-				}			
-			}
-		});
+        if(!debugMode) {
+            await this.notify();
+        }
+        else {
+            
+            for (let i = 0; i < this.positions.length; i++) {
+                for ( let m of this.positions[i] ) {
+                    console.log("reportedPos: " + m[1] + ' ' + m.diff);
+                }
+            }
+            this.getGlickoReport().then( report => {
+		        let gMsg = '**[CHECK MODE] No Errors Found**\n' + report;
+		        this.message.channel.send(gMsg).then( msg => { msg.delete(60000) });
+            });
+        }
 	}
 	
-	async notify(gameid)
+	async notify()
 	{
 		// construct new message with full changes
-		let msg = '';
-		msg += 'GameID: ' + gameid + '\n';
-		msg += 'Type: ' + GetGameType(this.type) + '\n';
-		msg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
+		let gMsg = '';
+		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
+		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
 		
 		// also delete original message?
 		this.message.delete();
 		
 		// COULD CRASH HERE, USER NOT FOUND, so we deleted above
-		msg += this.notifyConstructPlayerString();
-
-        if (msg.includes("**[ORIG]** "))     
-        {       
-            var sub = msg.split("**[ORIG]** ").pop().split(" ").shift();        
-            GetChannelSubLog().send(sub + " subbed");       
-        }       
-		
-		GetChannelReportHistory().send(msg);
-		GetChannelReportsProcessed().send(
-			'Approved By: ' + this.user + '\n' +
-			'Reported By: ' + this.message.author + '\n' + // FIX later: this.displayNameFromId(this.message.author.id)
-			'GameID: ' + gameid + '\n' +
-			'\n' + this.message.content
-		);
-
-		//GetChannelReportHistory().send(message);
-	    this.error.add('-Report Finished Successfully-');
-	    this.error.send(this.message.channel, 30);
-
-		let gMsg = '';
-		gMsg += 'GameID: ' + gameid + '\n';
-		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
-		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
         this.getGlickoReport().then( report => {
             gMsg += report;
 		    GetChannelGlickoHistory().send(gMsg);
+
+            if (gMsg.includes("**[ORIG]** ")) {
+                var sub = gMsg.split("**[ORIG]** ").pop().split(" ").shift();        
+                GetChannelSubLog().send(sub + " subbed");       
+            }       
+        });
+		
+		GetChannelReportsProcessed().send(
+			'Approved By: ' + this.user + '\n' +
+			'Reported By: ' + this.message.author + '\n' + // FIX later: this.displayNameFromId(this.message.author.id)
+			'\n' + this.message.content
+		);
+
+        this.message.channel.send(this.user + '\n-Report Finished Successfully-').then( msg => {
+            msg.delete(10000);
         });
 
         applyTags(this.message.mentions.members.array());
@@ -1199,7 +1191,7 @@ class ParseMessage
         else
             leaderboard.update('main');
 	}
-	
+
 	async getGlickoReport()
 	{
 		let msg = '';
@@ -1211,9 +1203,7 @@ class ParseMessage
 				for(var m of this.positions[i])
 				{
 					const displayName = this.displayNameFromM(m);					
-                    let p = await mongoUtil.getPlayer( m[1] );
-                    if (p)
-					    msg += (p.lastChange > 0 ? '+' : '') + p.lastChange + ' ' + displayName + (m.civ == null ? '' : ' ' + m.civ) + '\n';
+					msg += (m.diff > 0 ? '+' : '') + m.diff + ' ' + displayName + (m.civ == null ? '' : ' ' + m.civ) + '\n';
 				}
 			}
 		}
@@ -1229,49 +1219,20 @@ class ParseMessage
 					else msg += (i+1) + ': ';
 					
 					const displayName = this.displayNameFromM(m);
-                    let p = await mongoUtil.getPlayer(m[1]);
-                    if (p)
-					    msg += (p.lastChange > 0 ? '+' : '') + p.lastChange + ' ' + displayName + (m.civ == null ? '' : ' ' + m.civ) + '\n';
+					msg += (m.diff > 0 ? '+' : '') + m.diff + ' ' + displayName + (m.civ == null ? '' : ' ' + m.civ) + '\n';
 				}
 			}
 		}
 		return msg;
 	}
-	
-	notifyConstructPlayerString()
+
+	displayNameFromM2(m)
 	{
-		let msg = '';
-		if(this.type == 2)
-		{
-			for(var i = 0; i < this.positions.length; ++i)
-			{
-				msg += '\n**Team ' + (i+1) + '**\n';
-				for(var m of this.positions[i])
-				{
-					const displayName = this.displayNameFromM(m);					
-					msg += (m.ratingChange > 0 ? '+' : '') + m.ratingChange + ' ' + displayName + (m.civ == null ? '' : ' ' + m.civ) + '\n';
-				}
-			}
-		}
-		else
-		{
-			for(var i = 0; i < this.positions.length; ++i)
-			{
-				const max_j = this.positions[i].length;
-				for(var j = 0; j < max_j; ++j)
-				{
-					const m = this.positions[i][j];
-					if(max_j != 1) msg += '(TIE ' + (i+1) + ') ';
-					else msg += (i+1) + ': ';
-					
-					const displayName = this.displayNameFromM(m);
-					msg += (m.ratingChange > 0 ? '+' : '') + m.ratingChange + ' ' + displayName + (m.civ == null ? '' : ' ' + m.civ) + '\n';
-				}
-			}
-		}
-		return msg;
+		let displayName = this.displayNameFromId(m.dId);
+		if(m.subType == 1) displayName = ' **[SUB]** ' + displayName;
+		if(m.subType == 2) displayName = ' **[ORIG]** ' + displayName;
+		return displayName;
 	}
-	
 	displayNameFromM(m)
 	{
 		let displayName = this.displayNameFromId(m[1]);
@@ -1316,18 +1277,15 @@ class ParseMessage
 
 async function applyTags(players)
 {
-    console.log("number of members = " + players.length);
     for ( i in players )
     {
         let player = players[i];
         if (!player)
             continue;
-        let playerStats = await util.makeRGRequest('stats.php', {
-            id: player.id
-        }).catch(console.error);
-        if (!playerStats)
+        let skill = await mongoUtil.getHighScore( player.id );
+        if (!skill)
             continue;
-        let skill = playerStats.rating;
+
         if (skill < 1500)
         {
             if ( !player.roles.has(settler) )

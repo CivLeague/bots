@@ -61,11 +61,11 @@ class C6Leaderboard
                         '628117034948886529'
                     ];
 
-                    let msg = ''
+                    let msg = '```js\n'
                     let j = 0;
                     for ( var i = 0; i < this.glickoLb.length ; i++ ) {
-                        if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
-                        else msg += '`#' + (i+1) + '`     `';
+                        if ( i < 9 ) msg += '#0' + (i+1) + '   ';
+                        else msg += '#' + (i+1) + '   ';
 
                         let name = this.glickoLb[i].name;
                         let avgP = this.glickoLb[i].avgPlace.toFixed(2);
@@ -73,24 +73,35 @@ class C6Leaderboard
                         let games = this.glickoLb[i].games;
 
                         msg += name;
-                        let spaces = 12 - name.length;
+                        let spaces = 14 - name.length;
                         for ( let k = 0; k < spaces; k++ ) {
                             msg += ' ';
                         }
-                        msg += 'Avg Finish: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '`\n';
+                        msg += 'Avg Place: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '\n';
 
                         if ( ((i+1) % 10) == 0 ) {
                             var m = await channel.fetchMessage(messages[j]);
-                            m.edit(msg);
-                            msg = '';
+                            m.edit(msg + '```');
+                            msg = '```js\n';
                             j++;
                         }
                     }
 
-                    if (msg != '') {
-                        m = await channel.fetchMessage(messages[j]);
-                        m.edit(msg);
+                    for ( let x = this.glickoLb.length; x < 50; x++ ) {
+                        msg += '#' + (x+1) + '\n';
+                        if ( ((x+1) % 10) == 0 ) {
+                            var m = await channel.fetchMessage(messages[j]);
+                            m.edit(msg + '```');
+                            msg = '```js\n';
+                            j++;
+                        }
                     }
+
+                    if (msg != '```js\n') {
+                        m = await channel.fetchMessage(messages[j]);
+                        m.edit(msg + '```');
+                    }
+
                     return;
                 }
                 else {
@@ -124,12 +135,6 @@ class C6Leaderboard
 	{
 		try
 		{
-			// Grab data
-			this.leaderboard = await util.makeRGRequest('leaderboard.php', {});
-			
-			// Publish new Leaderboard
-			await this.publishLeaderboard();
-
             //glicko2
             await this.publishGlickoLeaderboard(db);
 
@@ -156,11 +161,11 @@ class C6Leaderboard
         ];
 
         //actual leaderboard message
-        let msg = ''
+        let msg = '```js\n'
         let j = 0;
         for ( var i = 0; i < this.glickoLb.length ; i++ ) {
-            if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
-            else msg += '`#' + (i+1) + '`     `';
+            if ( i < 9 ) msg += '#0' + (i+1) + '   ';
+            else msg += '#' + (i+1) + '   ';
 
             let name = this.glickoLb[i].name;
             let avgP = this.glickoLb[i].avgPlace.toFixed(2);
@@ -172,19 +177,27 @@ class C6Leaderboard
             for ( let k = 0; k < spaces; k++ ) {
                 msg += ' ';
             }
-            msg += 'Avg Finish: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '`\n';
+            msg += 'Avg Place: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '\n';
 
             if ( ((i+1) % 10) == 0 ) {
                 var m = await channel.fetchMessage(messages[j]);
-                m.edit(msg);
-                msg = '';
+                m.edit(msg + '```');
+                msg = '```js\n';
                 j++;
             }
         }
-        //blanks in case not enough players on leaderboard
-        if (msg != '') {
+        for ( let x = this.glickoLb.length; x < 50; x++ ) {
+            msg += '`#' + (x+1) + '`\n';
+            if ( ((x+1) % 10) == 0 ) {
+                var m = await channel.fetchMessage(messages[j]);
+                m.edit(msg + '```');
+                msg = '```js\n';
+                j++;
+            }
+        }
+        if (msg != '```js\n') {
             m = await channel.fetchMessage(messages[j]);
-            m.edit(msg);
+            m.edit(msg + '```');
         }
     }
     async publishGlickoLeaderboard(db)
@@ -303,77 +316,6 @@ class C6Leaderboard
             m.edit(msg);
         }
     }
-
-	async publishLeaderboard()
-	{
-        const channel = util.getChannel(483346000233365526);
-		const messages = [
-			'544328293927878666',
-            '544328296918155264',
-            '544328298084433922',
-            '544328300127059988',
-            '544328301657849866',
-			'544328321853554733',
-            '544328323795386398',
-            '544328325372575744',
-            '544328326744113162',
-            '544328328379760650'
-		];
-
-		let i = 0;
-		const max_top = this.leaderboard.length < 100 ? this.leaderboard.length : 100;		
-		for(const m of messages)
-		{
-			const msg = await channel.fetchMessage(m);
-			const content_new = this.createLeaderboard(i, max_top);
-
-			if( msg.content != content_new) msg.edit( content_new );
-			i += max_per_leaderboard_message;
-		}
-	}
-	
-	createLeaderboard(i, max_top)
-	{	
-		let msg = '**Top ' + (i+max_per_leaderboard_message) + '**';
-		const max_i = i + (max_top - i < max_per_leaderboard_message ? max_top - i : max_per_leaderboard_message);
-		for(; i < max_i; ++i)
-		{
-			let n = (i+1);
-			if(n >= 10 && n <= 20) n += 'th';
-			else if(n % 10 == 1) n += 'st';
-			else if(n % 10 == 2) n += 'nd';
-			else if(n % 10 == 3) n += 'rd';
-			else n += 'th';
-			
-			// Construct win_percentage
-			const s = this.leaderboard[i];
-			let win_percentage = this.getWinPercentage(s.wins, s.losses).toString() + '%'; while(win_percentage.length < 4) win_percentage = ' ' + win_percentage;
-			let wins = s.wins.toString(); while(wins.length < 4) wins = ' ' + wins;
-			//let losses = s.losses.toString(); while(losses.length < 4) losses = ' ' + losses;
-			let losses = s.losses.toString(); while(losses.length < 4) losses += ' ';
-			
-			// split columns
-			//msg += '\n`' + s.rating + ' ' + win_percentage + ' `'; //len: 12 (12)
-			//msg += ' `W ' + wins + '` `L ' + losses + '`'; //len: 18 (30)
-			
-			// W-L one column
-			//msg += '\n`' + s.rating + ' ' + win_percentage + ' ';
-			//msg += ' ' + wins + 'W ' + losses + 'L`';
-			
-			msg += '\n`' + s.rating + ' ' + win_percentage + '  ';
-			msg += '[' + wins + '-' + losses + ']`';
-			// len 25 (25)
-			
-			// Best' Civ
-			if(s.civ != null) msg += ' ' + util.getCivEmojiByDBID(s.civ); //len: 21 (51) + maxcivemoji
-			
-			msg += ' <@' + s.id + '> **(' + n + ')**'; //len: 35 (86) + maxcivemoji
-		}
-		
-		//[length_per_line] 86 + maxcivemoji ( scotland: 28) => 118
-		//console.log('[msg_total]' + msg.length);
-		return msg;
-	}
 }
 
 module.exports = new C6Leaderboard();
