@@ -138,6 +138,7 @@ const srv = http.createServer( (req, res) =>
                             console.log('SteamId (' + realid + ') already registered');
                             console.log('username:\t' + member.user.username + '\ndisplayName:\t' + member.displayName);
                             message.reply( '\n**Error**: you are already registered.' );
+                            res.end('Error: you are already registered.' );
                             return;
                         }
 
@@ -167,8 +168,8 @@ const srv = http.createServer( (req, res) =>
                                 }
                             }
                             if (!ownCiv) {
-                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
                                 GetChannelWelcome().send("**Error:** your steam account does not seem to own Civ 6. Please contact a moderator.");
+                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
                                 return;
                             }
 
@@ -183,17 +184,18 @@ const srv = http.createServer( (req, res) =>
 					        
 					        try
 					        {
-					        	// Finish up HTTP reply
-					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
-					        	
                                 let ret = await mongoUtil.registerPlayer(json_me.id, realid, member.user.username, member.displayName);
                                 if (!ret) {
                                     console.log('could not register new player:\n\tdiscord:\t' + json_me.id + '\n\tsteam:\t' + realid);
                                     GetChannelWelcome().send( '\n**Error**: an error occured during registration. Please contact a moderator.' );
+                                    res.end( 'Error: an error occured during registration. Please contact a moderator.' );
                                     return;
                                 }
 
-					        	GetChannelSteamLog().send('<@' + json_me.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+					        	// Finish up HTTP reply
+					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
+					        	
+					        	GetChannelSteamLog().send('<@' + json_me.id + '> uname: ' + member.user.username + ' dname: ' + member.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
                                 member.addRoles([ranked, chieftain]);
 					        }
@@ -353,7 +355,8 @@ class RegisterModule
                     }
                     else {
 			            target.addRoles([ranked, chieftain]);
-			            GetChannelSteamLog().send('<@' + target.id + '> <https://steamcommunity.com/profiles/' + realid + '>');
+                        const member = GetChannelSteamLog().guild.member(user);
+					    GetChannelSteamLog().send('<@' + json_me.id + '> uname: ' + member.user.username + ' dname: ' + member.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
                         message.channel.send(target + ' has now been registered with default stats and given the ranked role.');
                     }
                 });
