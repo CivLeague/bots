@@ -187,7 +187,7 @@ class C6Leaderboard
             }
         }
         for ( let x = this.glickoLb.length; x < 50; x++ ) {
-            msg += '`#' + (x+1) + '`\n';
+            msg += '#' + (x+1) + '\n';
             if ( ((x+1) % 10) == 0 ) {
                 var m = await channel.fetchMessage(messages[j]);
                 m.edit(msg + '```');
