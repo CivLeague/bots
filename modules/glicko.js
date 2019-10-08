@@ -1113,7 +1113,7 @@ class ParseMessage
                                                      losses,
                                                      plyr.civs
                                                     );
-                        await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
+                        //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
                             let plyr = await mongoUtil.getPlayer( pStats.dId );
                             if (plyr) {
