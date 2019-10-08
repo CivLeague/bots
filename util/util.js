@@ -277,6 +277,9 @@ class C6Util
 		{
             if ( i == "🤏" )
                 i = "621827736695996417";
+            else if ( i == "🏝" ) {
+                i = "%F0%9F%8F%9D";
+            }
 			// TODO: error detection here
 			await message.react(i);
 		}

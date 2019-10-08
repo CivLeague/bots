@@ -185,15 +185,6 @@ util.client.on('message', message =>
                 ["6⃣", "6 Hours"],
 				["➖", "No Limit"]
             ]), {} );
-
-		bot_vote.showChoice(message.channel, '**__Starting Era__**\n',
-			new Map([
-				["🇦", "Ancient"],
-				["🇨", "Classical"],
-				["🇲", "Medieval"],
-				["🇷", "Renaissance"],
-				["🇮", "Information"]
-			]), {} );
         }
 
         //show for everyone
@@ -202,14 +193,12 @@ util.client.on('message', message =>
 				["🇵", "Pangaea"],
 				["🇫", "Fractal"],
 				["🇨", "Continents"],
-				["🇦", "Archipelago"],
-				["🇸", "Inland Sea"],
-				["🇮", "Islands"],
-				["🔀", "Shuffle"],
-				["7⃣", "Seven Seas"],
 				["🤏", "Small Continents"],
-				["🇹", "Terra"],
-				["🏹", "Continents and Islands"]
+				["🏝", "Continents and Islands"],
+				["🇦", "Archipelago"],
+				["🇮", "Islands"],
+				["7⃣", "Seven Seas"],
+				["🔀", "Shuffle"]
 			]), {} );
 
         bot_vote.showChoice(message.channel, '**__World Age__**\n',
@@ -226,35 +215,6 @@ util.client.on('message', message =>
 		
 		if ( !isTeamVote )
 		{
-        bot_vote.showChoice(message.channel, '**__Disaster Intensity__**\n',
-            new Map([
-				["0⃣", "No Disasters"],
-				["1⃣", "Low Frequency"],
-				["2⃣", "Standard"],
-				["3⃣", "Increased Frequency"],
-				["4⃣", "High Frequency"]
-            ]), {} );
-
-		bot_vote.showChoice(message.channel, '**__City States__**\n',
-			new Map([
-				["🇷", "Raze All"],
-				["1⃣", "1 Capture (Raze rest)"],
-				["2⃣", "2 Capture (Raze rest)"],
-				["➖", "No Limit"]
-			]), {} );
-
-		bot_vote.showChoice(message.channel, '**__Barbarians__**\t\t',
-			new Map([
-				["➕", "Banned"],
-				["➖", "Not Banned"]
-			]), {} );
-			
-		bot_vote.showChoice(message.channel, '**__Nukes__**\t\t\t\t',
-			new Map([
-				["➕", "Banned"],
-				["➖", "Not Banned"]
-			]), {} );
-
 		bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
 			new Map([
 				["➕", "Allowed"],
