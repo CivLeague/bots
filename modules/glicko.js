@@ -709,6 +709,8 @@ class ParseMessage
                         console.log("thisCiv " + thisCiv);
 
                         thisCiv.wins = thisCiv.wins + 1;
+                        if (!plyr.subbedIn)  plyr.subbedIn  = 0;
+                        if (!plyr.subbedOut) plyr.subbedOut = 0;
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
@@ -718,7 +720,9 @@ class ParseMessage
                                                      plyr.games + 1,
                                                      plyr.wins + 1,
                                                      plyr.losses,
-                                                     plyr.civs
+                                                     plyr.civs,
+                                                     plyr.subbedIn + 1,
+                                                     plyr.subbedOut
                                                     );
                         //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
@@ -817,6 +821,8 @@ class ParseMessage
                         console.log("thisCiv " + thisCiv);
 
                         thisCiv.losses = thisCiv.losses + 1;
+                        if (!plyr.subbedIn)  plyr.subbedIn  = 0;
+                        if (!plyr.subbedOut) plyr.subbedOut = 0;
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
@@ -826,7 +832,9 @@ class ParseMessage
                                                      plyr.games + 1,
                                                      plyr.wins,
                                                      plyr.losses + 1,
-                                                     plyr.civs
+                                                     plyr.civs,
+                                                     plyr.subbedIn,
+                                                     plyr.subbedOut + 1
                                                     );
                         await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }
@@ -1039,6 +1047,9 @@ class ParseMessage
                                 losses = plyr.losses;
                             }
 
+                            if (!plyr.subbedIn)  plyr.subbedIn  = 0;
+                            if (!plyr.subbedOut) plyr.subbedOut = 0;
+
                             await mongoUtil.updatePlayer(pStats.dId,
                                                          Math.round(pStats.getRating()),
                                                          diff,
@@ -1047,7 +1058,9 @@ class ParseMessage
                                                          plyr.games + 1,
                                                          wins,
                                                          losses,
-                                                         plyr.civs
+                                                         plyr.civs,
+                                                         plyr.subbedIn,
+                                                         plyr.subbedOut
                                                         );
                             await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                         }
@@ -1103,6 +1116,9 @@ class ParseMessage
                             losses = plyr.losses;
                         }
 
+                        if (!plyr.subbedIn)  plyr.subbedIn  = 0;
+                        if (!plyr.subbedOut) plyr.subbedOut = 0;
+
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
@@ -1111,7 +1127,9 @@ class ParseMessage
                                                      plyr.games + 1,
                                                      wins,
                                                      losses,
-                                                     plyr.civs
+                                                     plyr.civs,
+                                                     plyr.subbedIn,
+                                                     plyr.subbedOut
                                                     );
                         //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
                     }

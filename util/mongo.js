@@ -65,6 +65,8 @@ module.exports = {
             games:      0,
             wins:       0,
             losses:     0,
+            subbedIn:   0,
+            subbedOut:  0,
             resets:     1
         });
     },
@@ -137,17 +139,19 @@ module.exports = {
         { upsert: true });
     },
 
-    updatePlayer: async function ( discordId, skill, diff, rd, vol, g, w, l, civs ) {
+    updatePlayer: async function ( discordId, skill, diff, rd, vol, g, w, l, civs, subIn, subOut ) {
         await _coll.updateOne({ _id : discordId }, {
             $set: {
-                rating: skill,
+                rating:     skill,
                 lastChange: diff,
-                rd:  rd,
-                vol: vol,
-                games: g,
-                wins: w,
-                losses: l,
-                civs: civs
+                rd:         rd,
+                vol:        vol,
+                games:      g,
+                wins:       w,
+                losses:     l,
+                civs:       civs,
+                subbedIn:   subIn,
+                subbedOut:  subOut
             },
             $currentDate: { lastModified: true }
         });
@@ -176,6 +180,22 @@ module.exports = {
             },
             $currentDate: { lastModified: true }
         });
+    },
+
+    getRatings: async function ( players ) {
+        let result = [];
+        for ( player of players ) {
+            let p = await _coll.findOne({ _id: player[1].id });
+            if (!p) {
+                p = {
+                    _id: player[1].id,
+                    rating: 1500
+                }
+            }
+            p.name = player[1].displayName;
+            result.push(p);
+        }
+        return result.sort((a, b) => (a.rating < b.rating) ? 1 : -1);
     },
 
     getLeaderboard: async function ( collection ) {
