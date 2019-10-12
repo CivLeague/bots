@@ -161,7 +161,7 @@ class StatsBotModule
                     if (!player) {
                         skill = 1500;
                     }
-                    let name  = player.name.replace(/[^0-9a-zA-Z_\[\]\(\)\-]/g, '');
+                    let name  = player.name.replace(/[^0-9a-zA-Z_\[\]\(\)\-\/ ]/g, '');
                     let skill = player.rating;
                     let rank  = this.getRank(skill);
                     let spaces = 20 - name.length;
