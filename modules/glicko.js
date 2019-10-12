@@ -10,6 +10,8 @@ const RealUtil = require('util');
 
 const http = require('http');
 
+const moderatorId = '291753249361625089';
+
 const deity     = '628461624524800000';
 const immortal  = '628464081346625536';
 const emperor   = '628464280118755351';
@@ -374,11 +376,11 @@ class ReportBotModule
 		{
 			if(reaction.message.channel.id != this.allowedChannelId) return; // only check reactions in #ranked_reporting
 
-			const isAdmin = reaction.message.channel.memberPermissions(user).has(Discord.Permissions.FLAGS.MANAGE_MESSAGES, true);
+			const isModerator = GetChannelSubLog().guild.member(user).roles.has(moderatorId);
 			const isDebugEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇨';
 			const isReportEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇷';
 
-			if(isDebugEmoji || (isAdmin && isReportEmoji))
+			if(isDebugEmoji || (isModerator && isReportEmoji))
 			{
 				let pm = new ParseMessage(reaction.message, user);
                 if ( pm.abort == false )
