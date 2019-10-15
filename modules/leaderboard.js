@@ -249,7 +249,7 @@ class C6Leaderboard
             if ( currDate - lastDate > 2628000000 ) {
                 console.log(this.glickoLb[i]._id + " decaying 150 points.");
                 console.log("old:\t" + this.glickoLb[i].rating);
-                await mongoUtil.setSkill( this.glickoLb[i]._id, this.glickoLb[i].rating - 150 );
+                await mongoUtil.changeSkill( this.glickoLb[i]._id, -150, db );
                 let p = await mongoUtil.getPlayer( this.glickoLb[i]._id );
                 console.log("new:\t" + p.rating);
             }

@@ -147,6 +147,7 @@ function checkCivs(civs) {
                 result.push('Pericles');
                 break;
             case "gandhi":
+            case "ghandi":
                 result.push('Gandhi');
                 break;
             case "chandragupta":
@@ -301,7 +302,7 @@ function checkCivs(civs) {
                 break;
             default:
                 if (c != "" && c != "tie" && c != "sub" && c != "for") {
-                    return "could not match `" + c +"` to a civ";
+                    return "Could not match `" + c +"` to a civ";
                 }
                 break;
         }
@@ -412,17 +413,18 @@ class ParseMessage
 		{
 			// @Moderator mention
 			if(line.includes('<@&291753249361625089>')) continue;
+            if(line === '') continue;
 			
 			if(line.includes('type'))
 			{
 				if(this.type != null)
 				{
-					this.error.add('two game types specified. only one possible');
+					this.error.add('\nTwo game types specified. only one possible');
 				}
 				else
 				{
 					if ( !this.assignType(line) )
-                        this.error.add('invalid game type... [allowed] ffa, diplo, duel, war, team');
+                        this.error.add('\nInvalid game type... [allowed] ffa, diplo, duel, war, team');
 				}
                 continue;
 			}
@@ -432,7 +434,7 @@ class ParseMessage
 			const matches = getMatches(regxp, line);
 			
             if ( matches.length == 0 ) {
-                this.error.add('No player found on line:\n' + line);
+                this.error.add('\nNo player found on line:\n' + line);
                 this.abort = true;
             }
 			else
@@ -444,12 +446,12 @@ class ParseMessage
 				{
 					if(this.host != null)
 					{
-						this.error.add('two hosts specified. only one possible');
+						this.error.add('\nTwo hosts specified... Only one allowed');
 					}
 					else if( message.mentions.users.get(groupMatch) == null )
 					{
 						// if we dont check for this the code will crash later (!)
-						this.error.add('specified host not part of the reported game');
+						this.error.add('\nSpecified host not part of the reported game');
 					}
 					else
 					{
@@ -491,7 +493,7 @@ class ParseMessage
 							/*const clean_subs = line.replace(/^[a-z0-9\s\@\<\>]/g, '');
 							console.log('[line] ' + line);
 							console.log('[clean] ' + clean_subs);*/
-							this.error.add('SUB without FOR keyword in [line] ' + line);
+							this.error.add('\nSUB without FOR keyword in [line] ' + line);
 						}
 					}
 
@@ -511,25 +513,25 @@ class ParseMessage
 					console.log('[civsMatched]' + civsMatched);
                     if ( typeof civsMatched == "string" ) {
                         if (civsMatched == "england") {
-					    	this.error.add('`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria`, `EleanorE`, or `EleanorF`');
+					    	this.error.add('\n`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria`, `EleanorE`, or `EleanorF`');
                             this.abort = true;
 		                    this.error.send(this.message.channel, 60);
                             return;
                         }
                         else if (civsMatched == "france") {
-                            this.error.add('`France` is too ambiguous on line:\n' + line + '\n\nPlease use `Catherine` or `EleanorF`');
+                            this.error.add('\n`France` is too ambiguous on line:\n' + line + '\n\nPlease use `Catherine` or `EleanorF`');
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
                         }
                         else if (civsMatched == "greece") {
-                            this.error.add('`Greece` is too ambiguous on line:\n' + line + '\n\nPlease use `Gorgo` or `Pericles`');
+                            this.error.add('\n`Greece` is too ambiguous on line:\n' + line + '\n\nPlease use `Gorgo` or `Pericles`');
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
                         }
-                        else if (civsMatched.startsWith("could")) {
-                            this.error.add(civsMatched + " on line:\n" + line);
+                        else if (civsMatched.startsWith("Could")) {
+                            this.error.add('\n' + civsMatched + " on line:\n" + line);
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
@@ -542,14 +544,14 @@ class ParseMessage
 					
 					if(civsMatched.length == 0)
 					{
-						this.error.add('no civ found for [line] ' + line);
+						this.error.add('\nNo civ found for [line] ' + line);
                         this.abort = true;
 		                this.error.send(this.message.channel, 60);
                         return;
 					}
 					else if(civsMatched.length != matches.length - matches_subs.length)
 					{
-						this.error.add('invalid amount of civs [' + civsMatched + '] found for [line] ' + line);
+						this.error.add('\nInvalid amount of civs [' + civsMatched + '] found for [line] ' + line);
                         this.abort = true;
 		                this.error.send(this.message.channel, 60);
                         return;
@@ -573,13 +575,13 @@ class ParseMessage
 		
 		if(this.host == null)
 		{
-            this.error.add('game must include a tagged host');
+            this.error.add('\nGame must include a tagged host');
             this.abort = true;
 		}
 		
 		if(this.type == null)
 		{
-            this.error.add('game must include a type... [allowed] ffa, diplo, war, team, duel');
+            this.error.add('\nGame must include a type... [allowed] ffa, diplo, war, team, duel');
             this.abort = true;
 		}
 				
@@ -597,7 +599,7 @@ class ParseMessage
 				}
 				else if((this.civState == 1 && m.civ != null) || (this.civState == 2 && m.civ == null))
 				{
-					this.error.add('error with player <@' + m[1] + '> :: a game can either have no civs or all players must have a reported civ');
+					this.error.add('\nError with player <@' + m[1] + '> :: a game can either have no civs or all players must have a reported civ');
                     this.abort = true;
 				}
 				
@@ -607,7 +609,7 @@ class ParseMessage
 
 		if(this.type == 3 && this.civCount != 2)
 		{
-			this.error.add('Duels can only score 2 players, not ' + this.civCount);
+			this.error.add('\nDuels can only score 2 players, not ' + this.civCount);
             this.abort = true;
 		}
 
@@ -1167,7 +1169,7 @@ class ParseMessage
                 }
             }
             this.getGlickoReport().then( report => {
-		        let gMsg = '**[CHECK MODE] No Errors Found**\n' + report;
+		        let gMsg = '`[CHECK MODE]`\n**No Errors Found**\n\n' + report;
 		        this.message.channel.send(gMsg).then( msg => { msg.delete(60000) });
             });
         }
@@ -1176,7 +1178,7 @@ class ParseMessage
 	async notify()
 	{
 		// construct new message with full changes
-		let gMsg = '';
+		let gMsg = '```[GAME]```';
 		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
 		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
 		
@@ -1195,9 +1197,10 @@ class ParseMessage
         });
 		
 		GetChannelReportsProcessed().send(
-			'Approved By: ' + this.user + '\n' +
-			'Reported By: ' + this.message.author + '\n' + // FIX later: this.displayNameFromId(this.message.author.id)
-			'\n' + this.message.content
+            '```[GAME]```' +
+			this.message.content + '\n' +
+			'Reported By: ' + this.message.author + '\n' +
+			'Approved By: ' + this.user
 		);
 
         this.message.channel.send(this.user + '\n-Report Finished Successfully-').then( msg => {

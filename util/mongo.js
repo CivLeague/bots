@@ -173,13 +173,23 @@ module.exports = {
         });
     },
 
-    setSkill: async function ( discordId, skill ) {
-        await _coll.updateOne({ _id : discordId }, {
-            $set: {
-                rating: skill
-            },
-            $currentDate: { lastModified: true }
-        });
+    changeSkill: async function ( discordId, db, change ) {
+        if (db == 'main') {
+            await _main.updateOne({ _id : discordId }, {
+                $inc: {
+                    rating: change
+                },
+                $currentDate: { lastModified: true }
+            });
+        }
+        else if (db == 'team') {
+            await _team.updateOne({ _id : discordId }, {
+                $inc: {
+                    rating: change
+                },
+                $currentDate: { lastModified: true }
+            });
+        }
     },
 
     getRatings: async function ( players ) {

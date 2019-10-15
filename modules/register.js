@@ -339,6 +339,7 @@ class RegisterModule
                         message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
                             msg.delete(20000);
                         });
+                        return;
                     }
 
                     let sExists = await mongoUtil.findBySteam( realid );
@@ -347,6 +348,7 @@ class RegisterModule
                         message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
                             msg.delete(20000);
                         });
+                        return;
                     }
 
                     let ret = await mongoUtil.registerPlayer(target.id, realid, target.user.username, target.displayName);
@@ -355,8 +357,7 @@ class RegisterModule
                     }
                     else {
 			            target.addRoles([ranked, chieftain]);
-                        const member = GetChannelSteamLog().guild.member(user);
-					    GetChannelSteamLog().send('<@' + json_me.id + '> uname: ' + member.user.username + ' dname: ' + member.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
+					    GetChannelSteamLog().send('<@' + json_me.id + '> uname: ' + target.user.username + ' dname: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
                         message.channel.send(target + ' has now been registered with default stats and given the ranked role.');
                     }
                 });

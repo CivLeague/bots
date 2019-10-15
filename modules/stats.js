@@ -7,6 +7,8 @@ const cmd_stats = '.stats';
 const cmd_ratings = '.ratings';
 const cmd_separator = ' ';
 
+const moderatorId = '291753249361625089';
+
 //const file_myleague = 'data/myleague.txt';
 
 function GetBotCommands() { return util.getChannel(304782408526594049); }
@@ -164,7 +166,7 @@ class StatsBotModule
                     let name  = player.name.replace(/[^0-9a-zA-Z_\[\]\(\)\-\/ ]/g, '');
                     let skill = player.rating;
                     let rank  = this.getRank(skill);
-                    let spaces = 20 - name.length;
+                    let spaces = 26 - name.length;
 
                     msg += '\n' + name;
                     while ( spaces > 0 ) {
@@ -184,6 +186,52 @@ class StatsBotModule
                 error.send(message.channel, 30);
             }
 		}
+        else if ( (content.startsWith('.changerating') || content.startsWith('.changeskill'))
+                  && message.channel == GetBotCommands()
+                  && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
+            message.delete();
+
+            let usage = '\n**USAGE**:\n`.changeskill`  `[team]`  `<member tag>`  `<amount>`';
+            if ( content == '.changerating' ) {
+                message.reply(usage).then( m => { m.delete(20000) });
+                return;
+            }
+                
+            let target = null;
+            if( message.mentions.members.size == 0 ) {
+                message.reply('\nYou must tag someone to change their rating' + usage).then( m => { m.delete(20000) });
+                return;
+            }
+            else if( message.mentions.members.size == 1 ) {
+                target = message.mentions.members.array().shift();
+                if ( !target ) {
+                    message.reply('\nCould not determine who to change rating for:' + usage).then( m => { m.delete(20000) });;
+                    return;
+                }
+            }
+            else {
+                message.reply('\nOnly one person can be tagged in order to change a rating' + usage).then( m => { m.delete(20000) });;
+                return;
+            }
+
+            let db = 'main';
+            if ( content.includes( 'team' ) )
+                db = 'team';
+            
+            let amt = content.split(' ').pop();
+            if ( !amt ) {
+                message.reply('\nCould not determine amount to change the rating by:' + usage).then( m => { m.delete(20000) });;
+                return;
+            }
+            amt = Number(amt);
+
+            if ( !Number.isInteger(amt) ) {
+                message.reply('\nCould not determine amount to change the rating by:' + usage).then( m => { m.delete(20000) });;
+                return;
+            }
+
+            mongoUtil.changeSkill( target.id, db, amt );
+        }
 	}
 }
 

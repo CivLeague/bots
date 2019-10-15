@@ -184,7 +184,7 @@ class C6Util
 		let split1 = [], split2 = [];
 		this.createSplit(allowed, split1, split2, 'Gorgo', 'Pericles');
 		this.createSplit(allowed, split1, split2, 'Gandhi', 'Chandragupta');
-		this.createSplit(allowed, split1, split2, 'England', 'Phoenicia');
+		this.createSplit(allowed, split1, split2, 'Victoria', 'Phoenicia');
 		this.createSplit(allowed, split1, split2, 'Australia', 'Netherlands');
 		this.createSplit(allowed, split1, split2, 'France', 'Scythia');
 		this.createSplit(allowed, split1, split2, 'America', 'Mapuche');
