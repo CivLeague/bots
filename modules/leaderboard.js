@@ -173,7 +173,7 @@ class C6Leaderboard
             let games = this.glickoLb[i].games;
 
             msg += name;
-            let spaces = 12 - name.length;
+            let spaces = 14 - name.length;
             for ( let k = 0; k < spaces; k++ ) {
                 msg += ' ';
             }
