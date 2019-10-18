@@ -13,6 +13,7 @@ const moderatorId = '291753249361625089';
 
 function GetBotCommands() { return util.getChannel(304782408526594049); }
 function GetBotTesting()  { return util.getChannel(351127558143868928); }
+function GetScrapReporting()  { return util.getChannel(631383877298159616); }
 function isBotChannel(channel) { return channel == GetBotCommands() || channel == GetBotTesting(); }
 
 const error_formatting = "Formatting error! Either use **.stats** for your own stats or **.stats @discordUser** to check someone else's stats";
@@ -45,7 +46,7 @@ class StatsBotModule
 	async handle(message)
 	{
 		if(message.author.bot == true) return; // ignore bot messages
-		if ( !isBotChannel(message.channel) ) return;
+		if ( !isBotChannel(message.channel) && message.channel != GetScrapReporting() ) return;
 		
         let error = errorHandler.create();
 		const content = message.content.toLowerCase();
@@ -187,12 +188,12 @@ class StatsBotModule
             }
 		}
         else if ( (content.startsWith('.changerating') || content.startsWith('.changeskill'))
-                  && message.channel == GetBotCommands()
+                  && (message.channel == GetBotCommands() || message.channel == GetScrapReporting())
                   && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
             message.delete();
 
             let usage = '\n**USAGE**:\n`.changeskill`  `[team]`  `<member tag>`  `<amount>`';
-            if ( content == '.changerating' ) {
+            if ( content == '.changerating' || content == '.changeskill' ) {
                 message.reply(usage).then( m => { m.delete(20000) });
                 return;
             }
@@ -200,17 +201,6 @@ class StatsBotModule
             let target = null;
             if( message.mentions.members.size == 0 ) {
                 message.reply('\nYou must tag someone to change their rating' + usage).then( m => { m.delete(20000) });
-                return;
-            }
-            else if( message.mentions.members.size == 1 ) {
-                target = message.mentions.members.array().shift();
-                if ( !target ) {
-                    message.reply('\nCould not determine who to change rating for:' + usage).then( m => { m.delete(20000) });;
-                    return;
-                }
-            }
-            else {
-                message.reply('\nOnly one person can be tagged in order to change a rating' + usage).then( m => { m.delete(20000) });;
                 return;
             }
 
@@ -230,7 +220,9 @@ class StatsBotModule
                 return;
             }
 
-            mongoUtil.changeSkill( target.id, db, amt );
+            for (let target of message.mentions.members.array()) {
+                mongoUtil.changeSkill( target.id, db, amt );
+            }
         }
 	}
 }
