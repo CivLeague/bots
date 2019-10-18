@@ -12,6 +12,7 @@ const cmd_forceregister = '.forceregister';
 
 function GetChannelSteamLog() { return util.getChannel(615805208848498688); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
+const vhaId = '375413414987825152';
 const moderatorId = '291753249361625089';
 const ranked = '615780983047979008';
 const chieftain = '628464491129995264';
@@ -296,7 +297,7 @@ class RegisterModule
                 });
             });
         }
-		else if( content.startsWith(cmd_forceregister) && message.member.roles.has(moderatorId) )
+		else if( content.startsWith(cmd_forceregister) && message.member.roles.has(vhaId) )
         {
             message.delete();
             if ( message.mentions.members.size == 0 )
