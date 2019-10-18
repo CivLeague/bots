@@ -380,14 +380,38 @@ class ReportBotModule
 			const isModerator = GetChannelSubLog().guild.member(user).roles.has(moderatorId);
 			const isDebugEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇨';
 			const isReportEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇷';
+            let reactions = reaction.message.reactions;
 
 			if(isDebugEmoji || (isModerator && isReportEmoji))
 			{
+                if ( isModerator && isReportEmoji ) {
+                    for (let r of reactions) {
+                        if ( r[1].emoji.name == '🛑'  || r[1].emoji.name == '❌' || r[1].emoji.name == '⛔'  || r[1].emoji.name == '🚫') {
+                            reaction.message.channel.send(user + ' this report should not be processed until the issue related to it is resolved').then ( m => {
+                                m.delete(20000);
+                            });
+                            return;
+                        }
+                    }
+                }
 				let pm = new ParseMessage(reaction.message, user);
                 if ( pm.abort == false )
 				    pm.parseGameReport(isDebugEmoji);
 			}
+            //else if ( !isModerator && !isDebugEmoji ) {
+            //    reaction.remove( user );
+            //    return;
+            //}
 		});
+
+        util.client.on('message', ( msg ) => {
+            if ( msg.author.bot ) return;
+
+            let content = msg.content;
+            if ( content.toLowerCase().includes( 'host' ) && content.toLowerCase().includes( 'type' ) ) {
+                msg.react('🇨');
+            }
+        });
 	}
 }
 
