@@ -11,6 +11,7 @@ const RealUtil = require('util');
 const http = require('http');
 
 const moderatorId = '291753249361625089';
+const botId = '293018308402348033';
 
 const deity     = '628461624524800000';
 const immortal  = '628464081346625536';
@@ -378,6 +379,7 @@ class ReportBotModule
 			if(reaction.message.channel.id != this.allowedChannelId) return; // only check reactions in #ranked_reporting
 
 			const isModerator = GetChannelSubLog().guild.member(user).roles.has(moderatorId);
+			const isBot = GetChannelSubLog().guild.member(user).roles.has(botId);
 			const isDebugEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇨';
 			const isReportEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇷';
             let reactions = reaction.message.reactions;
@@ -398,10 +400,10 @@ class ReportBotModule
                 if ( pm.abort == false )
 				    pm.parseGameReport(isDebugEmoji);
 			}
-            //else if ( !isModerator && !isDebugEmoji ) {
-            //    reaction.remove( user );
-            //    return;
-            //}
+            else if ( !isModerator && !isBot && !isDebugEmoji ) {
+                reaction.remove( user );
+                return;
+            }
 		});
 
         util.client.on('message', ( msg ) => {
@@ -1193,7 +1195,7 @@ class ParseMessage
                 }
             }
             this.getGlickoReport().then( report => {
-		        let gMsg = '`[CHECK MODE]`\n**No Errors Found**\n\n' + report;
+		        let gMsg = '```[CHECK MODE]```\n**No Errors Found**\n\n' + report;
 		        this.message.channel.send(gMsg).then( msg => { msg.delete(60000) });
             });
         }
