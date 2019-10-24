@@ -1264,7 +1264,7 @@ class ParseMessage
 				for(var j = 0; j < max_j; ++j)
 				{
 					const m = this.positions[i][j];
-					if(max_j != 1) msg += '(TIE ' + (i+1) + ') ';
+					if(max_j != 1 && m.subType == 0) msg += '(TIE ' + (i+1) + ') ';
 					else msg += (i+1) + ': ';
 					
 					const displayName = this.displayNameFromM(m);
@@ -1275,13 +1275,6 @@ class ParseMessage
 		return msg;
 	}
 
-	displayNameFromM2(m)
-	{
-		let displayName = this.displayNameFromId(m.dId);
-		if(m.subType == 1) displayName = ' **[SUB]** ' + displayName;
-		if(m.subType == 2) displayName = ' **[ORIG]** ' + displayName;
-		return displayName;
-	}
 	displayNameFromM(m)
 	{
 		let displayName = this.displayNameFromId(m[1]);
@@ -1291,9 +1284,8 @@ class ParseMessage
 	}
 	displayNameFromId(id)
 	{
-		const user = this.message.mentions.users.get(id);
+        const user = this.message.mentions.users.get(id);
 		const member = this.message.guild.member(user);
-		//return (user == null ? '**Deleted User**' : (member == null ? user.username : member.displayName));
 		return (user == null ? '**Deleted User**' : (member == null ? user.username : '<@' + id + '>'));
 	}
 	
