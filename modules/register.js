@@ -137,7 +137,6 @@ const srv = http.createServer( (req, res) =>
                         let sExists = await mongoUtil.findBySteam( realid );
                         if ( sExists ) {
                             console.log('SteamId (' + realid + ') already registered');
-                            console.log('username:\t' + member.user.username + '\ndisplayName:\t' + member.displayName);
                             message.reply( '\n**Error**: you are already registered.' );
                             res.end('Error: you are already registered.' );
                             return;
@@ -196,7 +195,7 @@ const srv = http.createServer( (req, res) =>
 					        	// Finish up HTTP reply
 					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
 					        	
-					        	GetChannelSteamLog().send('<@' + json_me.id + '> uname: ' + member.user.username + ' dname: ' + member.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
+					        	GetChannelSteamLog().send('<@' + json_me.id + '>\nUsername: ' + member.user.username + '\nDisplay Name: ' + member.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
                                 member.addRoles([ranked, chieftain]);
 					        }
@@ -346,7 +345,7 @@ class RegisterModule
                     let sExists = await mongoUtil.findBySteam( realid );
                     if ( sExists ) {
                         console.log(target.displayName + ' (' + realid + ') steam already registered');
-                        message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
+                        message.reply( '\n**Error**: ' + target + ' is already registered as ' + '<@' + sExists.discord_id + '>.' ).then( msg => {
                             msg.delete(20000);
                         });
                         return;
@@ -358,7 +357,7 @@ class RegisterModule
                     }
                     else {
 			            target.addRoles([ranked, chieftain]);
-					    GetChannelSteamLog().send('<@' + json_me.id + '> uname: ' + target.user.username + ' dname: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
+					    GetChannelSteamLog().send('Force Register by ' + message.member + '\n' + target + '\nUsername: ' + target.user.username + 'Display Name: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
                         message.channel.send(target + ' has now been registered with default stats and given the ranked role.');
                     }
                 });
