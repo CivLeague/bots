@@ -92,6 +92,25 @@ module.exports = {
         return await _players.findOne({ steam_id: steamId });
     },
     
+    changeDiscord: async function ( steamId, discordId, uname, dname ) {
+        let player = await _players.findOne({ steam_id: steamId });
+        let names = [];
+        if ( player ) {
+            if ( player.names )
+                newNames = player.names;
+
+            names.push ( { "user_name": uname, "display_name": dname } );
+            await _players.updateOne({ steam_id: steamId }, {
+                $set: {
+                    discord_id: discordId,
+                    otherNames: names
+                }
+            });
+            return true;
+        }
+        return false;
+    },
+    
     updateCiv: async function ( civ, place, skill ) {
         let places = [];
         let skills = [];

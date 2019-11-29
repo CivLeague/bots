@@ -82,9 +82,21 @@ voting.on('timeout', async(vote) =>
 		if(vote.messages.length != 0)
 		{
 			const firstMessage = vote.messages.shift();
-			await firstMessage.edit('--- This vote was deleted due to inactivity ---');
+            try {
+			    await firstMessage.edit('--- This vote was deleted due to inactivity ---');
+            }
+            catch ( e ) {
+                //do nothing
+            }
 		
-			for(let m of vote.messages) await m.delete();
+			for(let m of vote.messages) {
+                try {
+                    await m.delete();
+                }
+                catch ( e ) {
+                    //do nothing
+                }
+            }
 		}
 	}
 });
@@ -104,7 +116,7 @@ util.client.on('message', message =>
 		const vchannel = message.member.voiceChannel;
 		if (!vchannel)
 		{
-            message.reply("you must be in a voicechannel to use the votebot!");
+            message.reply("you must be in a voice channel to use the votebot!");
             return;
 		}
 		//grab list of players in voice channel that are not part of the game
@@ -171,24 +183,50 @@ util.client.on('message', message =>
 		
 		if ( !isTeamVote )
 		{
-		bot_vote.showChoice(message.channel, '**__Game Mode__**\n',
-			new Map([
-				["🇩", "Diplo"],
-				["➕", "Diplo+"],
-				["🇼", "Always War"],
-				["🇵", "Always Peace"]
-			]), {} );
+		    bot_vote.showChoice(message.channel, '**__Game Mode__**\t',
+		    	new Map([
+		    		["🇩", "Diplo"],
+		    		["➕", "Diplo+"],
+		    		["🇼", "Always War"],
+		    		["🇵", "Always Peace"]
+		    	]), {} );
 
-        bot_vote.showChoice(message.channel, '**__Game Duration__**\n',
-            new Map([
-                ["4⃣", "4 Hours"],
-                ["6⃣", "6 Hours"],
-				["➖", "No Limit"]
-            ]), {} );
+		    bot_vote.showChoice(message.channel, '**__Official Friends/Allies__**\t',
+		    	new Map([
+		    		["0⃣", "0"],
+		    		["1⃣", "1"],
+		    		["2⃣", "2"],
+		    		["♾️", "Unlimited"]
+		    	]), {} );
+
+		    bot_vote.showChoice(message.channel, '**__Gold Gifting/Trading__**\t',
+		    	new Map([
+		    		["✅", "Allowed"],
+		    		["🚫", "Not Allowed"]
+		    	]), {} );
+
+		    bot_vote.showChoice(message.channel, '**__Luxuries Gifting/Trading__**\t',
+		    	new Map([
+		    		["✅", "Allowed"],
+		    		["🚫", "Not Allowed"]
+		    	]), {} );
+
+		    bot_vote.showChoice(message.channel, '**__Strategics Gifting/Trading__**\t',
+		    	new Map([
+		    		["✅", "Allowed"],
+		    		["🚫", "Not Allowed"]
+		    	]), {} );
+
+            bot_vote.showChoice(message.channel, '**__Game Duration__**\t',
+                new Map([
+                    ["4⃣", "4 Hours"],
+                    ["6⃣", "6 Hours"],
+		    		["♾️", "Unlimited"]
+                ]), {} );
         }
 
         //show for everyone
-		bot_vote.showChoice(message.channel, '**__Map Type__**\n',
+		bot_vote.showChoice(message.channel, '**__Map Type__**\t',
 			new Map([
 				["🇵", "Pangaea"],
 				["🇫", "Fractal"],
@@ -201,26 +239,26 @@ util.client.on('message', message =>
 				["🔀", "Shuffle"]
 			]), {} );
 
-        bot_vote.showChoice(message.channel, '**__World Age__**\n',
+        bot_vote.showChoice(message.channel, '**__World Age__**\t',
             new Map([
 				["🇸", "Standard Age"],
                 ["🇳", "New Age (more mountains/hills)"]
             ]), {} );
 
-        bot_vote.showChoice(message.channel, '**__Resources__**\n',
+        bot_vote.showChoice(message.channel, '**__Resources__**\t',
             new Map([
 				["🇸", "Standard"],
                 ["🇦", "Abundant"]
             ]), {} );
-		
+
 		if ( !isTeamVote )
 		{
-		bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
-			new Map([
-				["➕", "Allowed"],
-				["➖", "Not Allowed"],
-                ["🇷", "All Random Civs"]
-			]), {} );
+		    bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
+		    	new Map([
+		    		["✅", "Allowed"],
+		    		["🚫", "Not Allowed"],
+                    ["🇷", "All Random Civs"]
+		    	]), {} );
 		}
 		
         /// Suggested Civ Bans

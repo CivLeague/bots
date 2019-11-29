@@ -87,7 +87,7 @@ class C6Leaderboard
                         }
                     }
 
-                    for ( let x = this.glickoLb.length; x < 50; x++ ) {
+                    for ( let x = this.glickoLb.length; x < 46; x++ ) {
                         msg += '#' + (x+1) + '\n';
                         if ( ((x+1) % 10) == 0 ) {
                             var m = await channel.fetchMessage(messages[j]);
@@ -186,7 +186,7 @@ class C6Leaderboard
                 j++;
             }
         }
-        for ( let x = this.glickoLb.length; x < 50; x++ ) {
+        for ( let x = this.glickoLb.length; x < 46; x++ ) {
             msg += '#' + (x+1) + '\n';
             if ( ((x+1) % 10) == 0 ) {
                 var m = await channel.fetchMessage(messages[j]);

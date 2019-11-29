@@ -10,6 +10,8 @@ const steam = new SteamAPI(util.getToken('steam'));
 const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
 
+const setid_usage = '`.setid`  `<tagged member>`  `<steam to match>`';
+
 function GetChannelSteamLog() { return util.getChannel(615805208848498688); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const vhaId = '375413414987825152';
@@ -137,7 +139,7 @@ const srv = http.createServer( (req, res) =>
                         let sExists = await mongoUtil.findBySteam( realid );
                         if ( sExists ) {
                             console.log('SteamId (' + realid + ') already registered');
-                            message.reply( '\n**Error**: you are already registered.' );
+                            GetChannelWelcome().send( '**Error**: you are already registered.' );
                             res.end('Error: you are already registered.' );
                             return;
                         }
@@ -187,7 +189,7 @@ const srv = http.createServer( (req, res) =>
                                 let ret = await mongoUtil.registerPlayer(json_me.id, realid, member.user.username, member.displayName);
                                 if (!ret) {
                                     console.log('could not register new player:\n\tdiscord:\t' + json_me.id + '\n\tsteam:\t' + realid);
-                                    GetChannelWelcome().send( '\n**Error**: an error occured during registration. Please contact a moderator.' );
+                                    GetChannelWelcome().send( '**Error**: an error occured during registration. Please contact a moderator.' );
                                     res.end( 'Error: an error occured during registration. Please contact a moderator.' );
                                     return;
                                 }
@@ -195,7 +197,17 @@ const srv = http.createServer( (req, res) =>
 					        	// Finish up HTTP reply
 					        	res.write('<b>Success</b><br>You may close this window and return to Discord');
 					        	
-					        	GetChannelSteamLog().send('<@' + json_me.id + '>\nUsername: ' + member.user.username + '\nDisplay Name: ' + member.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
+                                const embed = new Discord.RichEmbed()
+                                    .setColor('#0099ff')
+                                    .setTitle(user.tag + ' Registered')
+                                    .setDescription('https://steamcommunity.com/profiles/' + realid)
+                                    .setThumbnail(user.avatarURL)
+                                    .addField('Tag', member + '\n\n**Username**\n' + member.user.username, true)
+                                    .addField('Id', member.id + '\n\n**Display Name**\n' + member.displayName, true)
+                                    //.setImage(user.avatarURL)
+                                    .setTimestamp();
+                        
+                                GetChannelSteamLog().send(embed);
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
                                 member.addRoles([ranked, chieftain]);
 					        }
@@ -263,7 +275,14 @@ class RegisterModule
             }
             else {
                 const state_string = JSON.stringify({ user: target.id, chan: message.channel.id });
-                message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
+                const link = 'https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string;
+                const embed = new Discord.RichEmbed()
+                    .setColor('#0099ff')
+                    .setTitle('Authorize Bot')
+                    .setDescription('The CPL Bot needs authorization in order to search your Discord profile for your linked Steam account. It uses Steam accounts to verify unique users.\n\n[Click here to authorize](' + link + ')');
+                message.reply(embed).then( msg => { msg.delete(20000) } );
+
+                //message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
             }
         }
         else if ( content.startsWith('.check') && message.member.roles.has(moderatorId) )
@@ -354,11 +373,24 @@ class RegisterModule
                     let ret = await mongoUtil.registerPlayer(target.id, realid, target.user.username, target.displayName);
                     if (!ret) {
                         console.log('could not register new player:\n\tdiscord:\t' + target.id + '\n\tsteam:\t' + realid);
+                        message.reply( '\nAn unknown **Error** occured.' ).then( msg => {
+                            msg.delete(20000);
+                        });
+                        return;
                     }
                     else {
+                        const embed = new Discord.RichEmbed()
+                            .setColor('#7A2F8F')
+                            .setTitle('.forceregister by ' + message.member.user.tag)
+                            .setDescription('https://steamcommunity.com/profiles/' + realid)
+                            .setThumbnail(target.user.avatarURL)
+                            .addField('Tag', target + '\n\n**Username**\n' + target.user.username, true)
+                            .addField('Id', target.id + '\n\n**Display Name**\n' + target.displayName, true)
+                            //.setImage(target.user.avatarURL)
+                            .setTimestamp();
+                        GetChannelSteamLog().send(embed);
+                        message.channel.send(target + ', you have been registered with default stats and given the ranked role.\n\n Please read <#550251325724557322>.');
 			            target.addRoles([ranked, chieftain]);
-					    GetChannelSteamLog().send('Force Register by ' + message.member + '\n' + target + '\nUsername: ' + target.user.username + 'Display Name: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
-                        message.channel.send(target + ' has now been registered with default stats and given the ranked role.');
                     }
                 });
             }
@@ -368,6 +400,91 @@ class RegisterModule
                 message.channel.send("**Error**\n" + err);
             }
             return;
+        }
+		else if( content.startsWith('.setid') && message.member.roles.has(vhaId) ) {
+            message.delete();
+            if ( message.mentions.members.size == 0 ) {
+                    message.channel.send(setid_usage).then( msg => {
+                        msg.delete(20000);
+                    });
+                    return;
+            }
+		    else if ( message.mentions.members.size > 1 ) {
+                    message.channel.send('**Error:** too many members were tagged:\n' + setid_usage).then( msg => {
+                        msg.delete(20000);
+                    });
+                    return;
+            }
+
+            const target = message.mentions.members.values().next().value;
+
+            try
+            {
+                console.log(message.content);
+                let steamlink = message.content.split(' ').pop();
+                let steamid = await steam.resolve(steamlink);
+                console.log('steamID64:' + steamid);
+
+                util.makeRequest(https, {
+                    method: 'GET',
+                    hostname: 'steamid.io',
+                    path: '/lookup/' + steamid
+                }, null, async (response) =>
+                {
+                    let realid = response.split('data-steamid64').pop().slice(2, 19);
+                    console.log('real steamID64:' + realid);
+
+                    let dExists = await mongoUtil.findByDiscord( target.id );
+                    if ( dExists ) {
+                        console.log(target.displayName + ' (' + target.id + ') discord already registered');
+                        message.reply( '\n**Error**: ' + target + ' is already registered.' ).then( msg => {
+                            msg.delete(20000);
+                        });
+                        return;
+                    }
+
+                    let sExists = await mongoUtil.findBySteam( realid );
+                    if ( !sExists ) {
+                        console.log('could not swap the ID of player:\n\tdiscord:\t' + target.id + '\n\tsteam:\t' + realid);
+                        message.reply( '\n**Error**: ' + target + '\'s steam is not currently registered. Have them register normally.' ).then( msg => {
+                            msg.delete(20000);
+                        });
+                        return;
+                    }
+
+                    let ret = await mongoUtil.changeDiscord( realid, target.id, target.user.username, target.displayName );
+                    if (!ret) {
+                        message.reply( '\n**Error**: ' + target + '\'s steam is not currently registered. Have them register normally.' ).then( msg => {
+                            msg.delete(20000);
+                        });
+                        return;
+                    }
+
+                    const oldUser = util.client.users.get(sExists.discord_id);
+                    const oldMember = GetChannelSteamLog().guild.member(oldUser);
+                    const embed = new Discord.RichEmbed()
+                        .setColor('#A62019')
+                        .setTitle('.set-id by ' + message.member)
+                        .setDescription('https://steamcommunity.com/profiles/' + realid)
+                        .setThumbnail(target.user.avatarURL)
+                        .addField('New Tag', target + '\n\n**New Id**\n' + target.id + '\n\n**New Username**\n' + target.user.username + '\n\n**New Display Name**\n' + target.displayName, true)
+                        .addField('Old Tag', oldMember + '\n\n**Old Id**\n' + oldMember.id + '\n\n**Old Username**\n' + oldUser.username + '\n\n**Old Display Name**\n' + oldMember.displayName, true)
+                        //.setImage(target.user.avatarURL)
+                        .setTimestamp();
+                    GetChannelSteamLog().send(embed);
+                    GetChannelSteamLog().send('`.setid` by ' + message.member + '\nOld Discord: <@' + sExists.discord_id + '>\nNew Discord: ' + target + '\nUsername: ' + target.user.username + '\nDisplay Name: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
+                    message.channel.send(target + ' is now registered to steamId == `' + realid + '`.\n<@' + sExists.discord_id + '> has had their ranked role removed and been kicked from the server.').then( msg => { msg.delete(20000); });
+                    const reason = 'new discord: ' + target.id;
+                    await oldMember.removeRole(ranked, reason);
+                    await oldMember.kick(reason);
+                    target.addRoles([ranked, chieftain]);
+                });
+            }
+            catch (err)
+            {
+                console.log(err);
+                message.channel.send("**Error**\n" + err);
+            }
         }
 	}
 }

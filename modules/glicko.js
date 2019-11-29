@@ -797,9 +797,9 @@ class ParseMessage
                 let pStats = glickoPositions[i][j];
                 if ( pStats.dId == origId ) {
                     var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
-                    if ( diff > -20 ) {
-                        diff = -20;
-                        pStats.setRating(pStats.oldRating - 20);
+                    if ( diff > 20 ) {
+                        diff = 20;
+                        pStats.setRating(pStats.oldRating + diff);
                     }
 			        for (var k = 0; k < this.positions.length; ++k) {
 				        for(var m of this.positions[k]) {
@@ -989,8 +989,8 @@ class ParseMessage
                     p.oldVol = p.getVol();
                     if ( p.subType == 1 && p.ratingDiff < 20 )
                             p.setRating(p.oldRating + 20);
-                    else if ( p.subType == 2 && p.ratingDiff > -20 )
-                            p.setRating(p.oldRating - 20);
+                    else if ( p.subType == 2 && p.ratingDiff > 20 )
+                            p.setRating(p.oldRating + 20);
                     console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
                 }
             }

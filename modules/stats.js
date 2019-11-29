@@ -116,6 +116,7 @@ class StatsBotModule
                     let sIn   = player.subbedIn  ? player.subbedIn  : 0;
                     let sOut  = player.subbedOut ? player.subbedOut : 0;
                     let rank  = this.getRank(skill);
+                    let rd    = Math.round(player.rd);
 
                     msg += target;
                     msg += '```js';
@@ -127,6 +128,7 @@ class StatsBotModule
                     msg += '\nLosses:  ' + losses;
                     msg += '\nSub In:  ' + sIn;
                     msg += '\nSub Out: ' + sOut;
+                    msg += '\nRD:      ' + rd;
                     msg += '```';
                 }
                 else {
