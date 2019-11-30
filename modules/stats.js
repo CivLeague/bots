@@ -177,9 +177,9 @@ class StatsBotModule
 
             var player = await mongoUtil.getPlayer(target.id);
             if ( player ) {
-                let msg = '';
-                let spaces = "% ";
-                let winP = 0;
+                let pages = [];
+                let page = 1;
+
                 let bCivs = player.civs.sort( 
                     function(a, b) { 
                         let winP = (b.wins / (b.wins + b.losses)) - (a.wins / (a.wins + a.losses))
@@ -193,14 +193,73 @@ class StatsBotModule
 
                 console.log( bCivs );
 
+                let fields = [];
+                let str1 = '';
+                let str2 = '';
+                let i = 0;
+                for ( i = 0; i < bCivs.length; i++ ) {
+                    if (bCivs[i].name.toLowerCase() == 'eleanore' || bCivs[i].name.toLowerCase() == 'eleanorf') bCivs[i].name = 'Eleanor';
+                    console.log ( i + ': ' + bCivs[i].name );
+                    if ( i > 0 && str1 != '' ) {
+                        str1 += '\n';
+                        str2 += '\n';
+                    }
+                    str1 += '<' + util.civs[bCivs[i].name].tag + util.civs[bCivs[i].name].id + '>' + bCivs[i].name;
+                    str2 += (bCivs[i].wins / (bCivs[i].wins + bCivs[i].losses) * 100).toFixed(0) + '%';
+                    if ( ((i+1) % 5) == 0 ) {
+                        fields.push({ name: 'Civ', value: str1, inline: true });
+                        fields.push({ name: 'Win %', value: str2, inline: true });
+                        pages.push(fields);
+                        str1 = '';
+                        str2 = '';
+                        fields = [];
+                    }
+                }
+                if ( str1 != '' ) {
+                    fields = [];
+                    fields.push({ name: 'Civ', value: str1, inline: true });
+                    fields.push({ name: 'Win %', value: str2, inline: true });
+                    pages.push(fields);
+                }
+
                 let embed = new Discord.RichEmbed()
                     .setColor('#0099ff')
                     .setTitle(target.displayName + '\'s Best Civs')
-                    .setThumbnail(target.user.avatarURL)
-                    .addField('Civ', '<' + util.civs[bCivs[0].name].tag + util.civs[bCivs[0].name].id + '>' + bCivs[0].name + '\n' + '<' + util.civs[bCivs[1].name].tag + util.civs[bCivs[1].name].id + '>' + bCivs[1].name + '\n' + '<' + util.civs[bCivs[2].name].tag + util.civs[bCivs[2].name].id + '>' + bCivs[2].name + '\n' + '<' + util.civs[bCivs[3].name].tag + util.civs[bCivs[3].name].id + '>' + bCivs[3].name + '\n' + '<' + util.civs[bCivs[4].name].tag + util.civs[bCivs[4].name].id + '>' + bCivs[4].name, true)
-                    .addField('Win %', bCivs[0].wins / (bCivs[0].wins + bCivs[0].losses) * 100 + '%\n' + bCivs[1].wins / (bCivs[1].wins + bCivs[1].losses) * 100 + '%\n' + bCivs[2].wins / (bCivs[2].wins + bCivs[2].losses) * 100 + '%\n' + bCivs[3].wins / (bCivs[3].wins + bCivs[3].losses) * 100 + '%\n' + bCivs[4].wins / (bCivs[4].wins + bCivs[4].losses) * 100 + '%', true);
+                    .setFooter(`Page ${page} of ${pages.length}`)
+                    .setThumbnail(target.user.avatarURL);
+                embed.fields = pages[page-1];
 
-                message.channel.send(embed);
+                message.channel.send(embed).then( msg => {
+                    msg.react('◀️').then( r => {
+                        msg.react('▶️')
+
+                        const backFilter = (reaction, user) => reaction.emoji.name === '◀️' && user.id === message.author.id;;
+                        const nextFilter = (reaction, user) => reaction.emoji.name === '▶️' && user.id === message.author.id;;
+
+                        const back = msg.createReactionCollector(backFilter, { time: 180000, dispose: true });
+                        const next = msg.createReactionCollector(nextFilter, { time: 180000, dispose: true});
+
+                        back.on('collect', r => {
+                            r.remove(message.author);
+                            if (page === 1)
+                                return;
+                            page--;
+                            embed.fields = pages[page-1];
+                            embed.setFooter(`Page ${page} of ${pages.length}`);
+                            msg.edit(embed);
+                        })
+
+                        next.on('collect', r => {
+                            r.remove(message.author);
+                            if (page === pages.length)
+                                return;
+                            page++
+                            embed.fields = pages[page-1];
+                            embed.setFooter(`Page ${page} of ${pages.length}`);
+                            msg.edit(embed);
+                        })
+                    })
+                });
             }
         }
 		else if( content.startsWith(cmd_ratings) )
