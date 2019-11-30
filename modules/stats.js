@@ -1,6 +1,7 @@
 const util = require('../util/util');
 const mongoUtil = require('../util/mongo');
 
+const Discord = require('discord.js');
 const errorHandler = require('../util/errormessage');
 
 const cmd_stats = '.stats';
@@ -126,6 +127,7 @@ class StatsBotModule
                     msg += '\nWin %:   ' + wp + '%';
                     msg += '\nWins:    ' + wins;
                     msg += '\nLosses:  ' + losses;
+                    msg += '\nZeroes:  ' + ( games - wins - losses );
                     msg += '\nSub In:  ' + sIn;
                     msg += '\nSub Out: ' + sOut;
                     msg += '\nRD:      ' + rd;
@@ -141,6 +143,64 @@ class StatsBotModule
                 let error = errorHandler.create();
                 error.add(err);
                 error.send(message.channel, 30);
+            }
+        }
+        else if( content.startsWith('.bestcivs') ) {
+            if ( !isBotChannel(message.channel) ) return;
+
+            let target = null;
+            if(message.mentions.members.size == 0)
+            {
+                // usage on 'self'
+                target = message.member;
+            }
+            else if(message.mentions.members.size == 1)
+            {
+                target = message.mentions.members.array().shift();
+            }
+            else
+            {
+                message.channel.send('The **' + cmd_stats + '** command cannot be used for more than one player');
+                return;
+            }
+
+            if( !target ) // should never happen?!
+            {
+                console.log("CRASH_ERROR [content] " + content + " [mentions.members.size] " + message.mentions.members.size);
+                return;
+            }
+
+            let msg = '';
+            if ( content.includes('team') )
+                mongoUtil.useStatsColl('team');
+            else mongoUtil.useStatsColl('main');
+
+            var player = await mongoUtil.getPlayer(target.id);
+            if ( player ) {
+                let msg = '';
+                let spaces = "% ";
+                let winP = 0;
+                let bCivs = player.civs.sort( 
+                    function(a, b) { 
+                        let winP = (b.wins / (b.wins + b.losses)) - (a.wins / (a.wins + a.losses))
+                        if ( winP > 0 ) return 1;
+                        else if ( winP < 0 ) return -1;
+                        else if ( b.wins - a.wins > 0 ) return 1;
+                        else if ( b.wins - a.wins < 0 ) return -1;
+                        else return ( b.name < a.name );
+                    }
+                );
+
+                console.log( bCivs );
+
+                let embed = new Discord.RichEmbed()
+                    .setColor('#0099ff')
+                    .setTitle(target.displayName + '\'s Best Civs')
+                    .setThumbnail(target.user.avatarURL)
+                    .addField('Civ', '<' + util.civs[bCivs[0].name].tag + util.civs[bCivs[0].name].id + '>' + bCivs[0].name + '\n' + '<' + util.civs[bCivs[1].name].tag + util.civs[bCivs[1].name].id + '>' + bCivs[1].name + '\n' + '<' + util.civs[bCivs[2].name].tag + util.civs[bCivs[2].name].id + '>' + bCivs[2].name + '\n' + '<' + util.civs[bCivs[3].name].tag + util.civs[bCivs[3].name].id + '>' + bCivs[3].name + '\n' + '<' + util.civs[bCivs[4].name].tag + util.civs[bCivs[4].name].id + '>' + bCivs[4].name, true)
+                    .addField('Win %', bCivs[0].wins / (bCivs[0].wins + bCivs[0].losses) * 100 + '%\n' + bCivs[1].wins / (bCivs[1].wins + bCivs[1].losses) * 100 + '%\n' + bCivs[2].wins / (bCivs[2].wins + bCivs[2].losses) * 100 + '%\n' + bCivs[3].wins / (bCivs[3].wins + bCivs[3].losses) * 100 + '%\n' + bCivs[4].wins / (bCivs[4].wins + bCivs[4].losses) * 100 + '%', true);
+
+                message.channel.send(embed);
             }
         }
 		else if( content.startsWith(cmd_ratings) )
