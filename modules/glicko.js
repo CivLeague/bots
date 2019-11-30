@@ -1149,6 +1149,11 @@ class ParseMessage
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;
                         if (!plyr.subbedOut) plyr.subbedOut = 0;
 
+                        if ( pStats.subType == 1 )
+                            plyr.subbedIn++;
+                        else if ( pStats.subType == 2 )
+                            plyr.subbedOut++;
+
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
                                                      diff,
