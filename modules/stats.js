@@ -145,6 +145,139 @@ class StatsBotModule
                 error.send(message.channel, 30);
             }
         }
+        else if( content.startsWith('.mostcivs') ) {
+            if ( !isBotChannel(message.channel) ) return;
+
+            let target = null;
+            if(message.mentions.members.size == 0)
+            {
+                // usage on 'self'
+                target = message.member;
+            }
+            else if(message.mentions.members.size == 1)
+            {
+                target = message.mentions.members.array().shift();
+            }
+            else
+            {
+                message.channel.send('The **' + cmd_stats + '** command cannot be used for more than one player');
+                return;
+            }
+
+            if( !target ) // should never happen?!
+            {
+                console.log("CRASH_ERROR [content] " + content + " [mentions.members.size] " + message.mentions.members.size);
+                return;
+            }
+
+            let msg = '';
+            if ( content.includes('team') )
+                mongoUtil.useStatsColl('team');
+            else mongoUtil.useStatsColl('main');
+
+            var player = await mongoUtil.getPlayer(target.id);
+            if ( player ) {
+                let pages = [];
+                let page = 1;
+
+                let bCivs = player.civs.sort( 
+                    function(a, b) { 
+                        let winP = (b.wins / (b.wins + b.losses)) - (a.wins / (a.wins + a.losses))
+                        if ( b.wins - a.wins > 0 ) return 1;
+                        else if ( a.wins - b.wins > 0 ) return -1;
+                        else if ( winP > 0 ) return 1;
+                        else if ( winP < 0 ) return -1;
+                        else return ( b.name < a.name );
+                    }
+                );
+
+                console.log( bCivs );
+
+                let cName = '';
+                let fields = [];
+                let str1 = '';
+                let str2 = '';
+                let str3 = '';
+                let i = 0;
+                for ( i = 0; i < bCivs.length; i++ ) {
+                    cName = bCivs[i].name;
+                    if (cName == 'EleanorE') {
+                        cName = 'Eleanor';
+                        bCivs[i].name = "Eleanor England";
+                    }
+                    else if (cName == 'EleanorF') {
+                        cName = 'Eleanor';
+                        bCivs[i].name = "Eleanor France";
+                    }
+                    console.log ( i + ': ' + bCivs[i].name );
+                    if ( i > 0 && str1 != '' ) {
+                        str1 += '\n';
+                        str2 += '\n';
+                        str3 += '\n';
+                    }
+                    str1 += '<' + util.civs[cName].tag + util.civs[cName].id + '>' + bCivs[i].name;
+                    str2 += '`' + (bCivs[i].wins / (bCivs[i].wins + bCivs[i].losses) * 100).toFixed(0) + '%`';
+                    str3 += '`[' + bCivs[i].wins + '-' + bCivs[i].losses + ']`';
+                    if ( ((i+1) % 5) == 0 ) {
+                        fields.push({ name: 'Civ', value: str1, inline: true });
+                        fields.push({ name: '[W-L]', value: str3, inline: true });
+                        fields.push({ name: 'Win%', value: str2, inline: true });
+                        pages.push(fields);
+                        str1 = '';
+                        str2 = '';
+                        str3 = '';
+                        fields = [];
+                    }
+                }
+                if ( str1 != '' ) {
+                    fields = [];
+                    fields.push({ name: 'Civ', value: str1, inline: true });
+                    fields.push({ name: '[W-L]', value: str3, inline: true });
+                    fields.push({ name: 'Win%', value: str2, inline: true });
+                    pages.push(fields);
+                }
+
+                let embed = new Discord.RichEmbed()
+                    .setColor('#0099ff')
+                    .setTitle(target.displayName + '\'s Most Played Civs')
+                    .setDescription( content.includes('team') ? 'From the Team Database' : 'From the FFA Database' )
+                    .setFooter(`Page ${page} of ${pages.length}`)
+                    .setThumbnail(target.user.avatarURL);
+                embed.fields = pages[page-1];
+
+                message.channel.send(embed).then( msg => {
+                    msg.react('◀️').then( r => {
+                        msg.react('▶️')
+
+                        const backFilter = (reaction, user) => reaction.emoji.name === '◀️' && user.id === message.author.id;;
+                        const nextFilter = (reaction, user) => reaction.emoji.name === '▶️' && user.id === message.author.id;;
+
+                        const back = msg.createReactionCollector(backFilter, { time: 180000, dispose: true });
+                        const next = msg.createReactionCollector(nextFilter, { time: 180000, dispose: true});
+
+                        back.on('collect', r => {
+                            r.remove(message.author);
+                            if (page === 1)
+                                return;
+                            page--;
+                            embed.fields = pages[page-1];
+                            embed.setFooter(`Page ${page} of ${pages.length}`);
+                            msg.edit(embed);
+                        })
+
+                        next.on('collect', r => {
+                            r.remove(message.author);
+                            if (page === pages.length)
+                                return;
+                            page++
+                            embed.fields = pages[page-1];
+                            embed.setFooter(`Page ${page} of ${pages.length}`);
+                            msg.edit(embed);
+                        })
+                    })
+                });
+            }
+        }
         else if( content.startsWith('.bestcivs') ) {
             if ( !isBotChannel(message.channel) ) return;
 
@@ -193,38 +326,54 @@ class StatsBotModule
 
                 console.log( bCivs );
 
+                let cName = '';
                 let fields = [];
                 let str1 = '';
                 let str2 = '';
+                let str3 = '';
                 let i = 0;
                 for ( i = 0; i < bCivs.length; i++ ) {
-                    if (bCivs[i].name.toLowerCase() == 'eleanore' || bCivs[i].name.toLowerCase() == 'eleanorf') bCivs[i].name = 'Eleanor';
+                    cName = bCivs[i].name;
+                    if (cName == 'EleanorE') {
+                        cName = 'Eleanor';
+                        bCivs[i].name = "Eleanor England";
+                    }
+                    else if (cName == 'EleanorF') {
+                        cName = 'Eleanor';
+                        bCivs[i].name = "Eleanor France";
+                    }
                     console.log ( i + ': ' + bCivs[i].name );
                     if ( i > 0 && str1 != '' ) {
                         str1 += '\n';
                         str2 += '\n';
+                        str3 += '\n';
                     }
-                    str1 += '<' + util.civs[bCivs[i].name].tag + util.civs[bCivs[i].name].id + '>' + bCivs[i].name;
-                    str2 += (bCivs[i].wins / (bCivs[i].wins + bCivs[i].losses) * 100).toFixed(0) + '%';
+                    str1 += '<' + util.civs[cName].tag + util.civs[cName].id + '>' + bCivs[i].name;
+                    str2 += '`' + (bCivs[i].wins / (bCivs[i].wins + bCivs[i].losses) * 100).toFixed(0) + '%`';
+                    str3 += '`[' + bCivs[i].wins + '-' + bCivs[i].losses + ']`';
                     if ( ((i+1) % 5) == 0 ) {
                         fields.push({ name: 'Civ', value: str1, inline: true });
-                        fields.push({ name: 'Win %', value: str2, inline: true });
+                        fields.push({ name: 'Win%', value: str2, inline: true });
+                        fields.push({ name: '[W-L]', value: str3, inline: true });
                         pages.push(fields);
                         str1 = '';
                         str2 = '';
+                        str3 = '';
                         fields = [];
                     }
                 }
                 if ( str1 != '' ) {
                     fields = [];
                     fields.push({ name: 'Civ', value: str1, inline: true });
-                    fields.push({ name: 'Win %', value: str2, inline: true });
+                    fields.push({ name: 'Win%', value: str2, inline: true });
+                    fields.push({ name: '[W-L]', value: str3, inline: true });
                     pages.push(fields);
                 }
 
                 let embed = new Discord.RichEmbed()
                     .setColor('#0099ff')
                     .setTitle(target.displayName + '\'s Best Civs')
+                    .setDescription( content.includes('team') ? 'From the Team Database' : 'From the FFA Database' )
                     .setFooter(`Page ${page} of ${pages.length}`)
                     .setThumbnail(target.user.avatarURL);
                 embed.fields = pages[page-1];
