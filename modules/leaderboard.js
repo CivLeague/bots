@@ -202,6 +202,7 @@ class C6Leaderboard
     }
     async publishGlickoLeaderboard(db)
     {
+        await mongoUtil.useStatsColl(db);
         this.glickoLb = await mongoUtil.getLeaderboard(db);
         var channel = null;
         var messages = null;
@@ -249,7 +250,7 @@ class C6Leaderboard
             if ( currDate - lastDate > 2628000000 ) {
                 console.log(this.glickoLb[i]._id + " decaying 150 points.");
                 console.log("old:\t" + this.glickoLb[i].rating);
-                await mongoUtil.changeSkill( this.glickoLb[i]._id, -150, db );
+                await mongoUtil.changeSkill( this.glickoLb[i]._id, db, -150 );
                 let p = await mongoUtil.getPlayer( this.glickoLb[i]._id );
                 console.log("new:\t" + p.rating);
             }

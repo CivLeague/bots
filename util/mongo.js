@@ -124,7 +124,7 @@ module.exports = {
         if ( !ffa )
             civDB = _tcivs;
             
-        const c = await civsDB.findOne({ name: civ.name });
+        const c = await civDB.findOne({ name: civ.name });
         if ( !c ) {
             places = [ place ];
             skills = [ skill ];
@@ -152,7 +152,7 @@ module.exports = {
 
             games = c.games + 1;
         }
-        await civsDB.updateOne({ name : civ.name }, {
+        await civDB.updateOne({ name : civ.name }, {
             $set: {
                 avgPlace: avgP,
                 avgSkill: avgS,

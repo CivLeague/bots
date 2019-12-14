@@ -5,6 +5,7 @@ const leaderboard = require('./leaderboard');
 
 const Discord = require('discord.js');
 const Levenshtein = require('fast-levenshtein');
+const fs = require("fs");
 
 const RealUtil = require('util');
 
@@ -1081,6 +1082,20 @@ class ParseMessage
                                                          plyr.subbedOut
                                                         );
                             await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
+                            let fContent = {
+                                civ: thisCiv.name,
+                                place: i+1,
+                                skill: pStats.oldRating,
+                                player: pStats.dId,
+                                game: 'ffa'
+                            };
+                            let line = JSON.stringify(fContent, null, 2) + '\n';
+                            fs.appendFile("/home/ubuntu/bots/splunk/civs.data", line, (err) => {
+                                if (err) {
+                                    console.error(err);
+                                    return;
+                                };
+                            });
                         }
                     }
                     else {
@@ -1151,8 +1166,23 @@ class ParseMessage
                                                      plyr.subbedIn,
                                                      plyr.subbedOut
                                                     );
-                        if ( pStats.subType == 0 )
+                        if ( pStats.subType == 0 ) {
                             await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, false);
+                            let fContent = {
+                                civ: thisCiv.name,
+                                place: i+1,
+                                skill: pStats.oldRating,
+                                player: pStats.dId,
+                                game: 'team'
+                            };
+                            let line = JSON.stringify(fContent, null, 2) + '\n';
+                            fs.appendFile("/home/ubuntu/bots/splunk/civs.data", line, (err) => {
+                                if (err) {
+                                    console.error(err);
+                                    return;
+                                };
+                            });
+                        }
                     }
                     let plyr = await mongoUtil.getPlayer( pStats.dId );
                     if (plyr) {
