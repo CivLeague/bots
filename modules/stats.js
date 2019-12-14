@@ -54,13 +54,14 @@ class StatsBotModule
 
         if (content.startsWith('.resetstats')) {
             message.delete();
-			if( content != '.resetstats main' && content != '.resetstats team' ) {
-				error.add('Type  `.resetstats main`  or  `.resetstats team`  to confirm you really want to do this. You only get one reset for main leaderboard stats and one reset for team leaderboard stats. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
+			if( content != '.resetstats ffa' && content != '.resetstats team' ) {
+				error.add('Type  `.resetstats ffa`  or  `.resetstats team`  to confirm you really want to do this. You only get one reset for main leaderboard stats and one reset for team leaderboard stats. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
 				error.send(message.channel, 30);
 				return;
             }
 
             let db = content.split(' ').pop();
+            if ( db == 'ffa' ) db = 'main';
             await mongoUtil.useStatsColl(db);
             let player = await mongoUtil.getPlayer( message.author.id );
             if ( !player ) {
@@ -457,6 +458,129 @@ class StatsBotModule
                 error.send(message.channel, 30);
             }
 		}
+        else if ( content.startsWith('.forcereset')
+                  && isBotChannel(message.channel)
+                  && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
+            message.delete();
+
+            let usage = '\n**USAGE**:\n`.forcereset  <member tag>  <ffa | team>`';
+            if ( content == '.forcereset' ) {
+                message.reply(usage).then( m => { m.delete(20000) });
+                return;
+            }
+
+            let target = null;
+            if( message.mentions.members.size == 0 ) {
+                message.reply('\nYou must tag someone to change their rating' + usage).then( m => { m.delete(20000) });
+                return;
+            }
+            else if(message.mentions.members.size == 1)
+            {
+                target = message.mentions.members.array().shift();
+            }
+            else
+            {
+                message.reply('The `.forcereset` command cannot be used for more than one player').then( m => { m.delete(20000) });
+                return;
+            }
+
+            let db = '';
+            if ( content.includes('team') ) {
+                mongoUtil.useStatsColl('team');
+                db = 'team';
+            }
+            else if ( content.includes('ffa') ) {
+                mongoUtil.useStatsColl('main');
+                db = 'ffa';
+            }
+            else {
+                message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
+                return;
+            }
+
+            let player = await mongoUtil.getPlayer( target.id );
+            if ( !player ) {
+                message.reply(target + "doesn't have any stats to reset in the " + db + " database.").then(msg => { msg.delete(20000) });
+            }
+            else {
+                mongoUtil.resetStats( target.id ).then( result => {
+                    message.reply(target + "'s " + db + " stats have been reset.").then(msg => { msg.delete(20000) });
+                });
+            }
+        }
+        else if ( content.startsWith('.checkreset')
+                  && isBotChannel(message.channel)
+                  && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
+            message.delete();
+
+            let usage = '\n**USAGE**:\n`.checkreset  <member tag>  [team]`';
+            if ( content == '.checkreset' ) {
+                message.reply(usage).then( m => { m.delete(20000) });
+                return;
+            }
+
+            let target = null;
+            if( message.mentions.members.size == 0 ) {
+                message.reply('\nYou must tag someone in order to check someone\'s resets' + usage).then( m => { m.delete(20000) });
+                return;
+            }
+            else if(message.mentions.members.size == 1)
+            {
+                target = message.mentions.members.array().shift();
+            }
+            else
+            {
+                message.reply('The `.checkreset` command cannot be used for more than one player').then( m => { m.delete(20000) });
+                return;
+            }
+
+            let db = 'main';
+            if ( content.includes('team') ) {
+                mongoUtil.useStatsColl('team');
+                db = 'team';
+            }
+            else mongoUtil.useStatsColl('main');
+
+            let player = await mongoUtil.getPlayer( target.id );
+            if ( !player ) 
+                message.reply(target + " doesn't have any stats in the " + db + " database").then( m => { m.delete(20000) });
+            else if ( player.resets )
+                message.reply(target + " has an unused reset token").then( m => { m.delete(20000) });
+            else if ( !player.resets )
+                message.reply(target + " has used their reset token").then( m => { m.delete(20000) });
+        }
+        else if ( content.startsWith('.givereset')
+                  && isBotChannel(message.channel)
+                  && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
+            message.delete();
+
+            let usage = '\n**USAGE**:\n`.givereset  <member tag>  [team]`';
+            if ( content == '.givereset' ) {
+                message.reply(usage).then( m => { m.delete(20000) });
+                return;
+            }
+
+            let target = null;
+            if( message.mentions.members.size == 0 ) {
+                message.reply('\nYou must tag someone in order to give someone a reset' + usage).then( m => { m.delete(20000) });
+                return;
+            }
+            else if(message.mentions.members.size == 1)
+            {
+                target = message.mentions.members.array().shift();
+            }
+            else
+            {
+                message.channel.send('The `.givereset` command cannot be used for more than one player').then( m => { m.delete(20000) });
+                return;
+            }
+
+            if ( content.includes('team') )
+                mongoUtil.useStatsColl('team');
+            else mongoUtil.useStatsColl('main');
+
+            mongoUtil.giveReset( target.id );
+        }
         else if ( (content.startsWith('.changerating') || content.startsWith('.changeskill'))
                   && (message.channel == GetBotCommands() || message.channel == GetScrapReporting())
                   && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {

@@ -176,6 +176,15 @@ module.exports = {
         });
     },
 
+    giveReset: async function ( discordId ) {
+        await _coll.updateOne({ _id : discordId }, {
+            $set: {
+                resets: 1
+            },
+            $currentDate: { lastModified: true }
+        });
+    },
+
     resetStats: async function ( discordId ) {
         await _coll.updateOne({ _id : discordId }, {
             $set: {
@@ -186,6 +195,9 @@ module.exports = {
                 games:      0,
                 wins:       0,
                 losses:     0,
+                subbedIn:   0,
+                subbedOut:  0,
+                civs:       [],
                 resets:     0
             },
             $currentDate: { lastModified: true }

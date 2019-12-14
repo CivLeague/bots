@@ -285,7 +285,7 @@ class RegisterModule
                 //message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
             }
         }
-        else if ( content.startsWith('.check') && message.member.roles.has(moderatorId) )
+        else if ( content.startsWith('.check ') && message.member.roles.has(moderatorId) )
         {
             message.delete();
             let steamlink = message.content.split(' ').pop();
