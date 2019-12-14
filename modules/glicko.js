@@ -87,7 +87,6 @@ function getMatches(regxp, data)
 function checkCivs(civs) {
     let result = [];
     for ( const c of civs ) {
-        console.log("c === " + c);
         switch ( c ) {
             case "america":
             case "teddy":
@@ -536,7 +535,6 @@ class ParseMessage
 					//console.log('[clean]' + cleanstr);
 
 					const civsMatched = checkCivs( cleanstr.split(' '));
-					console.log('[civsMatched]' + civsMatched);
                     if ( typeof civsMatched == "string" ) {
                         if (civsMatched == "england") {
 					    	this.error.add('\n`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria`, `EleanorE`, or `EleanorF`');
@@ -618,7 +616,6 @@ class ParseMessage
 		{
 			for(var m of this.positions[i])
 			{
-                console.log('CIV: ' + m.civ);
 				if(this.civState == 0)
 				{
 					this.civState = m.civ == null ? 1 : 2;
@@ -690,6 +687,7 @@ class ParseMessage
                             }
                         }
                     }
+
                     console.log( "SUB ID: " + pStats.dId );
                     console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                     console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -697,12 +695,13 @@ class ParseMessage
                     console.log( "\tRd:\t" + pStats.getRd() );
                     console.log( "\tVol:\t" + pStats.getVol() );
                     console.log( "\tCiv:\t" + pStats.civ );
-                        let plyr = await mongoUtil.getPlayer( pStats.dId );
-                        if ( !plyr ) {
-                            await mongoUtil.createPlayer( pStats.dId );
-                            plyr = await mongoUtil.getPlayer( pStats.dId );
-                        }
-                        console.log(plyr);
+
+                    let plyr = await mongoUtil.getPlayer( pStats.dId );
+                    if ( !plyr ) {
+                        await mongoUtil.createPlayer( pStats.dId );
+                        plyr = await mongoUtil.getPlayer( pStats.dId );
+                    }
+
                     if (!debug && this.type != 2)
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
@@ -732,11 +731,8 @@ class ParseMessage
                         }
                         if ( !thisCiv ) {
                             plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
-                            console.log("plyr.civs.length " + plyr.civs.length);
-                            console.log("plyr.civs " + plyr.civs);
                             thisCiv = plyr.civs[plyr.civs.length - 1];
                         }
-                        console.log("thisCiv " + thisCiv);
 
                         thisCiv.wins = thisCiv.wins + 1;
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;
@@ -754,7 +750,7 @@ class ParseMessage
                                                      plyr.subbedIn + 1,
                                                      plyr.subbedOut
                                                     );
-                        //await mongoUtil.updateTeamCiv(thisCiv, i+1, pStats.oldRating);
+                        //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                     }
                 }
             }
@@ -808,6 +804,7 @@ class ParseMessage
                             }
                         }
                     }
+
                     console.log( "ORIG ID: " + pStats.dId );
                     console.log( "\tNew Rating:\t" + Math.round(pStats.getRating()) );
                     console.log( "\tOld Rating:\t" + Math.round(pStats.oldRating) );
@@ -815,6 +812,7 @@ class ParseMessage
                     console.log( "\tRd:\t" + pStats.getRd() );
                     console.log( "\tVol:\t" + pStats.getVol() );
                     console.log( "\tCiv:\t" + pStats.civ );
+
                     if (!debug && this.type != 2)
                     {
                         let plyr = await mongoUtil.getPlayer( pStats.dId );
@@ -844,11 +842,8 @@ class ParseMessage
                         }
                         if ( !thisCiv ) {
                             plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
-                            console.log("plyr.civs.length " + plyr.civs.length);
-                            console.log("plyr.civs " + plyr.civs);
                             thisCiv = plyr.civs[plyr.civs.length - 1];
                         }
-                        console.log("thisCiv " + thisCiv);
 
                         thisCiv.losses = thisCiv.losses + 1;
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;
@@ -866,7 +861,7 @@ class ParseMessage
                                                      plyr.subbedIn,
                                                      plyr.subbedOut + 1
                                                     );
-                        await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
+                        //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                     }
                 }
             }
@@ -885,20 +880,14 @@ class ParseMessage
             {
                 const civId = null
                 //const civId = m.civ == null ? null : util.getCiv(m.civ).dbid;
-                console.log("civ == " + m.civ);
 
                 //glicko2
                 var p = await mongoUtil.getPlayer( m[1] );
                 if (p)
-                {
-                    console.log("found player " + m[1]);
                     player = glicko.makePlayer(p.rating, p.rd, p.vol)
-                }
                 else
-                {
-                    console.log("did NOT find player " + m[1]);
                     player = glicko.makePlayer();
-                }
+
                 player.dId = m[1];
                 player.civ = m.civ;
                 player.subType = m.subType;
@@ -930,20 +919,22 @@ class ParseMessage
         } else {
             let teams = [];
             for (let i = 0; i < glickoPositions.length; i++) {
-                console.log("\n\n----==== T E A M ====----\n");
+                console.log("\n\n----==== T E A M " + (i+1) + " ====----\n");
                 console.log(glickoPositions[i]);
                 let ratingSum = 0;
                 let rdSum = 0;
                 let volSum = 0;
                 let numPlayers = glickoPositions[i].length;
-                console.log("\n----==== T E A M   A V G ====----\n");
+                console.log("\n----==== T E A M " + (i+1) + "  P L A Y E R S ====----\n");
                 for (const p of glickoPositions[i]) {
+                    console.log("---- player.dId = " + p.dId + " ----")
                     console.log("p.oldRating = " + p.oldRating);
                     console.log("p.rd = " + p.getRd());
                     console.log("p.vol = " + p.getVol());
                     console.log("ratingSum = " + ratingSum);
                     console.log("rdSum = " + rdSum);
                     console.log("volSum = " + volSum);
+
                     ratingSum += p.oldRating;
                     rdSum += p.getRd();
                     volSum += p.getVol();
@@ -951,13 +942,13 @@ class ParseMessage
                 let ratingAvg = ratingSum / numPlayers;
                 let rdAvg = rdSum / numPlayers;
                 let volAvg = volSum / numPlayers;
+                console.log("\n----==== T E A M " + (i+1) + "  A V G ====----\n");
                 console.log("\nteamAvg:\n\tratingAvg = " + ratingAvg);
                 console.log("\trdAvg = " + rdAvg);
                 console.log("\tvolAvg = " + volAvg);
                 let teamPlayer = glicko.makePlayer(ratingAvg, rdAvg, volAvg);
                 teamPlayer.oldRating = ratingAvg;
                 teams.push([teamPlayer]);
-                console.log("\n----==== TEAM PLAYER ====----\n");
                 console.log(teamPlayer);
                 console.log("rating = " + teamPlayer.getRating());
                 console.log("rd = " + teamPlayer.getRd());
@@ -982,7 +973,7 @@ class ParseMessage
             }
 
             for (let i = 0; i < teams.length; i++) {
-                console.log("\n----==== T E A M    C O M P U T E ====----\n");
+                console.log("\n----==== T E A M " + (i+1) + "  C O M P U T E ====----\n");
                 for (const p of glickoPositions[i]) {
                     p.ratingDiff = Math.round(p.getRating()) - Math.round(p.oldRating);
                     p.oldRd = p.getRd();
@@ -1054,11 +1045,8 @@ class ParseMessage
                             }
                             if ( !thisCiv ) {
                                 plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
-                                console.log("plyr.civs.length " + plyr.civs.length);
-                                console.log("plyr.civs " + plyr.civs);
                                 thisCiv = plyr.civs[plyr.civs.length - 1];
                             }
-                            console.log("thisCiv " + thisCiv);
 
                             var wins;
                             var losses;
@@ -1092,7 +1080,7 @@ class ParseMessage
                                                          plyr.subbedIn,
                                                          plyr.subbedOut
                                                         );
-                            await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
+                            await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                         }
                     }
                     else {
@@ -1123,11 +1111,8 @@ class ParseMessage
                         }
                         if ( !thisCiv ) {
                             plyr.civs.push( { name: pStats.civ, wins: 0, losses: 0 } );
-                            console.log("plyr.civs.length " + plyr.civs.length);
-                            console.log("plyr.civs " + plyr.civs);
                             thisCiv = plyr.civs[plyr.civs.length - 1];
                         }
-                        console.log("thisCiv " + thisCiv);
 
                         var wins;
                         var losses;
@@ -1166,26 +1151,27 @@ class ParseMessage
                                                      plyr.subbedIn,
                                                      plyr.subbedOut
                                                     );
-                        //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
+                        if ( pStats.subType == 0 )
+                            await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, false);
                     }
-                            let plyr = await mongoUtil.getPlayer( pStats.dId );
-                            if (plyr) {
-                            msg += '<@' + plyr._id + '>\n';
-                            msg += "**[IN]**\n";
-                            msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
-                            msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
-                            msg += "\tRating Diff:\t" + diff + "\n";
-                            msg += "\tRd:\t" + pStats.getRd() + "\n";
-                            msg += "\tVol:\t" + pStats.getVol() + "\n";
-                            msg += "\tsubtype:\t" + pStats.subType + "\n";
-                            msg += "**[OUT]**\n";
-                            msg += "\tNew Rating:\t" + plyr.rating + "\n";
-                            msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
-                            msg += "\tRd:\t" + plyr.rd + "\n";
-                            msg += "\tVol:\t" + plyr.vol + "\n";
-                            GetChannelGlickoDebug().send(msg);
-                            msg = '';
-                            }
+                    let plyr = await mongoUtil.getPlayer( pStats.dId );
+                    if (plyr) {
+                        msg += '<@' + plyr._id + '>\n';
+                        msg += "**[IN]**\n";
+                        msg += "\tNew Rating:\t" + Math.round(pStats.getRating()) + "\n";
+                        msg += "\tOld Rating:\t" + Math.round(pStats.oldRating) + "\n";
+                        msg += "\tRating Diff:\t" + diff + "\n";
+                        msg += "\tRd:\t" + pStats.getRd() + "\n";
+                        msg += "\tVol:\t" + pStats.getVol() + "\n";
+                        msg += "\tsubtype:\t" + pStats.subType + "\n";
+                        msg += "**[OUT]**\n";
+                        msg += "\tNew Rating:\t" + plyr.rating + "\n";
+                        msg += "\tRating Diff:\t" + plyr.lastChange + "\n";
+                        msg += "\tRd:\t" + plyr.rd + "\n";
+                        msg += "\tVol:\t" + plyr.vol + "\n";
+                        GetChannelGlickoDebug().send(msg);
+                        msg = '';
+                    }
                 }
             }
         }
@@ -1196,7 +1182,7 @@ class ParseMessage
             
             for (let i = 0; i < this.positions.length; i++) {
                 for ( let m of this.positions[i] ) {
-                    console.log("reportedPos: " + m[1] + ' ' + m.diff);
+                    console.log("results: " + m[1] + ' ' + m.diff);
                 }
             }
             this.getGlickoReport().then( report => {

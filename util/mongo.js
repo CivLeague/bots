@@ -13,6 +13,7 @@ var _ffa;
 var _team;
 var _coll;
 var _civs;
+var _tcivs;
 var _players;
 var _subs;
 
@@ -112,20 +113,18 @@ module.exports = {
         return false;
     },
     
-    updateTeamCiv: async function ( civ, win, skill ) {
-        let skills = [];
-        let avgS = 1500;
-        let games = 0; 
-    },
-
-    updateCiv: async function ( civ, place, skill ) {
+    updateCiv: async function ( civ, place, skill, ffa ) {
         let places = [];
         let skills = [];
         let avgP = 0;
         let avgS = 1500;
         let games = 0;
+        let civDB = _civs;
 
-        const c = await _civs.findOne({ name: civ.name });
+        if ( !ffa )
+            civDB = _tcivs;
+            
+        const c = await civsDB.findOne({ name: civ.name });
         if ( !c ) {
             places = [ place ];
             skills = [ skill ];
@@ -153,7 +152,7 @@ module.exports = {
 
             games = c.games + 1;
         }
-        await _civs.updateOne({ name : civ.name }, {
+        await civsDB.updateOne({ name : civ.name }, {
             $set: {
                 avgPlace: avgP,
                 avgSkill: avgS,
