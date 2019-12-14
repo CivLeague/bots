@@ -61,7 +61,6 @@ class StatsBotModule
             }
 
             let db = content.split(' ').pop();
-            if ( db == 'ffa' ) db = 'main';
             await mongoUtil.useStatsColl(db);
             let player = await mongoUtil.getPlayer( message.author.id );
             if ( !player ) {
@@ -106,7 +105,7 @@ class StatsBotModule
                 let msg = '';
                 if ( content.includes('team') )
                     mongoUtil.useStatsColl('team');
-                else mongoUtil.useStatsColl('main');
+                else mongoUtil.useStatsColl('ffa');
 
                 var player = await mongoUtil.getPlayer(target.id);
                 if ( player ) {
@@ -174,7 +173,7 @@ class StatsBotModule
             let msg = '';
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
-            else mongoUtil.useStatsColl('main');
+            else mongoUtil.useStatsColl('ffa');
 
             var player = await mongoUtil.getPlayer(target.id);
             if ( player ) {
@@ -307,7 +306,7 @@ class StatsBotModule
             let msg = '';
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
-            else mongoUtil.useStatsColl('main');
+            else mongoUtil.useStatsColl('ffa');
 
             var player = await mongoUtil.getPlayer(target.id);
             if ( player ) {
@@ -423,7 +422,7 @@ class StatsBotModule
             {
                 if ( content.includes('team') )
                     mongoUtil.useStatsColl('team');
-                else mongoUtil.useStatsColl('main');
+                else mongoUtil.useStatsColl('ffa');
 
                 let msg = '```js';
                 var players = await mongoUtil.getRatings(message.mentions.members)
@@ -490,7 +489,7 @@ class StatsBotModule
                 db = 'team';
             }
             else if ( content.includes('ffa') ) {
-                mongoUtil.useStatsColl('main');
+                mongoUtil.useStatsColl('ffa');
                 db = 'ffa';
             }
             else {
@@ -534,12 +533,12 @@ class StatsBotModule
                 return;
             }
 
-            let db = 'main';
+            let db = 'ffa';
             if ( content.includes('team') ) {
                 mongoUtil.useStatsColl('team');
                 db = 'team';
             }
-            else mongoUtil.useStatsColl('main');
+            else mongoUtil.useStatsColl('ffa');
 
             let player = await mongoUtil.getPlayer( target.id );
             if ( !player ) 
@@ -577,7 +576,7 @@ class StatsBotModule
 
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
-            else mongoUtil.useStatsColl('main');
+            else mongoUtil.useStatsColl('ffa');
 
             mongoUtil.giveReset( target.id );
         }
@@ -598,7 +597,7 @@ class StatsBotModule
                 return;
             }
 
-            let db = 'main';
+            let db = 'ffa';
             if ( content.includes( 'team' ) )
                 db = 'team';
             

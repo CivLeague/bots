@@ -19,7 +19,7 @@ class C6Leaderboard
                 var messages = null;
                 var db = null;
                 if ( message.channel == util.getChannel(587158329877331969) ) {
-                    db = 'main';
+                    db = 'ffa';
                     channel = util.getChannel(587158329877331969);
                     messages = [
                         '587469644269617162',
@@ -205,7 +205,7 @@ class C6Leaderboard
         this.glickoLb = await mongoUtil.getLeaderboard(db);
         var channel = null;
         var messages = null;
-        if ( db === 'main' ) {
+        if ( db === 'ffa' ) {
             channel = util.getChannel(587158329877331969);
 		    messages = [
 		    	'587469644269617162',

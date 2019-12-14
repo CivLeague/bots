@@ -9,7 +9,7 @@ process.on("uncaughtException", (err) => {
 var _cli
 var _stats;
 
-var _main;
+var _ffa;
 var _team;
 var _coll;
 var _civs;
@@ -21,10 +21,11 @@ module.exports = {
         MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10 }, function (err, client) {
             _cli     = client;
             _stats   = _cli.db('stats');
-            _main    = _stats.collection('main');
+            _ffa     = _stats.collection('ffa');
             _team    = _stats.collection('team');
-            _coll    = _stats.collection('main'); //set default collection
-            _civs    = _cli.db('civs').collection('civs');
+            _coll    = _stats.collection('ffa'); //set default collection
+            _civs    = _cli.db('civs').collection('ffa');
+            _tcivs   = _cli.db('civs').collection('team');
             _players = _cli.db('players').collection('players');
             _subs    = _cli.db('subs').collection('subs');
             console.log('mongo listening');
@@ -76,11 +77,11 @@ module.exports = {
     },
     
     getHighScore: async function ( discordId ) {
-        let main = await _main.findOne({ _id: discordId });
+        let ffa = await _ffa.findOne({ _id: discordId });
         let team = await _team.findOne({ _id: discordId });
-        if ( !main ) return team.rating;
-        if ( !team ) return main.rating;
-        if ( main.rating > team.rating ) return main.rating;
+        if ( !ffa ) return team.rating;
+        if ( !team ) return ffa.rating;
+        if ( ffa.rating > team.rating ) return ffa.rating;
         else return team.rating;
     },
     
@@ -111,6 +112,12 @@ module.exports = {
         return false;
     },
     
+    updateTeamCiv: async function ( civ, win, skill ) {
+        let skills = [];
+        let avgS = 1500;
+        let games = 0; 
+    },
+
     updateCiv: async function ( civ, place, skill ) {
         let places = [];
         let skills = [];
@@ -205,8 +212,8 @@ module.exports = {
     },
 
     changeSkill: async function ( discordId, db, change ) {
-        if (db == 'main') {
-            await _main.updateOne({ _id : discordId }, {
+        if (db == 'ffa') {
+            await _ffa.updateOne({ _id : discordId }, {
                 $inc: {
                     rating: change
                 },

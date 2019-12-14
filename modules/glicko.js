@@ -754,7 +754,7 @@ class ParseMessage
                                                      plyr.subbedIn + 1,
                                                      plyr.subbedOut
                                                     );
-                        //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating);
+                        //await mongoUtil.updateTeamCiv(thisCiv, i+1, pStats.oldRating);
                     }
                 }
             }
@@ -1243,7 +1243,7 @@ class ParseMessage
         if ( this.isTeam() )
             leaderboard.update('team');
         else
-            leaderboard.update('main');
+            leaderboard.update('ffa');
 	}
 
 	async getGlickoReport()
@@ -1302,15 +1302,15 @@ class ParseMessage
         }
 		else if ( data.includes('diplo') || data.includes('ffa') ) {
             this.type = 0;
-            mongoUtil.useStatsColl('main');
+            mongoUtil.useStatsColl('ffa');
         }
 		else if(data.includes('war')) {
             this.type = 1;
-            mongoUtil.useStatsColl('main');
+            mongoUtil.useStatsColl('ffa');
         }
 		else if(data.includes('duel') || data.includes('adcp') || data.includes('dual')) {
             this.type = 3;
-            mongoUtil.useStatsColl('main');
+            mongoUtil.useStatsColl('ffa');
         }
 		
 		return this.type != null;
