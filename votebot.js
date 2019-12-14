@@ -107,7 +107,9 @@ util.client.on('message', message =>
 	const content = message.content;
 	
 	const isTeamVote = content.startsWith('.teamvote')
-			   || content.startsWith('!teamvote');
+			   || content.startsWith('!teamvote')
+			   || content.startsWith('.voteteam')
+			   || content.startsWith('!voteteam');
 
 	if( content.startsWith('.vote') || isTeamVote)
 	{
