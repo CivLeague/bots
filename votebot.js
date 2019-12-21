@@ -17,6 +17,86 @@ voting.on('finished', async(vote, channel) =>
 {	
 	/// Parse results to actual bans
 	const results = vote.voteCivBans.getResults();
+    //console.log('Vote: {\n');
+    //console.log(vote);
+    var jVote = '{ "Vote" : { ';
+    vote.isTeamVote ? jVote += '"Game Type" : "Team", ' : jVote += '"Game Type" : "FFA", ';
+    jVote += '"Number of Voters" : ';
+    jVote += vote.users.length;
+    jVote += ', ';
+    jVote += '"Voters" : [ ';
+    for ( const u of vote.users ) {
+        jVote += '{ "id" : "' + u.id + '", ';
+        jVote += '"username" : "' + u.username + '" }, ';
+    }
+    jVote = jVote.slice(0, -2);
+    jVote += ' ], ';
+    jVote += '"Tiebreaker" : ';
+    jVote += '{ "id" : "' + vote.tieBreaker.id + '", ';
+    jVote += '"username" : "' + vote.tieBreaker.username + '" }';
+    jVote += ', ';
+    jVote += '"Options" : [ ';
+    //vote.isTeamVote ? console.log("\tGame Type: Team") : console.log("\tGame Type: FFA");
+    //console.info("\tNumber of Voters: ", vote.users.length);
+    //console.info("\tVoters:\n", vote.users); //array of user objects
+    //console.info("\tTiebreaker: ", vote.tieBreaker);
+    //console.info("\tOptions: {\n");
+    for ( const v of vote.voteChoices ) {
+        if ( v[1].finished === true || v[1].finished === false ) {
+            //console.info("\t\t{\n");
+            //console.info("\t\t\tOption: ", v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", ""));
+            //console.info("\t\t\tVotes:\n", v[1].votes); //array[array{user objects}]  v[1][i][0]?
+            //console.info("\t\t\tTallies: ", v[1].votecount); //map
+            jVote += '{ "Option" : "';
+            jVote += v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", "");
+            jVote += '", ';
+            jVote += '"Votes" : [ ';
+            for ( const vv in v[1].votes ) {
+                jVote += '{ "emoji" : "' + vv + '", "users" : [ ';
+                for ( const vu of v[1].votes[vv] ) {
+                    jVote += '{ "id" : "' + vu.id + '", ';
+                    jVote += '"username" : "' + vu.username + '" }';
+                    jVote += ', ';
+                }
+                jVote = jVote.slice(0, -2);
+                jVote += ' ] }, ';
+            }
+            jVote = jVote.slice(0, -2);
+            jVote += ' ], ';
+            jVote += '"Tallies" : [ '
+            for (const [e, num] of v[1].votecount.entries()) {
+                jVote += '{ "emoji" : "' + e + '", ';
+                jVote += '"count" : "' + num + '" }';
+                jVote += ', ';
+            }
+            jVote = jVote.slice(0, -2);
+            jVote += ' ], ';
+            let leading;
+            let mostVotes = 0;
+            for (const [key, value] of v[1].votecount.entries()) {
+                if ( value > mostVotes ) {
+                    mostVotes = value;
+                    leading = key;
+                }
+            }
+            //console.info("\t\t\tMost Votes: ", leading);
+            //console.info("\t\t\tEmoji Result: ", v[1].chosen); //just an emoji
+            //console.info("\t\t\tText Result: ", v[1].message.content.split('= ').pop());
+            //console.info("\t\t},\n");
+            jVote += '"Most Votes" : "';
+            jVote += leading;
+            jVote += '", ';
+            jVote += '"Emoji Result" : "';
+            jVote += v[1].chosen; //just an emoji
+            jVote += '", ';
+            jVote += '"Text Result" : "';
+            jVote += v[1].message.content.split('= ').pop();
+            jVote += '" }, ';
+        }
+    }
+    jVote = jVote.slice(0, -2);
+    jVote += ' ], ';
+    //console.info("\t}\n");
 	let banned = [];
 	for(let i of results)
 	{
@@ -29,6 +109,15 @@ voting.on('finished', async(vote, channel) =>
 			}
 		}
 	}
+    jVote += '"Banned Civs" : ';
+    jVote += JSON.stringify(banned);
+    jVote += '} ';
+    jVote += '}';
+    console.log(jVote);
+    let jObj = JSON.parse(jVote);
+    console.log(JSON.stringify(jObj, null, 2));
+    //console.log('\tBanned Civs: ', banned);
+    //console.info("}\n");
 	
 	/// Call draft
 	if ( vote.isTeamVote )
