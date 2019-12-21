@@ -24,7 +24,7 @@ class SubBotModule
                         }
                     }
                     if (msg == '')
-                        msg = "there are no subs to report.";
+                        msg = "no one has subbed more than twice since the last reset.";
                     message.reply(msg);
                     console.log(msg);
                 });
