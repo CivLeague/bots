@@ -677,9 +677,9 @@ class ParseMessage
                 let pStats = glickoPositions[i][j];
                 if ( pStats.dId == subId ) {
                     var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
-                    if ( diff < 20 ) {
-                        diff = 20;
-                        pStats.setRating(pStats.oldRating + 20);
+                    if ( diff < 5 ) {
+                        diff = 5;
+                        pStats.setRating(pStats.oldRating + diff);
                     }
 			        for (var k = 0; k < this.positions.length; ++k) {
 				        for(var m of this.positions[k]) {
@@ -794,8 +794,8 @@ class ParseMessage
                 let pStats = glickoPositions[i][j];
                 if ( pStats.dId == origId ) {
                     var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
-                    if ( diff > 20 ) {
-                        diff = 20;
+                    if ( diff > 5 ) {
+                        diff = 5;
                         pStats.setRating(pStats.oldRating + diff);
                     }
 			        for (var k = 0; k < this.positions.length; ++k) {
@@ -979,10 +979,10 @@ class ParseMessage
                     p.ratingDiff = Math.round(p.getRating()) - Math.round(p.oldRating);
                     p.oldRd = p.getRd();
                     p.oldVol = p.getVol();
-                    if ( p.subType == 1 && p.ratingDiff < 20 )
-                            p.setRating(p.oldRating + 20);
-                    else if ( p.subType == 2 && p.ratingDiff > 20 )
-                            p.setRating(p.oldRating + 20);
+                    if ( p.subType == 1 && p.ratingDiff < 5 )
+                            p.setRating(p.oldRating + 5);
+                    else if ( p.subType == 2 && p.ratingDiff > 5 )
+                            p.setRating(p.oldRating + 5);
                     console.log("teamPlayer:\n\tsubType = " + p.subType + "\n\toldRating = " + p.oldRating + "\n\tnewRating = " + p.getRating() + "\n");
                 }
             }
@@ -1051,7 +1051,7 @@ class ParseMessage
 
                             var wins;
                             var losses;
-                            if (diff > 0) {
+                            if (diff >= 0) {
                                 wins = plyr.wins + 1;
                                 losses = plyr.losses;
                                 thisCiv.wins = thisCiv.wins + 1;
@@ -1060,10 +1060,6 @@ class ParseMessage
                                 wins = plyr.wins;
                                 losses = plyr.losses + 1;
                                 thisCiv.losses = thisCiv.losses + 1;
-                            }
-                            else {
-                                wins = plyr.wins;
-                                losses = plyr.losses;
                             }
 
                             if (!plyr.subbedIn)  plyr.subbedIn  = 0;
@@ -1131,7 +1127,7 @@ class ParseMessage
 
                         var wins;
                         var losses;
-                        if (diff > 0) {
+                        if (diff >= 0) {
                             wins = plyr.wins + 1;
                             losses = plyr.losses;
                             thisCiv.wins = thisCiv.wins + 1;
@@ -1140,10 +1136,6 @@ class ParseMessage
                             wins = plyr.wins;
                             losses = plyr.losses + 1;
                             thisCiv.losses = thisCiv.losses + 1;
-                        }
-                        else {
-                            wins = plyr.wins;
-                            losses = plyr.losses;
                         }
 
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;

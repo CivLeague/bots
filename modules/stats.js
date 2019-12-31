@@ -119,6 +119,9 @@ class StatsBotModule
                     let rank  = this.getRank(skill);
                     let rd    = Math.round(player.rd);
 
+                    // add zeroes to wins
+                    wins += ( games - wins - losses );
+
                     msg += target;
                     msg += '```js';
                     msg += '\nSkill:   ' + skill;
@@ -127,7 +130,6 @@ class StatsBotModule
                     msg += '\nWin %:   ' + wp + '%';
                     msg += '\nWins:    ' + wins;
                     msg += '\nLosses:  ' + losses;
-                    msg += '\nZeroes:  ' + ( games - wins - losses );
                     msg += '\nSub In:  ' + sIn;
                     msg += '\nSub Out: ' + sOut;
                     msg += '\nRD:      ' + rd;
