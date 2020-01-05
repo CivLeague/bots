@@ -1,6 +1,7 @@
 ﻿const util = require('./util/util');
 const rc = require('./util/reactioncontrol');
 const voting = require('./util/voting');
+const fs = require("fs");
 
 /// Register civs as custom emojis
 for(let i in util.civs) voting.setCustomEmoji(util.civs[i]['tag'], util.civs[i]['id']);
@@ -17,8 +18,6 @@ voting.on('finished', async(vote, channel) =>
 {	
 	/// Parse results to actual bans
 	const results = vote.voteCivBans.getResults();
-    //console.log('Vote: {\n');
-    //console.log(vote);
     var jVote = '{ "Vote" : { ';
     vote.isTeamVote ? jVote += '"Game Type" : "Team", ' : jVote += '"Game Type" : "FFA", ';
     jVote += '"Number of Voters" : ';
@@ -36,17 +35,8 @@ voting.on('finished', async(vote, channel) =>
     jVote += '"username" : "' + vote.tieBreaker.username + '" }';
     jVote += ', ';
     jVote += '"Options" : [ ';
-    //vote.isTeamVote ? console.log("\tGame Type: Team") : console.log("\tGame Type: FFA");
-    //console.info("\tNumber of Voters: ", vote.users.length);
-    //console.info("\tVoters:\n", vote.users); //array of user objects
-    //console.info("\tTiebreaker: ", vote.tieBreaker);
-    //console.info("\tOptions: {\n");
     for ( const v of vote.voteChoices ) {
         if ( v[1].finished === true || v[1].finished === false ) {
-            //console.info("\t\t{\n");
-            //console.info("\t\t\tOption: ", v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", ""));
-            //console.info("\t\t\tVotes:\n", v[1].votes); //array[array{user objects}]  v[1][i][0]?
-            //console.info("\t\t\tTallies: ", v[1].votecount); //map
             jVote += '{ "Option" : "';
             jVote += v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", "");
             jVote += '", ';
@@ -79,10 +69,6 @@ voting.on('finished', async(vote, channel) =>
                     leading = key;
                 }
             }
-            //console.info("\t\t\tMost Votes: ", leading);
-            //console.info("\t\t\tEmoji Result: ", v[1].chosen); //just an emoji
-            //console.info("\t\t\tText Result: ", v[1].message.content.split('= ').pop());
-            //console.info("\t\t},\n");
             jVote += '"Most Votes" : "';
             jVote += leading;
             jVote += '", ';
@@ -112,10 +98,15 @@ voting.on('finished', async(vote, channel) =>
     jVote += '"Banned Civs" : ';
     jVote += JSON.stringify(banned);
     jVote += '} ';
-    jVote += '}';
-    console.log(jVote);
+    jVote += '}\n';
     let jObj = JSON.parse(jVote);
-    console.log(JSON.stringify(jObj, null, 2));
+    let line = JSON.stringify(jObj, null, 2);
+    fs.appendFile("/home/ubuntu/bots/splunk/votes.data", line, (err) => {
+        if (err) {
+            console.error(err);
+            return;
+        };
+    });
     //console.log('\tBanned Civs: ', banned);
     //console.info("}\n");
 	
