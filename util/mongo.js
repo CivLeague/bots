@@ -247,7 +247,12 @@ module.exports = {
 
     getLeaderboard: async function ( collection ) {
         _coll = _stats.collection(collection);
-        return await _coll.find().sort({ rating: -1 }).toArray();
+        if ( collection == 'ffa' ) {
+            return await _coll.find().sort({ rating: -1 }).toArray();
+        }
+        else {
+            return await _coll.find({ games: { $gte: 10 } }).sort({ rating: -1 }).toArray();
+        }
     },
 
     getCivsLeaderboard: async function ( ) {
