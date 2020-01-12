@@ -34,12 +34,12 @@ voting.on('finished', async(vote, channel) =>
     jVote += '{ "id" : "' + vote.tieBreaker.id + '", ';
     jVote += '"username" : "' + vote.tieBreaker.username + '" }';
     jVote += ', ';
-    jVote += '"Options" : [ ';
+    jVote += '"Options" : { ';
     for ( const v of vote.voteChoices ) {
         if ( v[1].finished === true || v[1].finished === false ) {
-            jVote += '{ "Option" : "';
+            jVote += '"';
             jVote += v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", "");
-            jVote += '", ';
+            jVote += '" : { ';
             jVote += '"Votes" : [ ';
             for ( const vv in v[1].votes ) {
                 jVote += '{ "emoji" : "' + vv + '", "users" : [ ';
@@ -81,8 +81,7 @@ voting.on('finished', async(vote, channel) =>
         }
     }
     jVote = jVote.slice(0, -2);
-    jVote += ' ], ';
-    //console.info("\t}\n");
+    jVote += ' }, ';
 	let banned = [];
 	for(let i of results)
 	{
@@ -107,8 +106,6 @@ voting.on('finished', async(vote, channel) =>
             return;
         };
     });
-    //console.log('\tBanned Civs: ', banned);
-    //console.info("}\n");
 	
 	/// Call draft
 	if ( vote.isTeamVote )
