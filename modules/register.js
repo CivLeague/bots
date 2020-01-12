@@ -460,23 +460,29 @@ class RegisterModule
                         return;
                     }
 
-                    const oldUser = util.client.users.get(sExists.discord_id);
-                    const oldMember = GetChannelSteamLog().guild.member(oldUser);
                     const embed = new Discord.RichEmbed()
                         .setColor('#A62019')
-                        .setTitle('.set-id by ' + message.member)
+                        .setTitle('.setid by ' + message.member.user.tag)
                         .setDescription('https://steamcommunity.com/profiles/' + realid)
                         .setThumbnail(target.user.avatarURL)
                         .addField('New Tag', target + '\n\n**New Id**\n' + target.id + '\n\n**New Username**\n' + target.user.username + '\n\n**New Display Name**\n' + target.displayName, true)
-                        .addField('Old Tag', oldMember + '\n\n**Old Id**\n' + oldMember.id + '\n\n**Old Username**\n' + oldUser.username + '\n\n**Old Display Name**\n' + oldMember.displayName, true)
+                        .addField('Old Tag', '<@' + sExists.discord_id + '>\n\n**Old Id**\n' + sExists.discord_id + '\n\n**Old Username**\n' + sExists.user_name + '\n\n**Old Display Name**\n' + sExists.display_name, true)
                         //.setImage(target.user.avatarURL)
                         .setTimestamp();
                     GetChannelSteamLog().send(embed);
                     GetChannelSteamLog().send('`.setid` by ' + message.member + '\nOld Discord: <@' + sExists.discord_id + '>\nNew Discord: ' + target + '\nUsername: ' + target.user.username + '\nDisplay Name: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
                     message.channel.send(target + ' is now registered to steamId == `' + realid + '`.\n<@' + sExists.discord_id + '> has had their ranked role removed and been kicked from the server.').then( msg => { msg.delete(20000); });
+
                     const reason = 'new discord: ' + target.id;
-                    await oldMember.removeRole(ranked, reason);
-                    await oldMember.kick(reason);
+                    const oldUser = util.client.users.get(sExists.discord_id);
+                    if ( oldUser ) {
+                        const oldMember = GetChannelSteamLog().guild.member(oldUser);
+                        if ( oldMember ) {
+                            await oldMember.removeRole(ranked, reason);
+                            await oldMember.kick(reason);
+                        }
+                    }
+
                     target.addRoles([ranked, chieftain]);
                 });
             }
