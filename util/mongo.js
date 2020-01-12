@@ -216,6 +216,9 @@ module.exports = {
                 $inc: {
                     rating: change
                 },
+                $set: {
+                    lastChange: change
+                },
                 $currentDate: { lastModified: true }
             });
         }
@@ -223,6 +226,9 @@ module.exports = {
             await _team.updateOne({ _id : discordId }, {
                 $inc: {
                     rating: change
+                },
+                $set: {
+                    lastChange: change
                 },
                 $currentDate: { lastModified: true }
             });
