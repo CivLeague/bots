@@ -6,6 +6,7 @@ const errorHandler = require('../util/errormessage');
 
 const cmd_stats = '.stats';
 const cmd_ratings = '.ratings';
+const cmd_roomratings = '.roomratings';
 const cmd_separator = ' ';
 
 const moderatorId = '291753249361625089';
@@ -412,6 +413,46 @@ class StatsBotModule
                     })
                 });
             }
+        }
+        else if ( content.startsWith( cmd_roomratings ) ) {
+            //get voice channel info
+            const vchannel = message.member.voiceChannel;
+            if (!vchannel)
+            {
+                message.reply("you must be in a voice channel to use roomratings!");
+                return;
+            }
+
+            if ( content.includes('team') )
+                mongoUtil.useStatsColl('team');
+            else mongoUtil.useStatsColl('ffa');
+
+            //add all game members (starting with host) to a mention message and a collection of users
+            let msg = '```js';
+            var players = await mongoUtil.getRatings(vchannel.members)
+            if (!players) {
+                message.reply('\nError occurred');
+                return;
+            }
+            for ( player of players ) {
+                if (!player) {
+                    skill = 1500;
+                }
+                let name  = player.name.replace(/[^0-9a-zA-Z_\[\]\(\)\-\/ ]/g, '');
+                let skill = player.rating;
+                let rank  = this.getRank(skill);
+                let spaces = 26 - name.length;
+
+                msg += '\n' + name;
+                while ( spaces > 0 ) {
+                    msg += ' ';
+                    spaces--;
+                }
+
+                msg += skill + '\t' + rank;
+            }
+            msg += '```';
+            message.channel.send(msg);
         }
 		else if( content.startsWith(cmd_ratings) )
 		{
