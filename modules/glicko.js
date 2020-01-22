@@ -846,7 +846,16 @@ class ParseMessage
                             thisCiv = plyr.civs[plyr.civs.length - 1];
                         }
 
-                        thisCiv.losses = thisCiv.losses + 1;
+                        let losses = plyr.losses;
+                        let wins = plyr.wins;
+                        if ( diff < 0 ) {
+                            thisCiv.losses++;
+                            losses++;
+                        }
+                        else {
+                            thisCiv.wins++;
+                            wins++;
+                        }
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;
                         if (!plyr.subbedOut) plyr.subbedOut = 0;
 
@@ -856,8 +865,8 @@ class ParseMessage
                                                      pStats.getRd(),
                                                      pStats.getVol(),
                                                      plyr.games + 1,
-                                                     plyr.wins,
-                                                     plyr.losses + 1,
+                                                     wins,
+                                                     losses,
                                                      plyr.civs,
                                                      plyr.subbedIn,
                                                      plyr.subbedOut + 1
