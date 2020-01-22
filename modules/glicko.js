@@ -1357,6 +1357,11 @@ async function applyTags(players)
         if (!skill)
             continue;
 
+        let p = await mongoUtil.getPlayer( player.id );
+        if ( ( skill >= 1600 || p.games > 30 ) && player.roles.has(novice) ) {
+            await player.removeRole(novice).catch(console.error);
+        }
+
         if (skill < 1500)
         {
             if ( !player.roles.has(settler) )

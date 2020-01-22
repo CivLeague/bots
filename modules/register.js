@@ -18,6 +18,7 @@ const vhaId = '375413414987825152';
 const moderatorId = '291753249361625089';
 const ranked = '615780983047979008';
 const chieftain = '628464491129995264';
+const novice = '577702305999093763';
 
 const http = require('http');
 const https = require('https');
@@ -209,7 +210,7 @@ const srv = http.createServer( (req, res) =>
                         
                                 GetChannelSteamLog().send(embed);
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                member.addRoles([ranked, chieftain]);
+                                member.addRoles([ranked, chieftain, novice]);
 					        }
 					        catch( err )
 					        {
@@ -390,7 +391,7 @@ class RegisterModule
                             .setTimestamp();
                         GetChannelSteamLog().send(embed);
                         message.channel.send(target + ', you have been registered with default stats and given the ranked role.\n\n Please read <#550251325724557322>.');
-			            target.addRoles([ranked, chieftain]);
+			            target.addRoles([ranked, chieftain, novice]);
                     }
                 });
             }
@@ -483,7 +484,7 @@ class RegisterModule
                         }
                     }
 
-                    target.addRoles([ranked, chieftain]);
+                    target.addRoles([ranked, chieftain, novice]);
                 });
             }
             catch (err)
