@@ -164,7 +164,7 @@ module.exports = {
         { upsert: true });
     },
 
-    updatePlayer: async function ( discordId, skill, diff, rd, vol, g, w, l, civs, subIn, subOut ) {
+    updatePlayer: async function ( discordId, skill, diff, rd, vol, g, w, l, civs, subIn, subOut, sub ) {
         await _coll.updateOne({ _id : discordId }, {
             $set: {
                 rating:     skill,
@@ -177,9 +177,13 @@ module.exports = {
                 civs:       civs,
                 subbedIn:   subIn,
                 subbedOut:  subOut
-            },
-            $currentDate: { lastModified: true }
+            }
         });
+        if ( !sub ) {
+            await _coll.updateOne({ _id : discordId }, {
+                $currentDate: { lastModified: !sub }
+            });
+        }
     },
 
     giveReset: async function ( discordId ) {
@@ -218,8 +222,7 @@ module.exports = {
                 },
                 $set: {
                     lastChange: change
-                },
-                $currentDate: { lastModified: true }
+                }
             });
         }
         else if (db == 'team') {
@@ -229,8 +232,7 @@ module.exports = {
                 },
                 $set: {
                     lastChange: change
-                },
-                $currentDate: { lastModified: true }
+                }
             });
         }
     },

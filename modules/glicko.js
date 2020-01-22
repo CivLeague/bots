@@ -738,6 +738,7 @@ class ParseMessage
                         thisCiv.wins = thisCiv.wins + 1;
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;
                         if (!plyr.subbedOut) plyr.subbedOut = 0;
+                        let sub = true;
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
@@ -749,7 +750,8 @@ class ParseMessage
                                                      plyr.losses,
                                                      plyr.civs,
                                                      plyr.subbedIn + 1,
-                                                     plyr.subbedOut
+                                                     plyr.subbedOut,
+                                                     sub
                                                     );
                         //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                     }
@@ -858,6 +860,7 @@ class ParseMessage
                         }
                         if (!plyr.subbedIn)  plyr.subbedIn  = 0;
                         if (!plyr.subbedOut) plyr.subbedOut = 0;
+                        let sub = true;
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
@@ -869,7 +872,8 @@ class ParseMessage
                                                      losses,
                                                      plyr.civs,
                                                      plyr.subbedIn,
-                                                     plyr.subbedOut + 1
+                                                     plyr.subbedOut + 1,
+                                                     sub
                                                     );
                         //await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                     }
@@ -1073,6 +1077,7 @@ class ParseMessage
 
                             if (!plyr.subbedIn)  plyr.subbedIn  = 0;
                             if (!plyr.subbedOut) plyr.subbedOut = 0;
+                            let sub = false;
 
                             await mongoUtil.updatePlayer(pStats.dId,
                                                          Math.round(pStats.getRating()),
@@ -1084,7 +1089,8 @@ class ParseMessage
                                                          losses,
                                                          plyr.civs,
                                                          plyr.subbedIn,
-                                                         plyr.subbedOut
+                                                         plyr.subbedOut,
+                                                         sub
                                                         );
                             await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                             let fContent = {
@@ -1154,6 +1160,7 @@ class ParseMessage
                             plyr.subbedIn++;
                         else if ( pStats.subType == 2 )
                             plyr.subbedOut++;
+                        let sub = false;
 
                         await mongoUtil.updatePlayer(pStats.dId,
                                                      Math.round(pStats.getRating()),
@@ -1165,7 +1172,8 @@ class ParseMessage
                                                      losses,
                                                      plyr.civs,
                                                      plyr.subbedIn,
-                                                     plyr.subbedOut
+                                                     plyr.subbedOut,
+                                                     sub
                                                     );
                         if ( pStats.subType == 0 ) {
                             await mongoUtil.updateCiv(thisCiv, i+1, pStats.oldRating, false);
