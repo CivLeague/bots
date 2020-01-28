@@ -14,6 +14,7 @@ const http = require('http');
 const moderatorId = '291753249361625089';
 const botId = '293018308402348033';
 
+const novice    = '577702305999093763';
 const deity     = '628461624524800000';
 const immortal  = '628464081346625536';
 const emperor   = '628464280118755351';
@@ -42,6 +43,7 @@ function GetChannelSubLog() { return util.getChannel(371831587001729036); }
 function GetChannelGlickoHistory() { return util.getChannel(569705866224467988); }
 function GetChannelGlickoDebug() { return util.getChannel(582241310220746762); }
 function GetChannelReportsProcessed() { return util.getChannel(484882448115564584); }
+function GetRankedReporting()  { return util.getChannel(413532530268962816); }
 
 // ONLY FOR TESTING
 const querystring = require('querystring');
@@ -407,7 +409,7 @@ class ReportBotModule
 		});
 
         util.client.on('message', ( msg ) => {
-            if ( msg.author.bot ) return;
+            if ( msg.author.bot || msg.channel != GetRankedReporting() ) return;
 
             let content = msg.content;
             if ( content.toLowerCase().includes( 'host' ) && content.toLowerCase().includes( 'type' ) ) {
@@ -1358,17 +1360,21 @@ async function applyTags(players)
             continue;
 
         let p = await mongoUtil.getPlayer( player.id );
-        if ( ( skill >= 1600 || p.games > 30 ) && player.roles.has(novice) ) {
+        if ( ( skill >= 1600 || p.games >= 30 ) && player.roles.has(novice) ) {
             await player.removeRole(novice).catch(console.error);
         }
 
         if (skill < 1500)
         {
+            if ( !player.roles.has(novice) && p.games < 30 )
+                await player.addRole(novice).catch(console.error);
             if ( !player.roles.has(settler) )
                 await swapRoles(player, settler);
         }
         else if (skill >= 1500 && skill < 1600)
         {
+            if ( !player.roles.has(novice) && p.games < 30 )
+                await player.addRole(novice).catch(console.error);
             if ( !player.roles.has(chieftain) )
                 await swapRoles(player, chieftain);
         }
