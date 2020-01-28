@@ -264,9 +264,9 @@ util.client.on('message', message =>
 		{
 		    bot_vote.showChoice(message.channel, '**__Game Mode__**\t',
 		    	new Map([
+		    		["⛔", "No Diplo"],
 		    		["🇩", "Diplo"],
 		    		["➕", "Diplo+"],
-		    		["🇼", "Always War"],
 		    		["🇵", "Always Peace"]
 		    	]), {} );
 
@@ -281,19 +281,25 @@ util.client.on('message', message =>
 		    bot_vote.showChoice(message.channel, '**__Gold Gifting/Trading__**\t',
 		    	new Map([
 		    		["✅", "Allowed"],
-		    		["🚫", "Not Allowed"]
+		    		["🚫", "Not Allowed"],
+		    		["🇫", "Friends & Allies"],
+		    		["🇦", "Allies Only"]
 		    	]), {} );
 
 		    bot_vote.showChoice(message.channel, '**__Luxuries Gifting/Trading__**\t',
 		    	new Map([
 		    		["✅", "Allowed"],
-		    		["🚫", "Not Allowed"]
+		    		["🚫", "Not Allowed"],
+		    		["🇫", "Friends & Allies"],
+		    		["🇦", "Allies Only"]
 		    	]), {} );
 
 		    bot_vote.showChoice(message.channel, '**__Strategics Gifting/Trading__**\t',
 		    	new Map([
 		    		["✅", "Allowed"],
-		    		["🚫", "Not Allowed"]
+		    		["🚫", "Not Allowed"],
+		    		["🇫", "Friends & Allies"],
+		    		["🇦", "Allies Only"]
 		    	]), {} );
 
             bot_vote.showChoice(message.channel, '**__Game Duration__**\t',
@@ -310,7 +316,7 @@ util.client.on('message', message =>
 				["🇵", "Pangaea"],
 				["🇫", "Fractal"],
 				["🇨", "Continents"],
-				["🤏", "Small Continents"],
+				["🗺️", "Small Continents"],
 				["🏝", "Continents and Islands"],
 				["🇦", "Archipelago"],
 				["🇮", "Islands"],

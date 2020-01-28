@@ -275,9 +275,7 @@ class C6Util
 		reactions = Array.from(reactions);
 		for( let i of reactions )
 		{
-            if ( i == "🤏" )
-                i = "621827736695996417";
-            else if ( i == "🏝" ) {
+            if ( i == "🏝" ) {
                 i = "%F0%9F%8F%9D";
             }
 			// TODO: error detection here
