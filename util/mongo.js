@@ -222,7 +222,8 @@ module.exports = {
                 },
                 $set: {
                     lastChange: change
-                }
+                },
+                $currentDate: { lastModified: true }
             });
         }
         else if (db == 'team') {
@@ -232,7 +233,8 @@ module.exports = {
                 },
                 $set: {
                     lastChange: change
-                }
+                },
+                $currentDate: { lastModified: true }
             });
         }
     },
