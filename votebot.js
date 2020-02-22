@@ -98,9 +98,9 @@ voting.on('finished', async(vote, channel) =>
     jVote += JSON.stringify(banned);
     jVote += '} ';
     jVote += '}\n';
-    let jObj = JSON.parse(jVote);
-    let line = JSON.stringify(jObj, null, 2);
-    fs.appendFile("/home/ubuntu/bots/splunk/votes.data", line, (err) => {
+//    let jObj = JSON.parse(jVote);
+  //  let line = JSON.stringify(jObj, null, 2);
+    fs.appendFile("/home/ubuntu/bots/splunk/votes.data", jVote, (err) => {
         if (err) {
             console.error(err);
             return;
