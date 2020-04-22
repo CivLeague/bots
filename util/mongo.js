@@ -10,23 +10,27 @@ var _cli
 var _stats;
 
 var _ffa;
+var _pbc;
 var _team;
 var _coll;
 var _civs;
 var _tcivs;
+var _bcivs;
 var _players;
 var _subs;
 
 module.exports = {
     connectToMongo: function () {
-        MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10 }, function (err, client) {
+        MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10, useUnifiedTopology: true }, function (err, client) {
             _cli     = client;
             _stats   = _cli.db('stats');
             _ffa     = _stats.collection('ffa');
+            _pbc     = _stats.collection('pbc');
             _team    = _stats.collection('team');
             _coll    = _stats.collection('ffa'); //set default collection
             _civs    = _cli.db('civs').collection('ffa');
             _tcivs   = _cli.db('civs').collection('team');
+            _bcivs   = _cli.db('civs').collection('bbg');
             _players = _cli.db('players').collection('players');
             _subs    = _cli.db('subs').collection('subs');
             console.log('mongo listening');
@@ -80,10 +84,30 @@ module.exports = {
     getHighScore: async function ( discordId ) {
         let ffa = await _ffa.findOne({ _id: discordId });
         let team = await _team.findOne({ _id: discordId });
-        if ( !ffa ) return team.rating;
-        if ( !team ) return ffa.rating;
-        if ( ffa.rating > team.rating ) return ffa.rating;
-        else return team.rating;
+        let pbc = await _pbc.findOne({ _id: discordId });
+        if ( !ffa  && !pbc )  return team.rating;
+        if ( !team && !pbc )  return ffa.rating;
+        if ( !ffa  && !team ) return pbc.rating;
+        if ( ffa && team && !pbc ) {
+            if ( ffa.rating > team.rating ) return ffa.rating;
+            else return team.rating;
+        }
+        if ( ffa && !team && pbc ) {
+            if ( ffa.rating > pbc.rating ) return ffa.rating;
+            else return pbc.rating;
+        }
+        if ( !ffa && team && pbc ) {
+            if ( team.rating > pbc.rating ) return team.rating;
+            else return pbc.rating;
+        }
+        if ( ffa && team && pbc ) {
+            if ( team.rating > pbc.rating ) {
+                if ( team.rating > ffa.rating ) return team.rating;
+                else return ffa.rating;
+            }
+            else if (pbc.rating > ffa.rating ) return pbc.rating;
+            else return ffa.rating;
+        }
     },
     
     findByDiscord: async function ( discordId ) {
@@ -123,7 +147,57 @@ module.exports = {
 
         if ( !ffa )
             civDB = _tcivs;
+        else
+            await this.updateBbgCiv( civ, place, skill );
             
+        const c = await civDB.findOne({ name: civ.name });
+        if ( !c ) {
+            places = [ place ];
+            skills = [ skill ];
+            avgP = place;
+            avgS = skill;
+            games = 1;
+        }
+        else {
+            places = c.places;
+            skills = c.skills;
+            places.push(place);
+            skills.push(skill);
+
+            let totalP = 0;
+            for(let i = 0; i < places.length; i++) {
+                totalP += places[i];
+            }
+            avgP = totalP / places.length;
+
+            let totalS = 0;
+            for(let j = 0; j < skills.length; j++) {
+                totalS += skills[j];
+            }
+            avgS = totalS / skills.length;
+
+            games = c.games + 1;
+        }
+        await civDB.updateOne({ name : civ.name }, {
+            $set: {
+                avgPlace: avgP,
+                avgSkill: avgS,
+                places: places,
+                skills: skills,
+                games: games
+            }
+        },
+        { upsert: true });
+    },
+
+    updateBbgCiv: async function ( civ, place, skill ) {
+        let places = [];
+        let skills = [];
+        let avgP = 0;
+        let avgS = 1500;
+        let games = 0;
+        let civDB = _bcivs;
+
         const c = await civDB.findOne({ name: civ.name });
         if ( !c ) {
             places = [ place ];
@@ -186,6 +260,15 @@ module.exports = {
         }
     },
 
+    bumpWins: async function ( discordId ) {
+        await _coll.updateOne({ _id : discordId }, {
+            $inc: {
+                first: 1
+            },
+            $currentDate: { lastModified: true }
+        });
+    },
+
     giveReset: async function ( discordId ) {
         await _coll.updateOne({ _id : discordId }, {
             $set: {
@@ -237,6 +320,44 @@ module.exports = {
                 $currentDate: { lastModified: true }
             });
         }
+        else if (db == 'pbc') {
+            await _pbc.updateOne({ _id : discordId }, {
+                $inc: {
+                    rating: change
+                },
+                $set: {
+                    lastChange: change
+                },
+                $currentDate: { lastModified: true }
+            });
+        }
+    },
+
+    changeRd: async function ( discordId, db, change ) {
+        if (db == 'ffa') {
+            await _ffa.updateOne({ _id : discordId }, {
+                $inc: {
+                    rd: change
+                },
+                $currentDate: { lastModified: true }
+            });
+        }
+        else if (db == 'team') {
+            await _team.updateOne({ _id : discordId }, {
+                $inc: {
+                    rd: change
+                },
+                $currentDate: { lastModified: true }
+            });
+        }
+        else if (db == 'pbc') {
+            await _pbc.updateOne({ _id : discordId }, {
+                $inc: {
+                    rd: change
+                },
+                $currentDate: { lastModified: true }
+            });
+        }
     },
 
     getRatings: async function ( players ) {
@@ -257,16 +378,23 @@ module.exports = {
 
     getLeaderboard: async function ( collection ) {
         _coll = _stats.collection(collection);
-        if ( collection == 'ffa' ) {
+        if ( collection == 'team' ) {
+            let res = await _coll.find({ games: { $gte: 10 } }).toArray();
+            return res.sort((p1, p2) => ((p1.wins/p1.games) < (p2.wins/p2.games)) ? 1 : -1); 
+            //return await _coll.find({ games: { $gte: 10 } }).sort({ rating: -1 }).toArray();
+        }
+        else if ( collection == 'ffa' )
+            return await _coll.find({ games: { $gte: 5 } }).sort({ rating: -1 }).toArray();
+        else
             return await _coll.find().sort({ rating: -1 }).toArray();
-        }
-        else {
-            return await _coll.find({ games: { $gte: 10 } }).sort({ rating: -1 }).toArray();
-        }
     },
 
     getCivsLeaderboard: async function ( ) {
         return await _civs.find().sort({ avgPlace: 1 }).toArray();
+    },
+
+    getBbgCivsLeaderboard: async function ( ) {
+        return await _bcivs.find().sort({ avgPlace: 1 }).toArray();
     },
 
     getSubs: async function () {

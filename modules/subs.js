@@ -5,12 +5,28 @@ const mongoUtil = require('../util/mongo');
 var moderatorId = '291753249361625089';
 
 function GetChannelSubLog() { return util.getChannel(371831587001729036); }
+function GetChannelBotCommands() { return util.getChannel(304782408526594049); }
 
 class SubBotModule
 {
     constructor()
     {
         util.client.on('message', async (message) => {
+            if (message.channel.id == GetChannelBotCommands().id) {
+                if (message.content == '.mysubs') {
+                    let msg = '';
+                    let pSubs = await mongoUtil.getSubCount(message.author.id)
+                    if ( pSubs && pSubs.count > 0 ) {
+                        msg += 'you have subbed ' + pSubs.count + ' times this month. Beware that each one after the 2nd sub will incur a 3 day suspension. Your sub count will be reset at 00:00 UTC on the 3rd of the month.'
+                    }
+                    else {
+                        msg += 'no subs have been logged for you this month.'
+                    }
+                    message.reply(msg)
+                }
+                return;
+            }
+
             if (message.channel.id != GetChannelSubLog().id)
                 return;
 

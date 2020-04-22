@@ -53,8 +53,8 @@ const querystring = require('querystring');
 // GameType: [0] Diplo   [1] War   [2] Team   [3] Duel
 function GetGameType(id)
 {
-	if(id == 0) return "Diplo";
-	else if(id == 1) return "War";
+	if(id == 0) return "FFA";
+	else if(id == 1) return "PBC";
 	else if(id == 2) return "Team";
 	else if(id == 3) return "Duel";
 	else return "N/A";
@@ -388,7 +388,7 @@ class ReportBotModule
 
 			if(isDebugEmoji || (isModerator && isReportEmoji))
 			{
-                if ( isModerator && isReportEmoji ) {
+                /*if ( isModerator && isReportEmoji ) {
                     for (let r of reactions) {
                         if ( r[1].emoji.name == '🛑'  || r[1].emoji.name == '❌' || r[1].emoji.name == '⛔'  || r[1].emoji.name == '🚫') {
                             reaction.message.channel.send(user + ' this report should not be processed until the issue related to it is resolved').then ( m => {
@@ -397,7 +397,7 @@ class ReportBotModule
                             return;
                         }
                     }
-                }
+                }*/
 				let pm = new ParseMessage(reaction.message, user);
                 if ( pm.abort == false )
 				    pm.parseGameReport(isDebugEmoji);
@@ -452,7 +452,7 @@ class ParseMessage
 				else
 				{
 					if ( !this.assignType(line) )
-                        this.error.add('\nInvalid game type... [allowed] ffa, diplo, duel, war, team');
+                        this.error.add('\nInvalid game type... [allowed] ffa, duel, pbc, team');
 				}
                 continue;
 			}
@@ -540,7 +540,7 @@ class ParseMessage
 					const civsMatched = checkCivs( cleanstr.split(' '));
                     if ( typeof civsMatched == "string" ) {
                         if (civsMatched == "england") {
-					    	this.error.add('\n`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria`, `EleanorE`, or `EleanorF`');
+					    	this.error.add('\n`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria` or `EleanorE`');
                             this.abort = true;
 		                    this.error.send(this.message.channel, 60);
                             return;
@@ -608,7 +608,7 @@ class ParseMessage
 		
 		if(this.type == null)
 		{
-            this.error.add('\nGame must include a type... [allowed] ffa, diplo, war, team, duel');
+            this.error.add('\nGame must include a type... [allowed] ffa, team, pbc, duel');
             this.abort = true;
 		}
 				
@@ -927,7 +927,7 @@ class ParseMessage
             }
             glickoPositions.push(pp);
         }
-        //glickoPositions = correct player positions
+        //glickoPositions == correct player positions
 
         if (this.type != 2) {
             const game = glicko.makeRace(glickoPositions);
@@ -1217,10 +1217,14 @@ class ParseMessage
             }
         }
         if(!debugMode) {
+            if ( !this.isTeam() ) {
+                for( let m of this.positions[0] ) {
+                    await mongoUtil.bumpWins( m[1] );
+                }
+            }
             await this.notify();
         }
         else {
-            
             for (let i = 0; i < this.positions.length; i++) {
                 for ( let m of this.positions[i] ) {
                     console.log("results: " + m[1] + ' ' + m.diff);
@@ -1269,6 +1273,8 @@ class ParseMessage
 
         if ( this.isTeam() )
             leaderboard.update('team');
+        else if ( this.isPBC() )
+            leaderboard.update('pbc');
         else
             leaderboard.update('ffa');
 	}
@@ -1323,16 +1329,16 @@ class ParseMessage
 	
 	assignType(data)
 	{
-		if ( data.includes('team') ) {
+		if(data.includes('pbc')) {
+            this.type = 1;
+            mongoUtil.useStatsColl('pbc');
+        }
+		else if ( data.includes('team') ) {
             this.type = 2;
             mongoUtil.useStatsColl('team');
         }
-		else if ( data.includes('diplo') || data.includes('ffa') ) {
+		else if ( data.includes('ffa') ) {
             this.type = 0;
-            mongoUtil.useStatsColl('ffa');
-        }
-		else if(data.includes('war')) {
-            this.type = 1;
             mongoUtil.useStatsColl('ffa');
         }
 		else if(data.includes('duel') || data.includes('adcp') || data.includes('dual')) {
@@ -1343,7 +1349,8 @@ class ParseMessage
 		return this.type != null;
 	}
 
-    isFFA()  { return ( this.type == 0 || this.type == 1 ); }
+    isFFA()  { return this.type == 0; }
+    isPBC()  { return this.type == 1; }
     isTeam() { return this.type == 2; } 
     isDuel() { return this.type == 3; } 
 }
@@ -1359,22 +1366,13 @@ async function applyTags(players)
         if (!skill)
             continue;
 
-        let p = await mongoUtil.getPlayer( player.id );
-        if ( ( skill >= 1600 || p.games >= 30 ) && player.roles.has(novice) ) {
-            await player.removeRole(novice).catch(console.error);
-        }
-
         if (skill < 1500)
         {
-            if ( !player.roles.has(novice) && p.games < 30 )
-                await player.addRole(novice).catch(console.error);
             if ( !player.roles.has(settler) )
                 await swapRoles(player, settler);
         }
         else if (skill >= 1500 && skill < 1600)
         {
-            if ( !player.roles.has(novice) && p.games < 30 )
-                await player.addRole(novice).catch(console.error);
             if ( !player.roles.has(chieftain) )
                 await swapRoles(player, chieftain);
         }

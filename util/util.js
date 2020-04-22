@@ -183,14 +183,14 @@ class C6Util
 		/// Split civs fairly
 		let split1 = [], split2 = [];
 		this.createSplit(allowed, split1, split2, 'Gorgo', 'Pericles');
+		this.createSplit(allowed, split1, split2, 'Kongo', 'Poland');
 		this.createSplit(allowed, split1, split2, 'Gandhi', 'Chandragupta');
 		this.createSplit(allowed, split1, split2, 'Victoria', 'Phoenicia');
 		this.createSplit(allowed, split1, split2, 'Australia', 'Netherlands');
-		this.createSplit(allowed, split1, split2, 'France', 'Scythia');
+		this.createSplit(allowed, split1, split2, 'Catherine', 'Scythia');
 		this.createSplit(allowed, split1, split2, 'America', 'Mapuche');
 		this.createSplit(allowed, split1, split2, 'Russia', 'Canada');
 		this.createSplit(allowed, split1, split2, 'Japan', 'Norway'); //needs revision
-		// brazil? -where?
 		/// end split
 
 		const perPlayer = Math.floor(allowed.length / 2);

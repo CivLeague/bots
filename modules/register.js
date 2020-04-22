@@ -34,6 +34,7 @@ const srv = http.createServer( (req, res) =>
 	const CLIENT_ID = '482621155136765973'
 	const CLIENT_SECRET = util.getToken('discord');
 	const REDIRECT_URI = 'http://34.216.163.75'
+	//const REDIRECT_URI = 'http://cpl.gg';
 
 	const params = getParams(req);
 	if(params.hasOwnProperty('code'))
@@ -210,7 +211,7 @@ const srv = http.createServer( (req, res) =>
                         
                                 GetChannelSteamLog().send(embed);
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                member.addRoles([ranked, chieftain, novice]);
+                                member.addRoles([ranked, chieftain]);
 					        }
 					        catch( err )
 					        {
@@ -277,11 +278,13 @@ class RegisterModule
             else {
                 const state_string = JSON.stringify({ user: target.id, chan: message.channel.id });
                 const link = 'https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string;
+                //const link = 'https://discordapp.com/api/oauth2/authorize?client_id=535317412002922496&redirect_uri=http%3A%2F%2Fcpl.gg&response_type=code&scope=connections%20identify&state=' + state_string;
                 const embed = new Discord.RichEmbed()
                     .setColor('#0099ff')
                     .setTitle('Authorize Bot')
                     .setDescription('The CPL Bot needs authorization in order to search your Discord profile for your linked Steam account. It uses Steam accounts to verify unique users.\n\n[Click here to authorize](' + link + ')');
                 message.reply(embed).then( msg => { msg.delete(20000) } );
+                message.channel.send("If you don't see the link, please turn on 'Link Preview' in your 'Text & Images' Discord Settings, then try aggain.").then( msg => { msg.delete(20000) } );
 
                 //message.reply('please click on the following link, then authorize the bot:\n<https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string + ">").then(msg => { msg.delete(20000) });
             }
@@ -391,7 +394,7 @@ class RegisterModule
                             .setTimestamp();
                         GetChannelSteamLog().send(embed);
                         message.channel.send(target + ', you have been registered with default stats and given the ranked role.\n\n Please read <#550251325724557322>.');
-			            target.addRoles([ranked, chieftain, novice]);
+			            target.addRoles([ranked, chieftain]);
                     }
                 });
             }
@@ -471,7 +474,6 @@ class RegisterModule
                         //.setImage(target.user.avatarURL)
                         .setTimestamp();
                     GetChannelSteamLog().send(embed);
-                    GetChannelSteamLog().send('`.setid` by ' + message.member + '\nOld Discord: <@' + sExists.discord_id + '>\nNew Discord: ' + target + '\nUsername: ' + target.user.username + '\nDisplay Name: ' + target.displayName + '\n<https://steamcommunity.com/profiles/' + realid + '>');
                     message.channel.send(target + ' is now registered to steamId == `' + realid + '`.\n<@' + sExists.discord_id + '> has had their ranked role removed and been kicked from the server.').then( msg => { msg.delete(20000); });
 
                     const reason = 'new discord: ' + target.id;
@@ -484,7 +486,7 @@ class RegisterModule
                         }
                     }
 
-                    target.addRoles([ranked, chieftain, novice]);
+                    target.addRoles([ranked, chieftain]);
                 });
             }
             catch (err)

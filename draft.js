@@ -10,6 +10,14 @@ process.on("uncaughtException", (err) => {
 util.client.on('message', message =>
 { 
 	let content = message.content;
+	if(content.startsWith(".showguilds")) {
+        message.delete();
+        guilds = util.client.guilds.array();
+        for ( var i = 0 ; i < guilds.length; i++ ) {
+            console.log(guilds[i].name);
+        }
+        //util.client.guilds.get('id').leave()
+    }
 	if(content.startsWith(".draftteam"))
 	{
 		const contentSplit = content.split('-');

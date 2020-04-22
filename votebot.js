@@ -258,16 +258,16 @@ util.client.on('message', message =>
 		
 		const bot_vote = voting.createVote(players);
 		bot_vote.isTeamVote = isTeamVote;
-		bot_vote.show(message.channel, '**__Modded Game__** - This game is played using the Better Balanced Game mod, type .modinfo for more details');
+		bot_vote.show(message.channel, '**__New Game__**\n**NOTE**: Only 1 CS may be captured and kept.');
 		
 		if ( !isTeamVote )
 		{
-		    bot_vote.showChoice(message.channel, '**__Game Mode__**\t',
+		    bot_vote.showChoice(message.channel, '**__Communication__**\t',
 		    	new Map([
-		    		["⛔", "No Diplo"],
-		    		["🇩", "Diplo"],
-		    		["➕", "Diplo+"],
-		    		["🇵", "Always Peace"]
+		    		["⛔", "None"],
+		    		["🇫", "Private between Friends and Allies"],
+		    		["🇵", "All Private Allowed"],
+		    		["➕", "All Public Only"]
 		    	]), {} );
 
 		    bot_vote.showChoice(message.channel, '**__Official Friends/Allies__**\t',
@@ -309,6 +309,13 @@ util.client.on('message', message =>
 		    		["♾️", "Unlimited"]
                 ]), {} );
         }
+        else {
+            bot_vote.showChoice(message.channel, '**__Relic Trading before t20__**\t',
+                new Map([
+		    		["✅", "Allowed"],
+		    		["🚫", "Not Allowed"]
+                ]), {} );
+        }
 
         //show for everyone
 		bot_vote.showChoice(message.channel, '**__Map Type__**\t',
@@ -334,6 +341,22 @@ util.client.on('message', message =>
             new Map([
 				["🇸", "Standard"],
                 ["🇦", "Abundant"]
+            ]), {} );
+
+        bot_vote.showChoice(message.channel, '**__Mountain Chokes__**\t',
+            new Map([
+				["🇸", "Small"],
+                ["🇳", "Normal"],
+                ["🇱", "Large"],
+                ["🇫", "Flat Earth"]
+            ]), {} );
+
+        bot_vote.showChoice(message.channel, '**__Disasters__**\t',
+            new Map([
+				["1⃣", "One"],
+				["2⃣", "Two"],
+				["3⃣", "Three"],
+                ["4⃣", "Four"]
             ]), {} );
 
 		if ( !isTeamVote )

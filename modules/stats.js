@@ -10,6 +10,16 @@ const cmd_roomratings = '.roomratings';
 const cmd_separator = ' ';
 
 const moderatorId = '291753249361625089';
+const deity     = '628461624524800000';
+const immortal  = '628464081346625536';
+const emperor   = '628464280118755351';
+const king      = '628464338985943040';
+const prince    = '628464428593184778';
+const warlord   = '628464457491939339';
+const chieftain = '628464491129995264';
+const settler   = '628464552882995200';
+const difficulties = [settler, chieftain, warlord, prince, king, emperor, immortal, deity];
+
 
 //const file_myleague = 'data/myleague.txt';
 
@@ -55,8 +65,8 @@ class StatsBotModule
 
         if (content.startsWith('.resetstats')) {
             message.delete();
-			if( content != '.resetstats ffa' && content != '.resetstats team' ) {
-				error.add('Type  `.resetstats ffa`  or  `.resetstats team`  to confirm you really want to do this. You only get one reset for main leaderboard stats and one reset for team leaderboard stats. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
+			if( content != '.resetstats ffa' && content != '.resetstats team' && content != '.resetstats pbc' ) {
+				error.add('Type  `.resetstats ffa`  or  `.resetstats team`  or  `.resetstats pbc`  to confirm you really want to do this. You only get one reset for each leaderboard stats. This action **cannot** be reversed. Once you reset your stats they are gone forever. There is **no backup**.');
 				error.send(message.channel, 30);
 				return;
             }
@@ -71,6 +81,9 @@ class StatsBotModule
                 mongoUtil.resetStats( message.author.id ).then( result => {
                     message.reply("your " + db + " stats have been reset.").then(msg => { msg.delete(20000) });
                 });
+                let m = message.member;
+                await m.removeRoles(difficulties).catch(console.error);
+                await m.addRole(chieftain).catch(console.error);
             }
             else
                 message.reply("you have already used your " + db + " stats reset.").then(msg => { msg.delete(20000) });
@@ -104,14 +117,25 @@ class StatsBotModule
             try
             {
                 let msg = '';
-                if ( content.includes('team') )
+                let db = ''
+                if ( content.includes('team') ) {
                     mongoUtil.useStatsColl('team');
-                else mongoUtil.useStatsColl('ffa');
+                    db = 'team';
+                }
+                else if ( content.includes('pbc') ) {
+                    mongoUtil.useStatsColl('pbc');
+                    db = 'pbc';
+                }
+                else {
+                    mongoUtil.useStatsColl('ffa');
+                    db = 'ffa';
+                }
 
                 var player = await mongoUtil.getPlayer(target.id);
                 if ( player ) {
                     let skill = player.rating;
                     let games = player.games;
+                    let first = player.first ? player.first : 0;
                     let wins  = player.wins;
                     let losses= player.losses;
                     let wp    = Math.round(wins*100/games);
@@ -129,6 +153,8 @@ class StatsBotModule
                     msg += '\nRank:    ' + rank;
                     msg += '\nGames:   ' + games;
                     msg += '\nWin %:   ' + wp + '%';
+                    if ( db != 'team' )
+                        msg += '\n1st:     ' + first;
                     msg += '\nWins:    ' + wins;
                     msg += '\nLosses:  ' + losses;
                     msg += '\nSub In:  ' + sIn;
@@ -137,7 +163,7 @@ class StatsBotModule
                     msg += '```';
                 }
                 else {
-                    msg += target + ' doesn\'t have any stats yet';
+                    msg += target + ' doesn\'t have any ' + db + ' stats yet';
                 }
                 message.channel.send(msg);
             }
@@ -176,6 +202,8 @@ class StatsBotModule
             let msg = '';
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
+            else if ( content.includes('pbc') )
+                mongoUtil.useStatsColl('pbc');
             else mongoUtil.useStatsColl('ffa');
 
             var player = await mongoUtil.getPlayer(target.id);
@@ -185,11 +213,8 @@ class StatsBotModule
 
                 let bCivs = player.civs.sort( 
                     function(a, b) { 
-                        let winP = (b.wins / (b.wins + b.losses)) - (a.wins / (a.wins + a.losses))
-                        if ( b.wins - a.wins > 0 ) return 1;
-                        else if ( a.wins - b.wins > 0 ) return -1;
-                        else if ( winP > 0 ) return 1;
-                        else if ( winP < 0 ) return -1;
+                        if ( (b.wins + b.losses) - (a.wins + a.losses) > 0 ) return 1;
+                        else if ( (b.wins + b.losses) - (a.wins + a.losses) < 0 ) return -1;
                         else return ( b.name < a.name );
                     }
                 );
@@ -309,6 +334,8 @@ class StatsBotModule
             let msg = '';
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
+            if ( content.includes('pbc') )
+                mongoUtil.useStatsColl('pbc');
             else mongoUtil.useStatsColl('ffa');
 
             var player = await mongoUtil.getPlayer(target.id);
@@ -323,6 +350,8 @@ class StatsBotModule
                         else if ( winP < 0 ) return -1;
                         else if ( b.wins - a.wins > 0 ) return 1;
                         else if ( b.wins - a.wins < 0 ) return -1;
+                        else if ( b.losses - a.losses > 0 ) return 1;
+                        else if ( b.losses - a.losses < 0 ) return -1;
                         else return ( b.name < a.name );
                     }
                 );
@@ -425,6 +454,8 @@ class StatsBotModule
 
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
+            else if ( content.includes('pbc') )
+                mongoUtil.useStatsColl('pbc');
             else mongoUtil.useStatsColl('ffa');
 
             //add all game members (starting with host) to a mention message and a collection of users
@@ -465,6 +496,8 @@ class StatsBotModule
             {
                 if ( content.includes('team') )
                     mongoUtil.useStatsColl('team');
+                else if ( content.includes('pbc') )
+                    mongoUtil.useStatsColl('pbc');
                 else mongoUtil.useStatsColl('ffa');
 
                 let msg = '```js';
@@ -505,7 +538,7 @@ class StatsBotModule
                   && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
             message.delete();
 
-            let usage = '\n**USAGE**:\n`.forcereset  <member tag>  <ffa | team>`';
+            let usage = '\n**USAGE**:\n`.forcereset  <member tag>  <ffa | team | pbc>`';
             if ( content == '.forcereset' ) {
                 message.reply(usage).then( m => { m.delete(20000) });
                 return;
@@ -535,6 +568,10 @@ class StatsBotModule
                 mongoUtil.useStatsColl('ffa');
                 db = 'ffa';
             }
+            else if ( content.includes('pbc') ) {
+                mongoUtil.useStatsColl('pbc');
+                db = 'pbc';
+            }
             else {
                 message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
                 return;
@@ -555,7 +592,7 @@ class StatsBotModule
                   && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
             message.delete();
 
-            let usage = '\n**USAGE**:\n`.checkreset  <member tag>  [team]`';
+            let usage = '\n**USAGE**:\n`.checkreset  <member tag>  <ffa | pbc | team>`';
             if ( content == '.checkreset' ) {
                 message.reply(usage).then( m => { m.delete(20000) });
                 return;
@@ -576,12 +613,23 @@ class StatsBotModule
                 return;
             }
 
-            let db = 'ffa';
+            let db = '';
             if ( content.includes('team') ) {
                 mongoUtil.useStatsColl('team');
                 db = 'team';
             }
-            else mongoUtil.useStatsColl('ffa');
+            else if ( content.includes('pbc') ) {
+                mongoUtil.useStatsColl('pbc');
+                db = 'pbc';
+            }
+            else if ( content.includes('ffa') ) {
+                mongoUtil.useStatsColl('ffa');
+                db = 'ffa';
+            }
+            else {
+                message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
+                return;
+            }
 
             let player = await mongoUtil.getPlayer( target.id );
             if ( !player ) 
@@ -596,7 +644,7 @@ class StatsBotModule
                   && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
             message.delete();
 
-            let usage = '\n**USAGE**:\n`.givereset  <member tag>  [team]`';
+            let usage = '\n**USAGE**:\n`.givereset  <member tag>  <ffa | pbc | team>`';
             if ( content == '.givereset' ) {
                 message.reply(usage).then( m => { m.delete(20000) });
                 return;
@@ -619,7 +667,14 @@ class StatsBotModule
 
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
-            else mongoUtil.useStatsColl('ffa');
+            else if ( content.includes('pbc') )
+                mongoUtil.useStatsColl('pbc');
+            else if ( content.includes('ffa') )
+                mongoUtil.useStatsColl('ffa');
+            else {
+                message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
+                return;
+            }
 
             mongoUtil.giveReset( target.id );
         }
@@ -628,7 +683,7 @@ class StatsBotModule
                   && GetBotTesting().guild.member(message.author).roles.has(moderatorId) ) {
             message.delete();
 
-            let usage = '\n**USAGE**:\n`.changeskill`  `[team]`  `<member tag>`  `<amount>`';
+            let usage = '\n**USAGE**:\n`.changeskill`  `<ffa | pbc | team>`  `<member tag>`  `<amount>`';
             if ( content == '.changerating' || content == '.changeskill' ) {
                 message.reply(usage).then( m => { m.delete(20000) });
                 return;
@@ -640,9 +695,17 @@ class StatsBotModule
                 return;
             }
 
-            let db = 'ffa';
+            let db = '';
             if ( content.includes( 'team' ) )
                 db = 'team';
+            else if ( content.includes( 'pbc' ) )
+                db = 'pbc';
+            else if ( content.includes( 'ffa' ) )
+                db = 'ffa';
+            else {
+                message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
+                return;
+            }
             
             let amt = content.split(' ').pop();
             if ( !amt ) {
