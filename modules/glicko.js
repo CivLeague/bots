@@ -1,7 +1,7 @@
-const util = require('../util/util');
-const mongoUtil = require('../util/mongo');
-const errorHandler = require('../util/errormessage');
-const leaderboard = require('./leaderboard');
+const util = require('/home/codenaugh/bots/util/util');
+const mongoUtil = require('/home/codenaugh/bots/util/mongo');
+const errorHandler = require('/home/codenaugh/bots/util/errormessage');
+const leaderboard = require('/home/codenaugh/bots/modules/leaderboard');
 
 const Discord = require('discord.js');
 const Levenshtein = require('fast-levenshtein');

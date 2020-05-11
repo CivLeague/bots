@@ -1,6 +1,6 @@
-﻿const util = require('./util/util');
-const rc = require('./util/reactioncontrol');
-const voting = require('./util/voting');
+﻿const util = require('/home/codenaugh/bots/util/util');
+const rc = require('/home/codenaugh/bots/util/reactioncontrol');
+const voting = require('/home/codenaugh/bots/util/voting');
 const fs = require("fs");
 
 /// Register civs as custom emojis

@@ -1,4 +1,4 @@
-const util = require('./util');
+const util = require('/home/codenaugh/bots/util/util');
 const MongoClient = require('mongodb').MongoClient;
 const url = 'mongodb://cplbot:' + util.getToken('mongo') + '@localhost:27017/';
 

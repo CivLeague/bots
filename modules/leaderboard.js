@@ -1,12 +1,12 @@
-const util = require('../util/util');
-const mongoUtil = require('../util/mongo');
+const util = require('/home/codenaugh/bots/util/util');
+const mongoUtil = require('/home/codenaugh/bots/util/mongo');
 
 const max_per_leaderboard_message = 10;
 
 class C6Leaderboard
 {
 	constructor() {
-		util.client.on('ready', () =>
+		util.client.once('ready', () =>
         {
             //this.update('overall');
         });

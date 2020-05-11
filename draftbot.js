@@ -1,4 +1,4 @@
-const util = require('./util/util');
+const util = require('/home/codenaugh/bots/util/util');
 
 const err_formatting = 'Formatting Error. You may have forgotten the -, please try again.\nBase Command: **.draft** --- Example: **.draft-6.Sumeria.Scythia.Australia**\nBase Command: **.draftteam** Example (4v4): **.draftteam-8.2**';
 

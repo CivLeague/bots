@@ -1,6 +1,6 @@
-const util = require('../util/util');
-const mongoUtil = require('../util/mongo');
-const errorHandler = require('../util/errormessage');
+const util = require('/home/codenaugh/bots/util/util');
+const mongoUtil = require('/home/codenaugh/bots/util/mongo');
+const errorHandler = require('/home/codenaugh/bots/util/errormessage');
 
 const Discord = require('discord.js');
 const SteamAPI = require('steamapi');
@@ -248,7 +248,7 @@ class RegisterModule
 	constructor()
 	{
 		util.client.on('message', message => { this.handle(message); });
-		util.client.on('ready', () => { srv.listen(80, () => { console.log('http listening'); }); });
+		util.client.once('ready', () => { srv.listen(80, () => { console.log('http listening'); }); });
 	}
 	
 	testRequest(fail)

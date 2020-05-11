@@ -1,6 +1,6 @@
 ﻿const Events = require('events');
-const rc = require('./reactioncontrol');
-const util = require('./util');
+const rc = require('/home/codenaugh/bots/util/reactioncontrol');
+const util = require('/home/codenaugh/bots/util/util');
 
 var reactions = new Map();
 

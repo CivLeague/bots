@@ -3,7 +3,7 @@
 
 /// duplicate of C6Util::loadJSON
 const _fs = require('fs');
-const tokens = JSON.parse(_fs.readFileSync('./data/tokens.json', 'utf8').replace(/^\uFEFF/, ''));
+const tokens = JSON.parse(_fs.readFileSync('/home/codenaugh/bots/data/tokens.json', 'utf8').replace(/^\uFEFF/, ''));
 
 // permission URL
 //https://discordapp.com/oauth2/authorize?&client_id=292577703851196416&scope=bot&permissions=268561430
@@ -24,7 +24,7 @@ class C6Util
 	{
 		this.client = new Discord.Client();
 		// the ready event is vital, it means that your bot will only start reacting to information from Discord _after_ ready is emitted.
-		this.client.on('ready', () => { console.log('Ready!'); });
+		this.client.once('ready', () => { console.log('Ready!'); });
 		this.client.on('error', (error) => { console.log('-[DiscordError]-'); console.log(error); });
 		
 		///
@@ -57,9 +57,9 @@ class C6Util
 		
 		this.fs = require('fs');
 
-		this.civs = this.loadJSON('./data/civs.json');
-		const civs_rf = this.loadJSON('./data/civs_rf.json');
-		const civs_gs = this.loadJSON('./data/civs_gs.json');
+		this.civs = this.loadJSON('/home/codenaugh/bots/data/civs.json');
+		const civs_rf = this.loadJSON('/home/codenaugh/bots/data/civs_rf.json');
+		const civs_gs = this.loadJSON('/home/codenaugh/bots/data/civs_gs.json');
 		for(let key in civs_rf) { this.civs[key] = civs_rf[key]; }
 		for(let key in civs_gs) { this.civs[key] = civs_gs[key]; }
 	}

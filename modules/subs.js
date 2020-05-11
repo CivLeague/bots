@@ -1,6 +1,6 @@
-const util = require('../util/util');
+const util = require('/home/codenaugh/bots/util/util');
 const Discord = require('discord.js');
-const mongoUtil = require('../util/mongo');
+const mongoUtil = require('/home/codenaugh/bots/util/mongo');
 
 var moderatorId = '291753249361625089';
 

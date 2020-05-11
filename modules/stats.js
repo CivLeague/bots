@@ -1,8 +1,8 @@
-const util = require('../util/util');
-const mongoUtil = require('../util/mongo');
+const util = require('/home/codenaugh/bots/util/util');
+const mongoUtil = require('/home/codenaugh/bots/util/mongo');
 
 const Discord = require('discord.js');
-const errorHandler = require('../util/errormessage');
+const errorHandler = require('/home/codenaugh/bots/util/errormessage');
 
 const cmd_stats = '.stats';
 const cmd_ratings = '.ratings';
