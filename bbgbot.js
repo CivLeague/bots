@@ -36,7 +36,7 @@ function isVoteChannel(channel) {
     return channel.id == voteChannel
 }
 
-fs.readFile('/home/ubuntu/bots/data/tokens.json', (err, data) => { 
+fs.readFile('/home/codenaugh/bots/data/tokens.json', (err, data) => { 
     if (err) throw err; 
 
     const tokens = JSON.parse(data);

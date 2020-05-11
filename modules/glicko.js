@@ -1103,7 +1103,7 @@ class ParseMessage
                                 game: 'ffa'
                             };
                             let line = JSON.stringify(fContent, null, 2) + '\n';
-                            fs.appendFile("/home/ubuntu/bots/splunk/civs.data", line, (err) => {
+                            fs.appendFile("/home/codenaugh/bots/splunk/civs.data", line, (err) => {
                                 if (err) {
                                     console.error(err);
                                     return;
@@ -1187,7 +1187,7 @@ class ParseMessage
                                 game: 'team'
                             };
                             let line = JSON.stringify(fContent, null, 2) + '\n';
-                            fs.appendFile("/home/ubuntu/bots/splunk/civs.data", line, (err) => {
+                            fs.appendFile("/home/codenaugh/bots/splunk/civs.data", line, (err) => {
                                 if (err) {
                                     console.error(err);
                                     return;
