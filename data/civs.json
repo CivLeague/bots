@@ -133,5 +133,15 @@
 		"dbid": 43,
 		"id": "292492522905927681",
 		"tag": ":SumeriaGilgamesh:"
+	},
+	"Gran Colombia" : {
+		"dbid": 46,
+		"id": "712888831229296680",
+		"tag": ":GranColombiaSimonBolivar:"
+	},
+	"Maya" : {
+		"dbid": 47,
+		"id": "712890453841805362",
+		"tag": ":MayaLadySixSky:"
 	}
 }

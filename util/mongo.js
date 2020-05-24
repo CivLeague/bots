@@ -1,6 +1,5 @@
 const util = require('/home/codenaugh/bots/util/util');
 const MongoClient = require('mongodb').MongoClient;
-const url = 'mongodb://cplbot:' + util.getToken('mongo') + '@localhost:27017/';
 
 process.on("uncaughtException", (err) => {
   console.log(err);
@@ -19,9 +18,16 @@ var _bcivs;
 var _players;
 var _subs;
 
+var _susp;
+
 module.exports = {
-    connectToMongo: function () {
+    connect: function ( bot ) {
+        const url = 'mongodb://' + bot + ':' + util.getToken('mongo') + '@localhost:27017/';
         MongoClient.connect(url, { useNewUrlParser: true, poolSize: 10, useUnifiedTopology: true }, function (err, client) {
+            if ( err ) {
+                console.log( err )
+                return
+            }
             _cli     = client;
             _stats   = _cli.db('stats');
             _ffa     = _stats.collection('ffa');
@@ -33,7 +39,8 @@ module.exports = {
             _bcivs   = _cli.db('civs').collection('bbg');
             _players = _cli.db('players').collection('players');
             _subs    = _cli.db('subs').collection('subs');
-            console.log('mongo listening');
+            _susp    = _cli.db('players').collection('suspensions');
+            console.log('MongoDB ready');
         });
     },
 
@@ -415,5 +422,77 @@ module.exports = {
             { $set: { count: num } }, 
             { upsert: true }
         );
+    },
+
+    quit: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        if ( !member ) {
+            await _susp.updateOne(
+                { _id: memberId },
+                {
+                    $set: {
+                        suspended: 0,
+                        quitter: 0,
+                        "quit.tier": 0,
+                        "minor.tier": 0,
+                        "moderate.tier": 0,
+                        "major.tier": 0
+                    },
+                    $currentDate: {
+                        ends: true,
+                    }
+                },
+                { upsert: true }
+            )
+        }
+        member = await _susp.findOne({ _id: memberId })
+        let tier = member.quit.tier
+        if ( member.quit.last ) {
+            let last = member.quit.last
+            let now = new Date()
+            let ninety_days = 1000 * 60 * 60 * 24 * 90
+            let diff = Math.floor((last.getTime()-now.getTime())/(ninety_days))
+            while ( tier > 0 && diff > 0 ) {
+                tier--
+                diff--
+            }
+        }
+        tier++
+        let ends = new Date( member.ends );
+        if ( tier == 1 )
+            ends.setDate( ends.getDate() + 1 )
+        else if ( tier == 2 )
+            ends.setDate( ends.getDate() + 3 )
+        else if ( tier == 3 )
+            ends.setDate( ends.getDate() + 7 )
+        else if ( tier == 4 )
+            ends.setDate( ends.getDate() + 14 )
+        else if ( tier == 5 )
+            ends.setDate( ends.getDate() + 21 )
+        else if ( tier == 6 )
+            ends.setDate( ends.getDate() + 30 )
+
+        if ( member.quitter )
+            ends.setDate( ends.getDate() + 3 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    "quit.tier": tier,
+                    suspended: true,
+                    quitter: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        );
+
+        return { tier: tier, ends: ends }
+    },
+
+    suspend: async function ( memberId, type ) {
+        
+        return { tier: tier, ends: ends }
     }
 }

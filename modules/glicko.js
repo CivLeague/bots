@@ -116,6 +116,16 @@ function checkCivs(civs) {
             case "china":
                 result.push('China');
                 break;
+            case "colombia":
+            case "columbia":
+            case "gran colombia":
+            case "grancolombia":
+            case "gran columbia":
+            case "grancolumbia":
+            case "simon":
+            case "bolivar":
+                result.push('Gran Colombia');
+                break;
             case "egypt":
             case "cleopatra":
             case "cleo":
@@ -177,6 +187,9 @@ function checkCivs(civs) {
             case "alexander":
             case "alex":
                 result.push('Macedon');
+                break;
+            case "maya":
+                result.push('Maya');
                 break;
             case "norway":
             case "harald":

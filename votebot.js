@@ -100,7 +100,7 @@ voting.on('finished', async(vote, channel) =>
     jVote += '}\n';
 //    let jObj = JSON.parse(jVote);
   //  let line = JSON.stringify(jObj, null, 2);
-    fs.appendFile("/home/codenaugh/bots/splunk/votes.data", jVote, (err) => {
+    fs.appendFile("/home/jarvis/bots/splunk/votes.data", jVote, (err) => {
         if (err) {
             console.error(err);
             return;
@@ -258,7 +258,7 @@ util.client.on('message', message =>
 		
 		const bot_vote = voting.createVote(players);
 		bot_vote.isTeamVote = isTeamVote;
-		bot_vote.show(message.channel, '**__New Game__**\n**NOTE**: Only 1 CS may be captured and kept.');
+		bot_vote.show(message.channel, '**__New Game__**\n*NOTE: Only 1 CS may be captured and kept.*');
 		
 		if ( !isTeamVote )
 		{
@@ -343,12 +343,20 @@ util.client.on('message', message =>
                 ["🇦", "Abundant"]
             ]), {} );
 
+        bot_vote.showChoice(message.channel, '**__Strategics__**\t',
+            new Map([
+				["🇸", "Standard"],
+                ["🇦", "Abundant"],
+				["🇪", "Epic"],
+				["🇬", "Guaranteed"]
+            ]), {} );
+
         bot_vote.showChoice(message.channel, '**__Mountain Chokes__**\t',
             new Map([
-				["🇸", "Small"],
-                ["🇳", "Normal"],
-                ["🇱", "Large"],
-                ["🇫", "Flat Earth"]
+				["🇨", "Classic"],
+                ["🇸", "Standard"],
+                ["🇱", "Large Openings"],
+                ["🇮", "Impenetrable"]
             ]), {} );
 
         bot_vote.showChoice(message.channel, '**__Disasters__**\t',
