@@ -32,7 +32,7 @@ const cmd_forceregid = '.forceregid';
 
 const glicko2 = require('glicko2');
 const settings = {
-  rating:   1500,
+  rating:   1400,
   rd:       300,
   vol:      0.06,
   tau:      0.6
@@ -1116,7 +1116,7 @@ class ParseMessage
                                 game: 'ffa'
                             };
                             let line = JSON.stringify(fContent, null, 2) + '\n';
-                            fs.appendFile("/home/codenaugh/bots/splunk/civs.data", line, (err) => {
+                            fs.appendFile("/home/jarvis/bots/splunk/civs.data", line, (err) => {
                                 if (err) {
                                     console.error(err);
                                     return;
