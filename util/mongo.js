@@ -19,6 +19,9 @@ var _players;
 var _subs;
 
 var _susp;
+var _bandue
+var _suspdue
+var _unsuspdue
 
 module.exports = {
     connect: function ( bot ) {
@@ -28,18 +31,21 @@ module.exports = {
                 console.log( err )
                 return
             }
-            _cli     = client;
-            _stats   = _cli.db('stats');
-            _ffa     = _stats.collection('ffa');
-            _pbc     = _stats.collection('pbc');
-            _team    = _stats.collection('team');
-            _coll    = _stats.collection('ffa'); //set default collection
-            _civs    = _cli.db('civs').collection('ffa');
-            _tcivs   = _cli.db('civs').collection('team');
-            _bcivs   = _cli.db('civs').collection('bbg');
-            _players = _cli.db('players').collection('players');
-            _subs    = _cli.db('subs').collection('subs');
-            _susp    = _cli.db('players').collection('suspensions');
+            _cli       = client;
+            _stats     = _cli.db('stats');
+            _ffa       = _stats.collection('ffa');
+            _pbc       = _stats.collection('pbc');
+            _team      = _stats.collection('team');
+            _coll      = _stats.collection('ffa'); //set default collection
+            _civs      = _cli.db('civs').collection('ffa');
+            _tcivs     = _cli.db('civs').collection('team');
+            _bcivs     = _cli.db('civs').collection('bbg');
+            _players   = _cli.db('players').collection('players');
+            _subs      = _cli.db('subs').collection('subs');
+            _susp      = _cli.db('players').collection('suspensions');
+            _bandue    = _cli.db('players').collection('bans_due');
+            _suspdue   = _cli.db('players').collection('suspensions_due');
+            _unsuspdue = _cli.db('players').collection('unsuspensions_due');
             console.log('MongoDB ready');
         });
     },
@@ -59,6 +65,11 @@ module.exports = {
         return true;
     },
 
+    getDisplayName: async function ( id ) {
+        let player = await _players.findOne({ discord_id: id })
+        return player.display_name
+    },
+
     getStatsDb: function() {
         return _stats;
     },
@@ -70,7 +81,7 @@ module.exports = {
     createPlayer: async function ( discordId ) {
         await _coll.insertOne({
             _id:        discordId,
-            rating:     1500,
+            rating:     1400,
             rd:         300,
             vol:        0.06,
             tau:        0.6,
@@ -148,7 +159,7 @@ module.exports = {
         let places = [];
         let skills = [];
         let avgP = 0;
-        let avgS = 1500;
+        let avgS = 1400;
         let games = 0;
         let civDB = _civs;
 
@@ -201,7 +212,7 @@ module.exports = {
         let places = [];
         let skills = [];
         let avgP = 0;
-        let avgS = 1500;
+        let avgS = 1400;
         let games = 0;
         let civDB = _bcivs;
 
@@ -288,7 +299,7 @@ module.exports = {
     resetStats: async function ( discordId ) {
         await _coll.updateOne({ _id : discordId }, {
             $set: {
-                rating:     1500,
+                rating:     1400,
                 lastChange: 0,
                 rd:         300,
                 vol:        0.06,
@@ -374,7 +385,7 @@ module.exports = {
             if (!p) {
                 p = {
                     _id: player[1].id,
-                    rating: 1500
+                    rating: 1400
                 }
             }
             p.name = player[1].displayName;
@@ -383,6 +394,9 @@ module.exports = {
         return result.sort((a, b) => (a.rating < b.rating) ? 1 : -1);
     },
 
+    /*************************************************
+    **  LEADERBOARDS
+    *************************************************/
     getLeaderboard: async function ( collection ) {
         _coll = _stats.collection(collection);
         if ( collection == 'team' ) {
@@ -404,6 +418,9 @@ module.exports = {
         return await _bcivs.find().sort({ avgPlace: 1 }).toArray();
     },
 
+    /*************************************************
+    **  SUBS
+    *************************************************/
     getSubs: async function () {
         return _subs.find().sort({ count: -1 }).toArray();
     },
@@ -424,41 +441,109 @@ module.exports = {
         );
     },
 
-    quit: async function ( memberId ) {
-        let member = await _susp.findOne({ _id: memberId })
-        if ( !member ) {
-            await _susp.updateOne(
-                { _id: memberId },
-                {
-                    $set: {
-                        suspended: 0,
-                        quitter: 0,
-                        "quit.tier": 0,
-                        "minor.tier": 0,
-                        "moderate.tier": 0,
-                        "major.tier": 0
-                    },
-                    $currentDate: {
-                        ends: true,
+    /*************************************************
+    **  BAN BOT
+    *************************************************/
+    checkSuspensions: async function () {
+        let unsuspended = []
+        let players = await _susp.find().toArray()
+
+        for ( let player of players ) {
+            let update = false
+
+            if ( player.suspended ) {
+                if ( new Date() > new Date( player.ends ) ) {
+                    player.suspended = false
+                    player.ends = null
+                    update = true
+                    unsuspended.push( player )
+                }
+            }
+
+            let quitTier = player.quit ? player.quit.tier : 0
+            let quitDecays = null
+            if ( player.quit && player.quit.tier && player.quit.decays ) {
+                if ( new Date() > new Date( player.quit.decays ) && quitTier > 0 ) {
+                    quitTier-- 
+                    quitDecays = new Date()
+                    quitDecays.setDate( quitDecays.getDate() + 90 )
+                    update = true
+                }
+                else
+                    quitDecays = player.quit.decays
+            }
+
+            let minorTier = player.minor ? player.minor.tier : 0
+            let minorDecays = null
+            if ( player.minor && player.minor.tier && player.minor.decays ) {
+                if ( new Date() > new Date( player.minor.decays ) && minorTier > 0 ) {
+                    minorTier-- 
+                    minorDecays = new Date()
+                    //minorDecays.setDate( minorDecays.getDate() + 30 )
+                    minorDecays.setMinutes( minorDecays.getMinutes() + 5 ) //blah
+                    update = true
+                }
+                else
+                    minorDecays = player.minor.decays
+            }
+
+            let moderateTier = player.moderate ? player.moderate.tier : 0
+            let moderateDecays = null
+            if ( player.moderate && player.moderate.tier && player.moderate.decays ) {
+                if ( new Date () > new Date( player.moderate.decays ) && moderateTier > 0 ) {
+                    moderateTier-- 
+                    moderateDecays = new Date()
+                    moderateDecays.setDate( moderateDecays.getDate() + 60 )
+                    update = true
+                }
+                else
+                    moderateDecays = player.moderate.decays
+            }
+
+            let majorTier = player.major ? player.major.tier : 0
+            let majorDecays = null
+            if ( player.major && player.major.tier && player.major.decays ) {
+                if ( new Date() > new Date( player.major.decays ) && majorTier > 0 ) {
+                    majorTier-- 
+                    majorDecays = new Date()
+                    majorDecays.setDate( majorDecays.getDate() + 90 )
+                    update = true
+                }
+                else
+                    majorDecays = player.major.decays
+            }
+
+            if ( update ) {
+                _susp.updateOne(
+                    { _id: player._id },
+                    {
+                        $set: {
+                            suspended: player.suspended,
+                            ends: player.ends,
+                            "quit.tier": quitTier,
+                            "quit.decays": quitDecays,
+                            "minor.tier": minorTier,
+                            "minor.decays": minorDecays,
+                            "moderate.tier": moderateTier,
+                            "moderate.decays": moderateDecays,
+                            "major.tier": majorTier,
+                            "major.decays": majorDecays
+                        }
                     }
-                },
-                { upsert: true }
-            )
-        }
-        member = await _susp.findOne({ _id: memberId })
-        let tier = member.quit.tier
-        if ( member.quit.last ) {
-            let last = member.quit.last
-            let now = new Date()
-            let ninety_days = 1000 * 60 * 60 * 24 * 90
-            let diff = Math.floor((last.getTime()-now.getTime())/(ninety_days))
-            while ( tier > 0 && diff > 0 ) {
-                tier--
-                diff--
+                )
             }
         }
+        return unsuspended
+    },
+
+    quit: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let tier = member && member.quit ? member.quit.tier : 0
         tier++
-        let ends = new Date( member.ends );
+
+        let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
+        let decays = new Date()
+        decays.setDate( decays.getDate() + ( tier * 90 ) )
         if ( tier == 1 )
             ends.setDate( ends.getDate() + 1 )
         else if ( tier == 2 )
@@ -471,28 +556,263 @@ module.exports = {
             ends.setDate( ends.getDate() + 21 )
         else if ( tier == 6 )
             ends.setDate( ends.getDate() + 30 )
-
-        if ( member.quitter )
-            ends.setDate( ends.getDate() + 3 )
+        else if ( tier > 6 )
+            ends.setDate( ends.getDate() + 180 )
 
         _susp.updateOne(
             { _id: memberId },
             {
                 $set: {
                     "quit.tier": tier,
+                    "quit.decays": decays,
                     suspended: true,
-                    quitter: true,
                     ends: ends
                 }
             },
             { upsert: true }
-        );
+        )
 
         return { tier: tier, ends: ends }
     },
 
-    suspend: async function ( memberId, type ) {
-        
+    minor: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let tier = member && member.minor ? member.minor.tier : 0
+        tier++
+
+        let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
+        let decays = new Date()
+        decays.setDate( decays.getDate() + ( tier * 30 ) )
+        //if ( tier == 1 )
+            //warning
+        if ( tier == 2 )
+            ends.setDate( ends.getDate() + 1 )
+        else if ( tier == 3 )
+            ends.setDate( ends.getDate() + 2 )
+        else if ( tier == 4 )
+            ends.setDate( ends.getDate() + 3 )
+        else if ( tier == 5 )
+            ends.setDate( ends.getDate() + 5 )
+        else if ( tier >= 6 )
+            ends.setDate( ends.getDate() + 7 )
+
+        let suspended = false
+        if ( tier > 1 )
+            suspended = true
+        else if ( member && member.suspended )
+            suspended = member.suspended
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    "minor.tier": tier,
+                    "minor.decays": decays,
+                    suspended: suspended,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+
         return { tier: tier, ends: ends }
+    },
+
+    moderate: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let tier = member && member.moderate ? member.moderate.tier : 0
+        tier++
+
+        let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
+        let decays = new Date()
+        decays.setDate( decays.getDate() + ( tier * 60 ) )
+        if ( tier == 1 )
+            ends.setDate( ends.getDate() + 3 )
+        else if ( tier == 2 )
+            ends.setDate( ends.getDate() + 5 )
+        else if ( tier == 3 )
+            ends.setDate( ends.getDate() + 7 )
+        else if ( tier == 4 )
+            ends.setDate( ends.getDate() + 10 )
+        else if ( tier == 5 )
+            ends.setDate( ends.getDate() + 14 )
+        else if ( tier >= 6 )
+            ends.setDate( ends.getDate() + 21 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    "moderate.tier": tier,
+                    "moderate.decays": decays,
+                    suspended: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+
+        return { tier: tier, ends: ends }
+    },
+
+    major: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let tier = member && member.major ? member.major.tier : 0
+        tier++
+
+        let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
+        let decays = new Date()
+        decays.setDate( decays.getDate() + ( tier * 90 ) )
+        if ( tier == 1 )
+            ends.setDate( ends.getDate() + 7 )
+        else if ( tier == 2 )
+            ends.setDate( ends.getDate() + 14 )
+        else if ( tier == 3 )
+            ends.setDate( ends.getDate() + 30 )
+        else if ( tier == 4 )
+            ends.setDate( ends.getDate() + 60 )
+        else if ( tier == 5 )
+            ends.setDate( ends.getDate() + 90 )
+        else if ( tier >= 6 )
+            ends.setDate( ends.getDate() + 180 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    "major.tier": tier,
+                    "major.decays": decays,
+                    suspended: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+
+        return { tier: tier, ends: ends }
+    },
+
+    addDays: async function ( memberId, num ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let ends = new Date()
+        if ( member && member.ends )
+            ends = new Date( member.ends )
+        ends.setDate( ends.getDate() + parseInt( num ) )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    suspended: false,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+        return ends
+    },
+
+    rmDays: async function ( memberId, num ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let ends = null
+        if ( member && member.ends ) {
+            ends = new Date( member.ends )
+            ends.setDate( ends.getDate() - parseInt( num ) )
+
+            _susp.updateOne(
+                { _id: memberId },
+                {
+                    $set: {
+                        ends: ends
+                    }
+                }
+            )
+        }
+        return ends
+    },
+
+    subSuspension: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let ends = new Date()
+        if ( member && member.ends )
+            ends = new Date( member.ends )
+        ends.setDate( ends.getDate() + 3 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    suspended: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+        return ends
+    },
+
+    smurfSuspension: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let ends = new Date()
+        if ( member && member.ends )
+            ends = new Date( member.ends )
+        ends.setDate( ends.getDate() + 30 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    suspended: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+        return ends
+    },
+
+    unsuspend: async function ( memberId ) {
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    suspended: false,
+                    ends: null
+                }
+            }
+        )
+    },
+
+    unsuspendDue: async function ( memberId ) {
+        try {
+            await _unsuspdue.insertOne({ _id: memberId })
+        } catch ( err ) {}
+    },
+
+    banDue: async function ( memberId ) {
+        try {
+            await _bandue.insertOne({ _id: memberId })
+        } catch ( err ) {}
+    },
+
+    suspensionDue: async function ( memberId ) {
+        try {
+            await _suspdue.insertOne({ _id: memberId })
+        } catch ( err ) {}
+    },
+
+    isSuspensionDue: async function ( memberId ) {
+        let result = await _suspdue.deleteOne({ _id: memberId })
+        return ( result.deletedCount )
+    },
+
+    isBanDue: async function ( memberId ) {
+        let result = await _bandue.deleteOne({ _id: memberId })
+        return ( result.deletedCount )
+    },
+
+    isUnsuspendDue: async function ( memberId ) {
+        let result = await _unsuspdue.deleteOne({ _id: memberId })
+        return ( result.deletedCount )
     }
 }
