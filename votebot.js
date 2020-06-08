@@ -10,9 +10,9 @@ for(let i in util.civs) voting.setCustomEmoji(util.civs[i]['tag'], util.civs[i][
 voting.setGlobalTimeout(1800);
 //voting.setGlobalTimeout(60); //debug: 10 seconds
 
-function GetBotCommands() { return util.getChannel(304782408526594049); }
+function GetVotes() { return util.getChannel(715011144028258334); }
 function GetBotTesting()  { return util.getChannel(351127558143868928); }
-function isBotChannel(channel) { return channel == GetBotCommands() || channel == GetBotTesting(); }
+function isBotChannel(channel) { return channel == GetVotes() || channel == GetBotTesting(); }
 
 voting.on('finished', async(vote, channel) =>
 {	
