@@ -467,7 +467,7 @@ class StatsBotModule
             }
             for ( player of players ) {
                 if (!player) {
-                    skill = 1500;
+                    skill = 1400;
                 }
                 let name  = player.name.replace(/[^0-9a-zA-Z_\[\]\(\)\-\/ ]/g, '');
                 let skill = player.rating;
@@ -508,7 +508,7 @@ class StatsBotModule
                 }
                 for ( player of players ) {
                     if (!player) {
-                        skill = 1500;
+                        skill = 1400;
                     }
                     let name  = player.name.replace(/[^0-9a-zA-Z_\[\]\(\)\-\/ ]/g, '');
                     let skill = player.rating;

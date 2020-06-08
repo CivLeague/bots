@@ -17,7 +17,7 @@ function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const vhaId = '375413414987825152';
 const moderatorId = '291753249361625089';
 const ranked = '615780983047979008';
-const chieftain = '628464491129995264';
+const settler = '628464552882995200';
 const novice = '577702305999093763';
 
 const http = require('http');
@@ -153,6 +153,7 @@ const srv = http.createServer( (req, res) =>
                         }, null, async (response) =>
                         {
                             let ownCiv = false;
+                            let playtime = false;
                             const json_res = JSON.parse(response);
                             const gameCount = json_res.response.game_count;
                             const games = json_res.response.games;
@@ -169,11 +170,18 @@ const srv = http.createServer( (req, res) =>
                             for (const game of games) {
                                 if (game.appid == 289070) {
                                     ownCiv = true;
+                                    if (game.playtime_forever > 120)
+                                        playtime = true;
                                 }
                             }
                             if (!ownCiv) {
                                 GetChannelWelcome().send("**Error:** your steam account does not seem to own Civ 6. Please contact a moderator.");
-                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions');
+                                res.end('<b>Error</b><br>Your steam account does not seem to own Civ 6. Please close this page and return to Discord for further instructions.');
+                                return;
+                            }
+                            if (!playtime) {
+                                GetChannelWelcome().send("**Error:**\nYou either do not have more than 2 hours of Civ 6 play time or your time in game details are private. Please verify your Steam Game Details settings or try again after playing some more:\n```- sign into https://steamcommunity.com/\n- click your username in the upper right corner\n- click 'View Profile'\n- click 'Edit Profile'\n- click 'My Privacy Settings'\n- verify that Game Details is set to Public and the checkbox is NOT checked```After doing the above steps, try to `.register` again. If you continue to see this message, please contact a moderator in order to finish registration.");
+                                res.end("<b>Error:</b><br>You either need more than 2 hours of Civ 6 play time or must change a Steam setting. Please close this page and return to Discord for further instructions.");
                                 return;
                             }
 
@@ -211,7 +219,7 @@ const srv = http.createServer( (req, res) =>
                         
                                 GetChannelSteamLog().send(embed);
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                member.addRoles([ranked, chieftain]);
+                                member.addRoles([ranked, settler]);
 					        }
 					        catch( err )
 					        {
@@ -265,7 +273,13 @@ class RegisterModule
 		const content = message.content;
 		if ( message.author.bot ) return;
 		
-		if( content.startsWith(cmd_register) )
+        if ( content.toLowerCase() == '!egs' ) {
+            message.member.addRole('714869858885697648')
+            message.reply('you have been given the EGS role. Please proceed to <#714870286171766876>. You do not need to register.')
+            return
+        }
+
+		if( content.startsWith('.register') || content.startsWith('!register') )
 		{
             const target = message.author;
 
@@ -393,8 +407,8 @@ class RegisterModule
                             //.setImage(target.user.avatarURL)
                             .setTimestamp();
                         GetChannelSteamLog().send(embed);
-                        message.channel.send(target + ', you have been registered with default stats and given the ranked role.\n\n Please read <#550251325724557322>.');
-			            target.addRoles([ranked, chieftain]);
+                        message.channel.send(target + ', you have been registered with default stats and given the ranked role. Please read <#550251325724557322>.');
+			            target.addRoles([ranked, settler]);
                     }
                 });
             }
@@ -486,7 +500,7 @@ class RegisterModule
                         }
                     }
 
-                    target.addRoles([ranked, chieftain]);
+                    target.addRoles([ranked, settler]);
                 });
             }
             catch (err)
