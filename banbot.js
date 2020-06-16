@@ -19,13 +19,8 @@ const unsuspend = '`Usage: .unsuspend <member> [reason]`'
 const cplId        = '291751672106188800'
 const botTesting   = '351127558143868928'
 const suspended    = '291753513749577734'
-const quitterId    = '292212681887186944'
 const suspendedId  = '294099361053540353'
 const moderatorId  = '291753249361625089'
-
-function isQuitter( member ) {
-    return member.roles.has( quitterId )
-}
 
 function isSuspended( member ) {
     return member.roles.has( suspendedId )
@@ -55,7 +50,7 @@ bot.once('ready', async() => {
                 if ( member && member.roles.has( suspendedId ) )
                     await member.removeRole( suspendedId )
                 else if ( !member )
-                    mongo.unsuspendDue( player._id )
+                    await mongo.unsuspendDue( player._id )
                 else return
 
                 let msg = '<@' + player._id + '> unsuspended.'
@@ -133,14 +128,14 @@ bot.on('message', async ( message ) => {
                     target.addRole( suspendedId )
             }
             msg += '\n**ENDS:** ' + player.ends + '.'
-            message.channel.send( target + msg ).then( ( msg ) => { 
+            message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => { 
                 if ( !leftServer )
                     target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
                 else mongo.suspensionDue( id )
             })
         }
         else {
-            message.channel.send( target + msg ).then( ( msg ) => {
+            message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
                 if ( !leftServer ) {
                     target.user.send( 'You\'ve been banned in the CPL Discord server. If you believe this to be an error, please send an email to civplayersleagues@gmail.com' ).then( () => {
                         target.ban( 'Tier 7 quit' )
@@ -187,7 +182,7 @@ bot.on('message', async ( message ) => {
             msg += ' This is in addition to your current suspension.'
         if ( player.tier > 1 )
             msg += '\n**ENDS:** ' + player.ends + '.'
-        message.channel.send( target + msg ).then( ( msg ) => { 
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => { 
             if ( player.tier > 1 ) {
                 if ( !leftServer ) {
                     target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
@@ -241,13 +236,13 @@ bot.on('message', async ( message ) => {
                 msg += ' This is in addition to your current suspension.'
             else target.addRole( suspendedId )
             msg += '\n**ENDS:** ' + player.ends + '.'
-            message.channel.send( target + msg ).then( ( msg ) => {
+            message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
                 target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
             })
         }
         else {
             msg += '\n**ENDS:** ' + player.ends + '.'
-            message.channel.send( target + msg )
+            message.channel.send( '<@' + id + '>' + msg )
             mongo.suspensionDue( id )
         }
     }
@@ -289,7 +284,7 @@ bot.on('message', async ( message ) => {
         if ( player.tier < 6 )
             msg += '\n**ENDS:** ' + player.ends + '.'
 
-        message.channel.send( target + msg ).then( ( msg ) => {
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
             if ( player.tier < 6 ) {
                 if ( !leftServer ) {
                     target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
@@ -325,7 +320,7 @@ bot.on('message', async ( message ) => {
         if ( reason.length > 0 )
             msg += '\n**REASON:** ' + reason + '.'
         msg += '\n**ENDS:** ' + ends + '.'
-        message.channel.send( target + msg ).then( async ( msg ) => {
+        message.channel.send( '<@' + target.id + '>' + msg ).then( async ( msg ) => {
             await target.user.send( 'Your CPL suspension has been modified\n' + msg.url )
             if ( !target.roles.has( suspendedId ) )
                 await target.addRole( suspendedId )
@@ -335,13 +330,13 @@ bot.on('message', async ( message ) => {
         message.delete()
         let target = message.mentions.members.array().shift()
         if ( !target ) {
-            message.channel.send( adddays ).then( msg => { msg.delete( 30000 ) } )
+            message.channel.send( rmdays ).then( msg => { msg.delete( 30000 ) } )
             return
         }
         let reason = message.content.split(' ').slice(3).join(' ')
         let num = message.content.split(' ')[2]
         if ( isNaN( num ) ) {
-            message.channel.send( adddays ).then( msg => { msg.delete( 30000 ) } )
+            message.channel.send( rmdays ).then( msg => { msg.delete( 30000 ) } )
             return
         }
         let ends = await mongo.rmDays( target.id, num )
@@ -349,7 +344,7 @@ bot.on('message', async ( message ) => {
         if ( reason.length > 0 )
             msg += '\n**REASON:** ' + reason + '.'
         msg += '\n**ENDS:** ' + ends + '.'
-        message.channel.send( target + msg ).then( ( msg ) => {
+        message.channel.send( '<@' + target.id + '>' + msg ).then( ( msg ) => {
             target.user.send( 'Your CPL suspension has been modified\n' + msg.url )
         })
     }
@@ -378,7 +373,7 @@ bot.on('message', async ( message ) => {
                 target.addRole( suspendedId )
         }
         msg += '\n**ENDS:** ' + ends + '.'
-        message.channel.send( target + msg ).then( ( msg ) => {
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
             if ( !leftServer )
                 target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
             else mongo.suspensionDue( id )
@@ -409,7 +404,7 @@ bot.on('message', async ( message ) => {
                 target.addRole( suspendedId )
         }
         msg += '\n**ENDS:** ' + ends + '.'
-        message.channel.send( target + msg ).then( ( msg ) => {
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
             if ( !leftServer )
                 target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
             else mongo.suspensionDue( id )
@@ -429,7 +424,7 @@ bot.on('message', async ( message ) => {
             let msg = '\nYou have been unsuspended.'
             if ( reason.length > 0 )
                 msg += '\n**REASON:** ' + reason + '.'
-            message.channel.send( target + msg ).then( ( msg ) => {
+            message.channel.send( '<@' + target.id + '>' + msg ).then( ( msg ) => {
                 target.user.send( 'Your CPL suspension has been lifted\n' + msg.url )
             })
         }

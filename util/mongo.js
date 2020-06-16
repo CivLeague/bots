@@ -703,7 +703,7 @@ module.exports = {
             { _id: memberId },
             {
                 $set: {
-                    suspended: false,
+                    suspended: true,
                     ends: ends
                 }
             },
