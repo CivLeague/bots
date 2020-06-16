@@ -83,7 +83,7 @@ class StatsBotModule
                 });
                 let m = message.member;
                 await m.removeRoles(difficulties).catch(console.error);
-                await m.addRole(chieftain).catch(console.error);
+                await m.addRole(settler).catch(console.error);
             }
             else
                 message.reply("you have already used your " + db + " stats reset.").then(msg => { msg.delete(20000) });

@@ -6,7 +6,6 @@ const Discord = require('discord.js');
 const SteamAPI = require('steamapi');
 const steam = new SteamAPI(util.getToken('steam'));
 
-
 const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
 
