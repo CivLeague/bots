@@ -9,6 +9,7 @@ const cmd_ratings = '.ratings';
 const cmd_roomratings = '.roomratings';
 const cmd_separator = ' ';
 
+const codenaugh = '313389427671957504';
 const moderatorId = '291753249361625089';
 const deity     = '628461624524800000';
 const immortal  = '628464081346625536';
@@ -666,11 +667,11 @@ class StatsBotModule
             }
 
             if ( content.includes('team') )
-                mongoUtil.useStatsColl('team');
+                await mongoUtil.useStatsColl('team');
             else if ( content.includes('pbc') )
-                mongoUtil.useStatsColl('pbc');
+                await mongoUtil.useStatsColl('pbc');
             else if ( content.includes('ffa') )
-                mongoUtil.useStatsColl('ffa');
+                await mongoUtil.useStatsColl('ffa');
             else {
                 message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
                 return;
@@ -706,6 +707,7 @@ class StatsBotModule
                 message.reply("**ERROR** " + usage).then( m => { m.delete(20000) });
                 return;
             }
+            await mongoUtil.useStatsColl( db );
             
             let amt = content.split(' ').pop();
             if ( !amt ) {
@@ -720,8 +722,33 @@ class StatsBotModule
             }
 
             for (let target of message.mentions.members.array()) {
-                mongoUtil.changeSkill( target.id, db, amt );
+                let player = await mongoUtil.getPlayer (target.id )
+                let before = player.rating
+                await mongoUtil.changeSkill( target.id, db, amt );
+                player = await mongoUtil.getPlayer (target.id )
+                let after = player.rating
+                let diff = after - before
+                message.channel.send( target + ' skill changed:\nBefore: ' + before + '\nAfter: ' + after + '\nDiff: ' + diff )
             }
+        }
+        else if ( message.content == '.seasonreset' && message.author.id == codenaugh ) {
+            message.delete()
+            let members = message.guild.members
+            members.forEach ( m => {
+                if ( m.roles.has(chieftain)
+                || m.roles.has(warlord)
+                || m.roles.has(prince)
+                || m.roles.has(king)
+                || m.roles.has(emperor)
+                || m.roles.has(immortal)
+                || m.roles.has(deity) ) {
+                    m.removeRoles(difficulties).catch(console.error).then ( m => {
+                        m.addRole(settler).catch(console.error).then ( m => {
+                            console.log(m.id)
+                        })
+                    })
+                }
+            })
         }
 	}
 }
