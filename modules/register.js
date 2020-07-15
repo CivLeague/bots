@@ -218,7 +218,8 @@ const srv = http.createServer( (req, res) =>
                         
                                 GetChannelSteamLog().send(embed);
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                member.addRoles([ranked, settler]);
+                                await member.addRole(ranked).catch(console.error);
+                                await member.addRole(settler).catch(console.error);
 					        }
 					        catch( err )
 					        {
@@ -407,7 +408,8 @@ class RegisterModule
                             .setTimestamp();
                         GetChannelSteamLog().send(embed);
                         message.channel.send(target + ', you have been registered with default stats and given the ranked role. Please read <#550251325724557322>.');
-			            target.addRoles([ranked, settler]);
+			            await target.addRole(ranked).catch(console.error);
+			            await target.addRole(settler).catch(console.error);
                     }
                 });
             }
@@ -499,7 +501,8 @@ class RegisterModule
                         }
                     }
 
-                    target.addRoles([ranked, settler]);
+                    await target.addRoles(ranked).catch(console.error);
+                    await target.addRoles(settler).catch(console.error);
                 });
             }
             catch (err)
