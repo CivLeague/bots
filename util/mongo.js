@@ -289,10 +289,9 @@ module.exports = {
 
     giveReset: async function ( discordId ) {
         await _coll.updateOne({ _id : discordId }, {
-            $set: {
+            $inc: {
                 resets: 1
-            },
-            $currentDate: { lastModified: true }
+            }
         });
     },
 
@@ -695,7 +694,7 @@ module.exports = {
     addDays: async function ( memberId, num ) {
         let member = await _susp.findOne({ _id: memberId })
         let ends = new Date()
-        if ( member && member.ends )
+        if ( member && member.ends && member.ends > ends )
             ends = new Date( member.ends )
         ends.setDate( ends.getDate() + parseInt( num ) )
 
@@ -734,7 +733,7 @@ module.exports = {
     subSuspension: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId })
         let ends = new Date()
-        if ( member && member.ends )
+        if ( member && member.ends && member.ends > ends )
             ends = new Date( member.ends )
         ends.setDate( ends.getDate() + 3 )
 
@@ -754,7 +753,7 @@ module.exports = {
     smurfSuspension: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId })
         let ends = new Date()
-        if ( member && member.ends )
+        if ( member && member.ends && member.ends > ends )
             ends = new Date( member.ends )
         ends.setDate( ends.getDate() + 30 )
 
