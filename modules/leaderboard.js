@@ -3,6 +3,9 @@ const mongoUtil = require('/home/codenaugh/bots/util/mongo');
 
 const max_per_leaderboard_message = 10;
 
+const cplId = '291751672106188800'
+const twoWeeksMS = 1209600000
+
 class C6Leaderboard
 {
 	constructor() {
@@ -337,8 +340,9 @@ class C6Leaderboard
             return;
         }
 
-        const max = this.glickoLb.length < 100 ? this.glickoLb.length : 100;
+        const max = this.glickoLb.length
 
+        /*
         if (db != 'pbc') {
             //score decay
             let currDate = new Date();
@@ -356,16 +360,34 @@ class C6Leaderboard
                 }
             }
         }
+        */
 
         //actual leaderboard message
         let msg = ''
-        let j = 0;
-        for ( var i = 0; i < max ; i++ ) {
+        let i = 0
+        let j = 0
+        let k = 0
+
+        let maxDisp = db === 'pbc' ? 10 : 100
+
+        while ( i < maxDisp && k < max ) {
+            let member = await util.client.guilds.get( cplId ).fetchMember( this.glickoLb[k]._id )
+            let currDate = new Date()
+            let lastDate = new Date( this.glickoLb[k].lastModified )
+            if ( !member ) {
+                k++
+                continue
+            }
+            if ( db != 'pbc' && currDate-lastDate > twoWeeksMS ) {
+                k++
+                continue
+            }
+
             if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
             else if ( i < 99 ) msg += '`#' + (i+1) + '`     `';
             else msg += '`#' + (i+1) + '`   `';
-            msg += Math.round(this.glickoLb[i].rating) + '`';
-            let wins = this.glickoLb[i].wins;
+            msg += Math.round(this.glickoLb[k].rating) + '`';
+            let wins = this.glickoLb[k].wins;
             if (wins < 10) {
                 msg += '\t`[   ' + wins;
             }
@@ -376,7 +398,7 @@ class C6Leaderboard
                 msg += '\t`[ ' + wins;
             }
 
-            let losses = this.glickoLb[i].losses;
+            let losses = this.glickoLb[k].losses;
             if (losses < 10) {
                 msg += ' - ' + losses + '   ]';
             }
@@ -387,7 +409,7 @@ class C6Leaderboard
                 msg += ' - ' + losses + ' ]';
             }
 
-            let winPercent = Math.round(wins*100/this.glickoLb[i].games);
+            let winPercent = Math.round(wins*100/this.glickoLb[k].games);
             if (winPercent < 10) {
                 msg += '    ' + winPercent + '%`';
             }
@@ -398,7 +420,7 @@ class C6Leaderboard
                 msg += '  ' + winPercent + '%`';
             }
 
-            msg += '\t<@' + this.glickoLb[i]._id + '>\t' + '`rd: ' +  Math.round(this.glickoLb[i].rd) + '`\n';
+            msg += '\t<@' + this.glickoLb[k]._id + '>\n';
 
             if ( ((i+1) % 10) == 0 ) {
                 var m = await channel.fetchMessage(messages[j]);
@@ -406,6 +428,8 @@ class C6Leaderboard
                 msg = '';
                 j++;
             }
+            i++
+            k++
         }
         //blanks in case not enough players on leaderboard
         if (msg != '') {
