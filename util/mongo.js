@@ -52,12 +52,18 @@ module.exports = {
 
     registerPlayer: async function( discordId, steamId, userName, displayName ) {
         try {
-            await _players.insertOne({
-                discord_id:     discordId,
-                steam_id:       steamId,
-                user_name:      userName,
-                display_name:   displayName
-            });
+            await _players.updateOne(
+                {
+                    discord_id:     discordId,
+                    steam_id:       steamId,
+                    user_name:      userName,
+                    display_name:   displayName
+                },
+                {
+                    $currentDate: { lastModified: true },
+                },
+                { upsert: true }
+            );
         } catch (e) {
             console.log(e);
             return false;
