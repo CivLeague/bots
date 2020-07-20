@@ -30,9 +30,10 @@ const srv = http.createServer( (req, res) =>
 	//res.end('okay');
 	
 	const API_ENDPOINT = '/api/v7'
-	const CLIENT_ID = '482621155136765973'
+	const CLIENT_ID = '535317412002922496'
 	const CLIENT_SECRET = util.getToken('discord');
-	const REDIRECT_URI = 'http://34.216.163.75'
+	//const REDIRECT_URI = 'https://discord.gg/ubwTNdd'
+	const REDIRECT_URI = 'http://35.162.113.241'
 	//const REDIRECT_URI = 'http://cpl.gg';
 
 	const params = getParams(req);
@@ -291,8 +292,8 @@ class RegisterModule
             }
             else {
                 const state_string = JSON.stringify({ user: target.id, chan: message.channel.id });
-                const link = 'https://discordapp.com/oauth2/authorize?response_type=code&client_id=482621155136765973&scope=identify%20connections&redirect_uri=http%3A%2F%2F34.216.163.75&state=' + state_string;
-                //const link = 'https://discordapp.com/api/oauth2/authorize?client_id=535317412002922496&redirect_uri=http%3A%2F%2Fcpl.gg&response_type=code&scope=connections%20identify&state=' + state_string;
+                const link = 'https://discord.com/api/oauth2/authorize?client_id=535317412002922496&redirect_uri=http%3A%2F%2F35.162.113.241&response_type=code&scope=identify%20connections&state=' + state_string;
+                //const link = 'https://discord.com/api/oauth2/authorize?client_id=535317412002922496&redirect_uri=https%3A%2F%2Fdiscord.gg%2FubwTNdd&response_type=code&scope=identify%20connections&state=' + state_string;
                 const embed = new Discord.RichEmbed()
                     .setColor('#0099ff')
                     .setTitle('Authorize Bot')
