@@ -18,6 +18,7 @@ voting.on('finished', async(vote, channel) =>
 {	
 	/// Parse results to actual bans
 	const results = vote.voteCivBans.getResults();
+/*
     var jVote = '{ "Vote" : { ';
     vote.isTeamVote ? jVote += '"Game Type" : "Team", ' : jVote += '"Game Type" : "FFA", ';
     jVote += '"Number of Voters" : ';
@@ -38,8 +39,9 @@ voting.on('finished', async(vote, channel) =>
     for ( const v of vote.voteChoices ) {
         if ( v[1].finished === true || v[1].finished === false ) {
             jVote += '"';
-            jVote += v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", "");
-            jVote += '" : { ';
+*/
+//            jVote += v[1].display.replace(/\*\*/g, "").replace(/__/g, "").replace("\t", "");
+/*            jVote += '" : { ';
             jVote += '"Votes" : [ ';
             for ( const vv in v[1].votes ) {
                 jVote += '{ "emoji" : "' + vv + '", "users" : [ ';
@@ -106,6 +108,7 @@ voting.on('finished', async(vote, channel) =>
             return;
         };
     });
+*/
 	
 	/// Call draft
 	if ( vote.isTeamVote )
@@ -278,7 +281,7 @@ util.client.on('message', message =>
 		    		["♾️", "Unlimited"]
 		    	]), {} );
 
-		    bot_vote.showChoice(message.channel, '**__Gold Gifting/Trading__**\t',
+		    bot_vote.showChoice(message.channel, '**__Gold Gifting/Trading__** (delegation/embassies exempt)\t',
 		    	new Map([
 		    		["✅", "Allowed"],
 		    		["🚫", "Not Allowed"],
