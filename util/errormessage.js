@@ -5,6 +5,7 @@ class ErrorMessage
 		this.errs = [];
 		this.user = typeof user !== 'undefined' ? user + ' ' : '';
 		this.isError = true;
+        this.count = 0
 	}
 	
 	construct()
@@ -23,6 +24,7 @@ class ErrorMessage
 	add(msg)
 	{
 		this.errs.push(msg);
+        this.count++
 	}
 	
 	send(channel, timeoutSeconds)
