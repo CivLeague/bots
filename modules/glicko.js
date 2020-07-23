@@ -48,9 +48,10 @@ class ReportBotModule {
 			const isBot       = GetSubLog().guild.member(user).roles.has(botId);
 			const isCheckEmoji  = reaction.emoji.id == null && reaction.emoji.name == '🇨';
 			const isReportEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇷';
+			const isProcessEmoji = reaction.emoji.id == null && reaction.emoji.name == '🇵';
             let reactions = reaction.message.reactions;
 
-			if ( isCheckEmoji || (isModerator && isReportEmoji) )
+			if ( isCheckEmoji || (isModerator && isReportEmoji) || (isModerator && isProcessEmoji) )
 			{
                 /*if ( isModerator && isReportEmoji ) {
                     for (let r of reactions) {
@@ -218,6 +219,12 @@ class ParseMessage
                         }
                         else if (civsMatched == "greece") {
                             this.error.add('\n`Greece` is too ambiguous on line:\n' + line + '\n\nPlease use `Gorgo` or `Pericles`');
+                            this.abort = true;
+                            this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "gran") {
+                            this.error.add('\nSorry, spaces in a civ confuse me, like in Gran Colombia:\n' + line + '\n\nPlease use `Colombia` or `GranColombia`');
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
@@ -407,7 +414,7 @@ class ParseMessage
                         let sub = true;
 
                         await mongo.updatePlayer(pStats.dId,
-                                                     Math.round(pStats.getRating()),
+                                                     Math.round(pStats.oldRating) + diff,
                                                      diff,
                                                      pStats.getRd(),
                                                      pStats.getVol(),
@@ -466,6 +473,7 @@ class ParseMessage
                         diff = 5;
                         pStats.setRating(pStats.oldRating + diff);
                     }
+                    if ( diff < -100 ) diff = -100
 			        for (var k = 0; k < this.positions.length; ++k) {
 				        for(var m of this.positions[k]) {
                             if (m[1] == pStats.dId) {
@@ -529,18 +537,18 @@ class ParseMessage
                         let sub = true;
 
                         await mongo.updatePlayer(pStats.dId,
-                                                     Math.round(pStats.getRating()),
-                                                     diff,
-                                                     pStats.getRd(),
-                                                     pStats.getVol(),
-                                                     plyr.games + 1,
-                                                     wins,
-                                                     losses,
-                                                     plyr.civs,
-                                                     plyr.subbedIn,
-                                                     plyr.subbedOut + 1,
-                                                     sub
-                                                    );
+                                                  Math.round(pStats.oldRating) + diff,
+                                                  diff,
+                                                  pStats.getRd(),
+                                                  pStats.getVol(),
+                                                  plyr.games + 1,
+                                                  wins,
+                                                  losses,
+                                                  plyr.civs,
+                                                  plyr.subbedIn,
+                                                  plyr.subbedOut + 1,
+                                                  sub
+                                                 );
                         //await mongo.updateCiv(thisCiv, i+1, pStats.oldRating, true);
                     }
                 }
@@ -677,6 +685,7 @@ class ParseMessage
             for (let j = 0; j < glickoPositions[i].length; j++) {
                 let pStats = glickoPositions[i][j];
                 var diff = Math.round(pStats.getRating()) - Math.round(pStats.oldRating);
+                if ( diff < -100 ) diff = -100
                 if ( this.isTeam() || pStats.subType != 1 ) {
 			        for (var k = 0; k < this.positions.length; ++k) {
 				        for(var m of this.positions[k]) {
@@ -746,7 +755,7 @@ class ParseMessage
                             let sub = false;
 
                             await mongo.updatePlayer(pStats.dId,
-                                                         Math.round(pStats.getRating()),
+                                                         Math.round(pStats.oldRating) + diff,
                                                          diff,
                                                          pStats.getRd(),
                                                          pStats.getVol(),
@@ -829,7 +838,7 @@ class ParseMessage
                         let sub = false;
 
                         await mongo.updatePlayer(pStats.dId,
-                                                     Math.round(pStats.getRating()),
+                                                     Math.round(pStats.oldRating) + diff,
                                                      diff,
                                                      pStats.getRd(),
                                                      pStats.getVol(),
@@ -1140,9 +1149,7 @@ function checkCivs(civs) {
                 break;
             case "colombia":
             case "columbia":
-            case "gran colombia":
             case "grancolombia":
-            case "gran columbia":
             case "grancolumbia":
             case "simon":
             case "bolivar":
@@ -1337,6 +1344,10 @@ function checkCivs(civs) {
                 break;
             case "greece":
                 return "greece";
+                break;
+            case "gran":
+            case "grand":
+                return "gran";
                 break;
             default:
                 if (c != "" && c != "tie" && c != "sub" && c != "for") {
