@@ -311,6 +311,7 @@ module.exports = {
                 games:      0,
                 wins:       0,
                 losses:     0,
+                first:      0,
                 subbedIn:   0,
                 subbedOut:  0,
                 civs:       [],
