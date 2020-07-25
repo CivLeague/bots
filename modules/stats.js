@@ -149,9 +149,9 @@ class StatsBotModule
                     wins += ( games - wins - losses );
 
                     msg += target;
-                    msg += '```js';
-                    msg += '\nSkill:   ' + skill;
+                    msg += '```dos';
                     msg += '\nRank:    ' + rank;
+                    msg += '\nSkill:   ' + skill;
                     msg += '\nGames:   ' + games;
                     msg += '\nWin %:   ' + wp + '%';
                     if ( db != 'team' )
@@ -678,6 +678,7 @@ class StatsBotModule
             }
 
             mongoUtil.giveReset( target.id );
+            message.reply( target + ' has been given a reset token.' )
         }
         else if ( (content.startsWith('.changerating') || content.startsWith('.changeskill'))
                   && (message.channel == GetBotCommands() || message.channel == GetScrapReporting())
