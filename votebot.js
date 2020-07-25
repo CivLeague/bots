@@ -84,6 +84,7 @@ voting.on('finished', async(vote, channel) =>
     }
     jVote = jVote.slice(0, -2);
     jVote += ' }, ';
+*/
 	let banned = [];
 	for(let i of results)
 	{
@@ -96,6 +97,7 @@ voting.on('finished', async(vote, channel) =>
 			}
 		}
 	}
+/*
     jVote += '"Banned Civs" : ';
     jVote += JSON.stringify(banned);
     jVote += '} ';
@@ -272,7 +274,13 @@ util.client.on('message', message =>
 		    		["🇵", "All Private Allowed"],
 		    		["➕", "All Public Only"]
 		    	]), {} );
-
+/*
+		    bot_vote.showChoice(message.channel, '**__If AI quitter, Raze/Reject All Cities__**\t',
+		    	new Map([
+		    		["✅", "Yes, Raze/Reject All"],
+		    		["🚫", "No, Keep Any"]
+		    	]), {} );
+*/
 		    bot_vote.showChoice(message.channel, '**__Official Friends/Allies__**\t',
 		    	new Map([
 		    		["0⃣", "0"],
