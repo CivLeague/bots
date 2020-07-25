@@ -383,19 +383,19 @@ class C6Leaderboard
                 continue
             }
 
-            if ( i < 9 ) msg += '`#0' + (i+1) + '`     `';
-            else if ( i < 99 ) msg += '`#' + (i+1) + '`     `';
-            else msg += '`#' + (i+1) + '`   `';
-            msg += Math.round(this.glickoLb[k].rating) + '`';
+            if ( i < 9 ) msg += '`#0' + (i+1) + '     ';
+            else if ( i < 99 ) msg += '`#' + (i+1) + '     ';
+            else msg += '`#' + (i+1) + '    ';
+            msg += Math.round(this.glickoLb[k].rating);
             let wins = this.glickoLb[k].wins;
             if (wins < 10) {
-                msg += '\t`[   ' + wins;
+                msg += '\t[   ' + wins;
             }
             else if (wins < 100) {
-                msg += '\t`[  ' + wins;
+                msg += '\t[  ' + wins;
             }
             else {
-                msg += '\t`[ ' + wins;
+                msg += '\t[ ' + wins;
             }
 
             let losses = this.glickoLb[k].losses;
@@ -411,18 +411,34 @@ class C6Leaderboard
 
             let winPercent = Math.round(wins*100/this.glickoLb[k].games);
             if (winPercent < 10) {
-                msg += '    ' + winPercent + '%`';
+                msg += '    ' + winPercent + '%';
             }
             else if (winPercent < 100) {
-                msg += '   ' + winPercent + '%`';
+                msg += '   ' + winPercent + '%';
             }
             else {
-                msg += '  ' + winPercent + '%`';
+                msg += '  ' + winPercent + '%';
+            }
+
+            let first = this.glickoLb[k].first;
+            if ( first === undefined ) first = 0
+            if (first < 10) {
+                msg += '    ' + first + '`';
+            }
+            else if (losses < 100) {
+                msg += '   ' + first + '`';
+            }
+            else {
+                msg += '  ' + first + '`';
             }
 
             msg += '\t<@' + this.glickoLb[k]._id + '>\n';
 
             if ( ((i+1) % 10) == 0 ) {
+                if ( j == 0 ) {
+                    let legend = '`rank    skill   [wins - loss]  win%  1st`\n'
+                    msg = legend + msg
+                }
                 var m = await channel.fetchMessage(messages[j]);
                 m.edit(msg);
                 msg = '';
