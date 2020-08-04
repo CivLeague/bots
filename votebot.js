@@ -2,6 +2,7 @@
 const rc = require('/home/codenaugh/bots/util/reactioncontrol');
 const voting = require('/home/codenaugh/bots/util/voting');
 const fs = require("fs");
+require('log-timestamp')
 
 /// Register civs as custom emojis
 for(let i in util.civs) voting.setCustomEmoji(util.civs[i]['tag'], util.civs[i]['id']);

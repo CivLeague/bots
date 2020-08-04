@@ -1,6 +1,7 @@
 const Discord = require('discord.js')
 const bot = new Discord.Client()
 const fs = require('fs') 
+require('log-timestamp')
 
 const specialistId = '438521431698178058'
 const voteChannel  = '662798569979248654'
