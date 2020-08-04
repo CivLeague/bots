@@ -371,13 +371,15 @@ class C6Leaderboard
         let maxDisp = db === 'pbc' ? 10 : 100
 
         while ( i < maxDisp && k < max ) {
-            let member = await util.client.guilds.get( cplId ).fetchMember( this.glickoLb[k]._id )
-            let currDate = new Date()
-            let lastDate = new Date( this.glickoLb[k].lastModified )
-            if ( !member ) {
+            try {
+                await util.client.guilds.get( cplId ).fetchMember( this.glickoLb[k]._id )
+            }
+            catch (err) {
                 k++
                 continue
             }
+            let currDate = new Date()
+            let lastDate = new Date( this.glickoLb[k].lastModified )
             if ( db != 'pbc' && currDate-lastDate > twoWeeksMS ) {
                 k++
                 continue
