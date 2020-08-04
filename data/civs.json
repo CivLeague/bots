@@ -1,8 +1,8 @@
 {
-	"America" : {
+	"Teddy Rough Rider" : {
 		"dbid": 1,
-		"id": "292492522738155521",
-		"tag": ":AmericaTheodoreRoosevelt:"
+		"id": "739534754956836886",
+		"tag": ":TeddyAmericaRoughRider:"
 	},
 	"Arabia" : {
 		"dbid": 2,
@@ -39,10 +39,10 @@
 		"id": "292492523040014337",
 		"tag": ":EnglandVictoria:"
 	},
-	"Catherine" : {
+	"Catherine Black Queen" : {
 		"dbid": 13,
-		"id": "292492522888888323",
-		"tag": ":FranceCatherinedeMedici:"
+		"id": "739537418193076324",
+		"tag": ":CatherineFranceBlackQueen:"
 	},
 	"Gandhi" : {
 		"dbid": 14,
@@ -134,7 +134,7 @@
 		"id": "292492522905927681",
 		"tag": ":SumeriaGilgamesh:"
 	},
-	"Colombia" : {
+	"Gran Colombia" : {
 		"dbid": 46,
 		"id": "712888831229296680",
 		"tag": ":GranColombiaSimonBolivar:"
@@ -148,5 +148,20 @@
 		"dbid": 48,
 		"id": "735904512258211910",
 		"tag": ":EthiopiaMenelik:"
+	},
+	"Teddy Bull Moose" : {
+		"dbid": 49,
+		"id": "739537692945154144",
+		"tag": ":TeddyAmericaBullMoose:"
+	},
+	"Eleanor France" : {
+		"dbid": 50,
+		"id": "739534388890435644",
+		"tag": ":EleanorFrance:"
+	},
+	"Catherine The Magnificent" : {
+		"dbid": 51,
+		"id": "739534442716200970",
+		"tag": ":CatherineFranceMagnificent:"
 	}
 }

@@ -187,8 +187,10 @@ class C6Util
 		this.createSplit(allowed, split1, split2, 'Gandhi', 'Chandragupta');
 		this.createSplit(allowed, split1, split2, 'Victoria', 'Phoenicia');
 		this.createSplit(allowed, split1, split2, 'Australia', 'Netherlands');
-		this.createSplit(allowed, split1, split2, 'Catherine', 'Scythia');
-		this.createSplit(allowed, split1, split2, 'America', 'Mapuche');
+		this.createSplit(allowed, split1, split2, 'Catherine Black Queen', 'Catherine The Magnificent');
+		this.createSplit(allowed, split1, split2, 'Eleanor England', 'Eleanor France');
+		this.createSplit(allowed, split1, split2, 'Teddy Rough Rider', 'Teddy Bull Moose');
+		this.createSplit(allowed, split1, split2, 'Zulu', 'Mongolia');
 		this.createSplit(allowed, split1, split2, 'Russia', 'Canada');
 		this.createSplit(allowed, split1, split2, 'Japan', 'Norway'); //needs revision
 		/// end split

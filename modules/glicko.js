@@ -205,20 +205,44 @@ class ParseMessage
 
 					const civsMatched = checkCivs( cleanstr.split(' '));
                     if ( typeof civsMatched == "string" ) {
-                        if (civsMatched == "england") {
+                        if (civsMatched == "america" || civsMatched == "teddy" ) {
+					    	this.error.add('\n' + civsMatched + ' is too ambiguous on line:\n' + line + '\n\nPlease use `TeddyBM` or `TeddyRR`');
+                            this.abort = true;
+		                    this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "catherine" ) {
+					    	this.error.add('\n' + civsMatched + ' is too ambiguous on line:\n' + line + '\n\nPlease use `CatherineBQ` or `CatherineM`');
+                            this.abort = true;
+		                    this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "england") {
 					    	this.error.add('\n`England` is too ambiguous on line:\n' + line + '\n\nPlease use `Victoria` or `EleanorE`');
                             this.abort = true;
 		                    this.error.send(this.message.channel, 60);
                             return;
                         }
                         else if (civsMatched == "france") {
-                            this.error.add('\n`France` is too ambiguous on line:\n' + line + '\n\nPlease use `Catherine` or `EleanorF`');
+                            this.error.add('\n`France` is too ambiguous on line:\n' + line + '\n\nPlease use `CatherineM` or `CatherineBQ` or `EleanorF`');
+                            this.abort = true;
+                            this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "eleanor") {
+                            this.error.add('\n`Eleanor` is too ambiguous on line:\n' + line + '\n\nPlease use `EleanorE` or `EleanorF`');
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
                         }
                         else if (civsMatched == "greece") {
                             this.error.add('\n`Greece` is too ambiguous on line:\n' + line + '\n\nPlease use `Gorgo` or `Pericles`');
+                            this.abort = true;
+                            this.error.send(this.message.channel, 60);
+                            return;
+                        }
+                        else if (civsMatched == "india") {
+                            this.error.add('\n`India` is too ambiguous on line:\n' + line + '\n\nPlease use `Ghandi` or `Chandragupta`');
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
@@ -768,11 +792,13 @@ class ParseMessage
                                                          sub
                                                         );
                             await mongo.updateCiv(thisCiv, i+1, pStats.oldRating, true);
+                            let pn = await mongo.getDisplayName( pStats.dId )
                             let fContent = {
                                 civ: thisCiv.name,
                                 place: i+1,
                                 skill: pStats.oldRating,
-                                player: pStats.dId,
+                                playerId: pStats.dId,
+                                playerName: pn,
                                 game: 'ffa'
                             };
                             let line = JSON.stringify(fContent, null, 2) + '\n';
@@ -860,7 +886,7 @@ class ParseMessage
                                 game: 'team'
                             };
                             let line = JSON.stringify(fContent, null, 2) + '\n';
-                            fs.appendFile("/home/codenaugh/bots/splunk/civs.data", line, (err) => {
+                            fs.appendFile("/home/jarvis/bots/splunk/civs.data", line, (err) => {
                                 if (err) {
                                     console.error(err);
                                     return;
@@ -890,7 +916,7 @@ class ParseMessage
             }
         }
         if(!debugMode) {
-            if ( !this.isTeam() ) {
+            if ( !this.isTeam() && !this.isDuel() ) {
                 for( let m of this.positions[0] ) {
                     await mongo.bumpWins( m[1] );
                 }
@@ -905,7 +931,7 @@ class ParseMessage
             }
             this.getGlickoReport().then( report => {
 		        let gMsg = '```[CHECK MODE]```\n**No Errors Found**\n\n' + report;
-		        this.message.channel.send(gMsg).then( msg => { msg.delete(60000) });
+		        this.message.channel.send(gMsg).then( msg => { msg.delete(60000).catch(() => {}) });
             });
         }
 	}
@@ -913,7 +939,8 @@ class ParseMessage
 	async notify()
 	{
 		// construct new message with full changes
-		let gMsg = '```[GAME]```';
+        let time = this.message.createdAt.toUTCString()
+		let gMsg = '```[ ' + time + ' ]```';
 		gMsg += 'Type: ' + GetGameType(this.type) + '\n';
 		gMsg += '⍟Host: ' + this.displayNameFromId(this.host) + '\n';
 		
@@ -932,7 +959,7 @@ class ParseMessage
         });
 		
 		GetReportsProcessed().send(
-            '```[GAME]```' +
+            '```[ ' + time + ']```' +
 			this.message.content + '\n' +
 			'Reported By: ' + this.message.author + '\n' +
 			'Approved By: ' + this.user
@@ -1122,10 +1149,15 @@ function checkCivs(civs) {
     let result = [];
     for ( const c of civs ) {
         switch ( c ) {
-            case "america":
-            case "teddy":
-            case "usa":
-                result.push('America');
+            case "teddyrr":
+            case "teddyroughrider":
+            case "americarr":
+                result.push('Teddy Rough Rider');
+                break;
+            case "teddybullmoose":
+            case "teddybm":
+            case "americabm":
+                result.push('Teddy Bull Moose');
                 break;
             case "arabia":
             case "saladin":
@@ -1164,19 +1196,44 @@ function checkCivs(civs) {
             case "victoria":
                 result.push('Victoria');
                 break;
+            case "ethiopia":
+            case "menelik":
+                result.push('Ethiopia');
+                break;
             case "eengland":
             case "englande":
             case "eleanore":
-                result.push('EleanorE');
-                break;
-            case "catherine":
-            case "katherine":
-                result.push('Catherine');
+            case "eleanoreengland":
+                result.push('Eleanor England');
                 break;
             case "efrance":
             case "francee":
             case "eleanorf":
-                result.push('EleanorF');
+            case "eleanorfrance":
+                result.push('Eleanor France');
+                break;
+            case "catherinem":
+            case "katherinem":
+            case "magnificent":
+                result.push('Catherine The Magnificent');
+                break;
+            case "catherinebq":
+            case "katherinebq":
+            case "blackqueen":
+                result.push('Catherine Black Queen');
+                break;
+            case "germany":
+            case "frederick":
+                result.push('Germany');
+                break;
+            case "gorgo":
+                result.push('Gorgo');
+                break;
+            case "efrance":
+            case "francee":
+            case "eleanorf":
+            case "eleanorfrance":
+                result.push('EleanorFrance');
                 break;
             case "germany":
             case "frederick":
@@ -1336,6 +1393,9 @@ function checkCivs(civs) {
             case "kristina":
                 result.push('Sweden');
                 break;
+            case "eleanor":
+                return "eleanor";
+                break;
             case "england":
                 return "england";
                 break;
@@ -1348,6 +1408,17 @@ function checkCivs(civs) {
             case "gran":
             case "grand":
                 return "gran";
+                break;
+            case "america":
+            case "usa":
+            case "teddy":
+                return "america";
+                break;
+            case "catherine":
+                return "catherine";
+                break;
+            case "india":
+                return "india";
                 break;
             default:
                 if (c != "" && c != "tie" && c != "sub" && c != "for") {
