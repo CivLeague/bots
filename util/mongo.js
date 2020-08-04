@@ -545,6 +545,7 @@ module.exports = {
     quit: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId })
         let tier = member && member.quit ? member.quit.tier : 0
+        if ( tier < 0 ) tier = 0
         tier++
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
@@ -584,6 +585,7 @@ module.exports = {
     minor: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId })
         let tier = member && member.minor ? member.minor.tier : 0
+        if ( tier < 0 ) tier = 0
         tier++
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
@@ -627,6 +629,7 @@ module.exports = {
     moderate: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId })
         let tier = member && member.moderate ? member.moderate.tier : 0
+        if ( tier < 0 ) tier = 0
         tier++
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
@@ -664,6 +667,7 @@ module.exports = {
     major: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId })
         let tier = member && member.major ? member.major.tier : 0
+        if ( tier < 0 ) tier = 0
         tier++
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
@@ -820,5 +824,36 @@ module.exports = {
     isUnsuspendDue: async function ( memberId ) {
         let result = await _unsuspdue.deleteOne({ _id: memberId })
         return ( result.deletedCount )
+    },
+
+    rmTier: async function ( memberId, category ) {
+        if ( category == 'quit' ) {
+            let member = await _susp.findOne({ _id: memberId } )
+            if ( member.quit.tier < 1 ) return -1
+            await _susp.updateOne({ _id: memberId }, { $inc: { "quit.tier": -1 }} )
+            let result =  await _susp.findOne({ _id: memberId })
+            return result.quit.tier
+        }
+        else if ( category == 'minor' ) {
+            let member = await _susp.findOne({ _id: memberId } )
+            if ( member.minor.tier < 1 ) return -1
+            await _susp.updateOne({ _id: memberId }, { $inc: { "minor.tier": -1 }} )
+            let result =  await _susp.findOne({ _id: memberId })
+            return result.minor.tier
+        }
+        else if ( category == 'moderate' ) {
+            let member = await _susp.findOne({ _id: memberId } )
+            if ( member.moderate.tier < 1 ) return -1
+            await _susp.updateOne({ _id: memberId }, { $inc: { "moderate.tier": -1 }} )
+            let result =  await _susp.findOne({ _id: memberId })
+            return result.moderate.tier
+        }
+        else if ( category == 'major' ) {
+            let member = await _susp.findOne({ _id: memberId } )
+            if ( member.major.tier < 1 ) return -1
+            await _susp.updateOne({ _id: memberId }, { $inc: { "major.tier": -1 }} )
+            let result =  await _susp.findOne({ _id: memberId })
+            return result.major.tier
+        }
     }
 }
