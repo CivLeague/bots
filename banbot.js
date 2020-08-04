@@ -2,6 +2,7 @@ const Discord = require( 'discord.js' )
 const bot = new Discord.Client()
 const mongo = require( '/home/codenaugh/bots/util/mongo' )
 const fs = require( 'fs' ) 
+require('log-timestamp')
 
 const usage     = 'Commands that Ban Bot can handle:\n' +
                   '_Type a command with no args to get its usage statement_\n' +
@@ -15,6 +16,7 @@ const rmdays    = '`Usage: .rmdays <member> <number> [reason]`'
 const oversub   = '`Usage: .oversub <member>`'
 const smurf     = '`Usage: .smurf <member>`'
 const unsuspend = '`Usage: .unsuspend <member> [reason]`'
+const rmtier    = '`Usage: .rmtier <category> <member>`'
 
 const cplId        = '291751672106188800'
 const botTesting   = '351127558143868928'
@@ -365,7 +367,7 @@ bot.on('message', async ( message ) => {
         }
         let ends = await mongo.subSuspension( id )
         let msg = '\n**[ EXCESSIVE SUB INFRACTION ]**'
-        msg += '\n**RESULT:** Each sub after the 2nd in a month is a 3 day suspension.'
+        msg += '\n**RESULT:** Each sub after the 3rd in a month is a 3 day suspension.'
         if ( !leftServer ) {
             if ( target.roles.has( suspendedId ) )
                 msg += ' This is in addition to your current suspension.'
@@ -428,6 +430,20 @@ bot.on('message', async ( message ) => {
                 target.user.send( 'Your CPL suspension has been lifted\n' + msg.url )
             })
         }
+    }
+    else if ( content.startsWith( '.rmtier' ) ) {
+        message.delete()
+        let target = message.mentions.members.array().shift()
+        if ( !target ) {
+            message.channel.send( rmtier ).then( msg => { msg.delete( 30000 ) } )
+            return
+        }
+        let category = content.split( ' ' )[1]
+        let num = await mongo.rmTier( target.id, category )
+        if ( num < 0 )
+            message.channel.send( '<@' + target.id + '> was already at ' + category + ' tier 0' )
+        else
+            message.channel.send( '<@' + target.id + '> is now at ' + category + ' tier ' + num ) 
     }
     else if ( content.startsWith( '.banbot' ) ) {
         message.delete()
