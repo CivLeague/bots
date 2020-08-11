@@ -423,13 +423,13 @@ bot.on('message', async ( message ) => {
         mongo.unsuspend( target.id )
         if ( target.roles.has( suspendedId ) ) {
             target.removeRole( suspendedId )
+        }
             let msg = '\nYou have been unsuspended.'
             if ( reason.length > 0 )
                 msg += '\n**REASON:** ' + reason + '.'
             message.channel.send( '<@' + target.id + '>' + msg ).then( ( msg ) => {
                 target.user.send( 'Your CPL suspension has been lifted\n' + msg.url )
             })
-        }
     }
     else if ( content.startsWith( '.rmtier' ) ) {
         message.delete()
