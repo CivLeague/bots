@@ -15,7 +15,7 @@ function GetChannelSteamLog() { return util.getChannel(615805208848498688); }
 function GetChannelWelcome() { return util.getChannel(368928122219003904); }
 const vhaId = '375413414987825152';
 const moderatorId = '291753249361625089';
-const ranked = '615780983047979008';
+const steam = '615780983047979008';
 const settler = '628464552882995200';
 const novice = '577702305999093763';
 
@@ -58,7 +58,7 @@ const srv = http.createServer( (req, res) =>
 		///
 		util.makeRequest(https, {
 			method: 'POST',
-			hostname: 'discordapp.com',
+			hostname: 'discord.com',
 			path: API_ENDPOINT + '/oauth2/token',
 		}, {
 			client_id: CLIENT_ID,
@@ -76,7 +76,7 @@ const srv = http.createServer( (req, res) =>
 			///
 			util.makeRequest(https, {
 				method: 'GET',
-				hostname: 'discordapp.com',
+				hostname: 'discord.com',
 				path: API_ENDPOINT + '/users/@me',
 				headers: { 'authorization': 'Bearer ' + json.access_token },
 			}, null, (body_me) =>
@@ -99,7 +99,7 @@ const srv = http.createServer( (req, res) =>
 				///
 				util.makeRequest(https, {
 					method: 'GET',
-					hostname: 'discordapp.com',
+					hostname: 'discord.com',
 					path: API_ENDPOINT + '/users/@me/connections',
 					headers: { 'authorization': 'Bearer ' + json.access_token },
 				}, null, async (body_connections) =>
@@ -219,7 +219,7 @@ const srv = http.createServer( (req, res) =>
                         
                                 GetChannelSteamLog().send(embed);
 					        	GetChannelWelcome().send('<@' + json_me.id + '>, you have been registered successfully.\nPlease read <#550251325724557322> and <#553224175398158346>.');
-                                await member.addRole(ranked).catch(console.error);
+                                await member.addRole(steam).catch(console.error);
                                 await member.addRole(settler).catch(console.error);
 					        }
 					        catch( err )
@@ -408,8 +408,8 @@ class RegisterModule
                             //.setImage(target.user.avatarURL)
                             .setTimestamp();
                         GetChannelSteamLog().send(embed);
-                        message.channel.send(target + ', you have been registered with default stats and given the ranked role. Please read <#550251325724557322>.');
-			            await target.addRole(ranked).catch(console.error);
+                        message.channel.send(target + ', you have been registered with default stats and given the steam role. Please read <#550251325724557322>.');
+			            await target.addRole(steam).catch(console.error);
 			            await target.addRole(settler).catch(console.error);
                     }
                 });
@@ -490,19 +490,19 @@ class RegisterModule
                         //.setImage(target.user.avatarURL)
                         .setTimestamp();
                     GetChannelSteamLog().send(embed);
-                    message.channel.send(target + ' is now registered to steamId == `' + realid + '`.\n<@' + sExists.discord_id + '> has had their ranked role removed and been kicked from the server.').then( msg => { msg.delete(20000); });
+                    message.channel.send(target + ' is now registered to steamId == `' + realid + '`.\n<@' + sExists.discord_id + '> has had their steam role removed and been kicked from the server.').then( msg => { msg.delete(20000); });
 
                     const reason = 'new discord: ' + target.id;
                     const oldUser = util.client.users.get(sExists.discord_id);
                     if ( oldUser ) {
                         const oldMember = GetChannelSteamLog().guild.member(oldUser);
                         if ( oldMember ) {
-                            await oldMember.removeRole(ranked, reason);
+                            await oldMember.removeRole(steam, reason);
                             await oldMember.kick(reason);
                         }
                     }
 
-                    await target.addRoles(ranked).catch(console.error);
+                    await target.addRoles(steam).catch(console.error);
                     await target.addRoles(settler).catch(console.error);
                 });
             }
