@@ -4,7 +4,7 @@ const errorHandler = require('/home/codenaugh/bots/util/errormessage');
 
 const Discord = require('discord.js');
 const SteamAPI = require('steamapi');
-const steam = new SteamAPI(util.getToken('steam'));
+const steamapi = new SteamAPI(util.getToken('steam'));
 
 const cmd_register = '.register';
 const cmd_forceregister = '.forceregister';
@@ -308,7 +308,7 @@ class RegisterModule
         {
             message.delete();
             let steamlink = message.content.split(' ').pop();
-            let steamid = await steam.resolve(steamlink);
+            let steamid = await steamapi.resolve(steamlink);
 
             util.makeRequest(https, {
                 method: 'GET',
@@ -359,7 +359,7 @@ class RegisterModule
             {
                 console.log(message.content); 
                 let steamlink = message.content.split(' ').pop();
-                let steamid = await steam.resolve(steamlink);
+                let steamid = await steamapi.resolve(steamlink);
                 console.log('steamID64:' + steamid); 
 
                 util.makeRequest(https, {
@@ -442,7 +442,7 @@ class RegisterModule
             {
                 console.log(message.content);
                 let steamlink = message.content.split(' ').pop();
-                let steamid = await steam.resolve(steamlink);
+                let steamid = await steamapi.resolve(steamlink);
                 console.log('steamID64:' + steamid);
 
                 util.makeRequest(https, {
