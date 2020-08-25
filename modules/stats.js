@@ -357,7 +357,7 @@ class StatsBotModule
                     }
                 );
 
-                console.log( bCivs );
+                console.log( target.displayName + ':\n' + bCivs );
 
                 let cName = '';
                 let fields = [];

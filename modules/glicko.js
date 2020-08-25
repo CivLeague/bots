@@ -792,7 +792,8 @@ class ParseMessage
                                                          sub
                                                         );
                             await mongo.updateCiv(thisCiv, i+1, pStats.oldRating, true);
-                            let pn = await mongo.getDisplayName( pStats.dId )
+                            let pn = "unknown"
+                            pn = await mongo.getDisplayName( pStats.dId ).catch(() => {})
                             let fContent = {
                                 civ: thisCiv.name,
                                 place: i+1,
