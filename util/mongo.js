@@ -13,8 +13,10 @@ var _pbc;
 var _team;
 var _coll;
 var _civs;
-var _tcivs;
 var _bcivs;
+var _tcivs;
+var _tbcivs;
+var _pcivs;
 var _players;
 var _subs;
 
@@ -38,8 +40,10 @@ module.exports = {
             _team      = _stats.collection('team');
             _coll      = _stats.collection('ffa'); //set default collection
             _civs      = _cli.db('civs').collection('ffa');
-            _tcivs     = _cli.db('civs').collection('team');
             _bcivs     = _cli.db('civs').collection('bbg');
+            _tcivs     = _cli.db('civs').collection('team');
+            _tbcivs    = _cli.db('civs').collection('team_bbg');
+            _pcivs     = _cli.db('civs').collection('prince_plus');
             _players   = _cli.db('players').collection('players');
             _subs      = _cli.db('subs').collection('subs');
             _susp      = _cli.db('players').collection('suspensions');
@@ -171,8 +175,11 @@ module.exports = {
 
         if ( !ffa )
             civDB = _tcivs;
-        else
-            await this.updateBbgCiv( civ, place, skill );
+
+        if ( skill >= 1700 && ffa )
+            await this.updatePrinceCiv( civ, place, skill )
+
+        await this.updateBbgCiv( civ, place, skill, ffa );
             
         const c = await civDB.findOne({ name: civ.name });
         if ( !c ) {
@@ -214,13 +221,64 @@ module.exports = {
         { upsert: true });
     },
 
-    updateBbgCiv: async function ( civ, place, skill ) {
+    updatePrinceCiv: async function ( civ, place, skill ) {
+        let places = [];
+        let skills = [];
+        let avgP = 0;
+        let avgS = 1400;
+        let games = 0;
+        let civDB = _pcivs;
+
+        const c = await civDB.findOne({ name: civ.name });
+        if ( !c ) {
+            places = [ place ];
+            skills = [ skill ];
+            avgP = place;
+            avgS = skill;
+            games = 1;
+        }
+        else {
+            places = c.places;
+            skills = c.skills;
+            places.push(place);
+            skills.push(skill);
+
+            let totalP = 0;
+            for(let i = 0; i < places.length; i++) {
+                totalP += places[i];
+            }
+            avgP = totalP / places.length;
+
+            let totalS = 0;
+            for(let j = 0; j < skills.length; j++) {
+                totalS += skills[j];
+            }
+            avgS = totalS / skills.length;
+
+            games = c.games + 1;
+        }
+        await civDB.updateOne({ name : civ.name }, {
+            $set: {
+                avgPlace: avgP,
+                avgSkill: avgS,
+                places: places,
+                skills: skills,
+                games: games
+            }
+        },
+        { upsert: true });
+    },
+
+    updateBbgCiv: async function ( civ, place, skill, ffa ) {
         let places = [];
         let skills = [];
         let avgP = 0;
         let avgS = 1400;
         let games = 0;
         let civDB = _bcivs;
+
+        if ( !ffa )
+            civDB = _tbcivs;
 
         const c = await civDB.findOne({ name: civ.name });
         if ( !c ) {
@@ -422,6 +480,18 @@ module.exports = {
 
     getBbgCivsLeaderboard: async function ( ) {
         return await _bcivs.find().sort({ avgPlace: 1 }).toArray();
+    },
+
+    getTeamCivsLeaderboard: async function ( ) {
+        return await _tcivs.find().sort({ avgPlace: 1 }).toArray();
+    },
+
+    getTeamCivsBBGLeaderboard: async function ( ) {
+        return await _tbcivs.find().sort({ avgPlace: 1 }).toArray();
+    },
+
+    getCivsPrinceLeaderboard: async function ( ) {
+        return await _pcivs.find().sort({ avgPlace: 1 }).toArray();
     },
 
     /*************************************************

@@ -217,8 +217,15 @@ class C6Leaderboard
             await this.publishGlickoLeaderboard(db);
 
             //civs
-            await this.publishCivsLeaderboard( false );
-            await this.publishCivsLeaderboard( true );
+            if ( db === 'ffa' ) {
+                await this.publishCivsLeaderboard( false );
+                await this.publishCivsLeaderboard( true );
+                await this.publishCivsPrinceLeaderboard()
+            }
+            else {
+                await this.publishTeamCivsLeaderboard( false )
+                await this.publishTeamCivsLeaderboard( true )
+            }
 		}
 		catch(err)
 		{
@@ -248,24 +255,29 @@ class C6Leaderboard
                 '628117032432566273',
                 '628117033443262464',
                 '628117034173202435',
-                '628117034948886529'
+                '628117034948886529',
+                '745894579227590656'
             ];
         }
 
         //actual leaderboard message
         let msg = '```js\n'
         let j = 0;
-        for ( var i = 0; i < this.glickoLb.length ; i++ ) {
+        for ( var i = 0; i < this.glickoLb.length; i++ ) {
             if ( i < 9 ) msg += '#0' + (i+1) + '   ';
             else msg += '#' + (i+1) + '   ';
 
             let name = this.glickoLb[i].name;
+            if ( name == 'Catherine The Magnificent' ) name = 'Catherine M'
+            else if ( name == 'Catherine Black Queen' ) name = 'Catherine BQ'
+            else if ( name == 'Teddy Rough Rider' ) name = 'Teddy RR'
+            else if ( name == 'Teddy Bull Moose' ) name = 'Teddy BM'
             let avgP = this.glickoLb[i].avgPlace.toFixed(2);
             let avgS = Math.round(this.glickoLb[i].avgSkill);
             let games = this.glickoLb[i].games;
 
             msg += name;
-            let spaces = 14 - name.length;
+            let spaces = 16 - name.length;
             for ( let k = 0; k < spaces; k++ ) {
                 msg += ' ';
             }
@@ -278,9 +290,50 @@ class C6Leaderboard
                 j++;
             }
         }
-        for ( let x = this.glickoLb.length; x < 46; x++ ) {
-            msg += '#' + (x+1) + '\n';
-            if ( ((x+1) % 10) == 0 ) {
+        if (msg != '```js\n') {
+            m = await channel.fetchMessage(messages[j]);
+            m.edit(msg + '```');
+        }
+    }
+
+    async publishCivsPrinceLeaderboard() {
+        var channel = null;
+        var messages = null;
+        this.glickoLb = await mongoUtil.getCivsPrinceLeaderboard();
+        channel = util.getChannel(745907056015442000);
+        messages = [
+            '745909457636294656',
+            '745909458458378300',
+            '745909459129335818',
+            '745909459787710474',
+            '745909460446216212',
+            '745909484257542144'
+        ]
+
+        //actual leaderboard message
+        let msg = '```js\n'
+        let j = 0;
+        for ( var i = 0; i < this.glickoLb.length; i++ ) {
+            if ( i < 9 ) msg += '#0' + (i+1) + '   ';
+            else msg += '#' + (i+1) + '   ';
+
+            let name = this.glickoLb[i].name;
+            if ( name == 'Catherine The Magnificent' ) name = 'Catherine M'
+            else if ( name == 'Catherine Black Queen' ) name = 'Catherine BQ'
+            else if ( name == 'Teddy Rough Rider' ) name = 'Teddy RR'
+            else if ( name == 'Teddy Bull Moose' ) name = 'Teddy BM'
+            let avgP = this.glickoLb[i].avgPlace.toFixed(2);
+            let avgS = Math.round(this.glickoLb[i].avgSkill);
+            let games = this.glickoLb[i].games;
+
+            msg += name;
+            let spaces = 16 - name.length;
+            for ( let k = 0; k < spaces; k++ ) {
+                msg += ' ';
+            }
+            msg += 'Avg Place: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '\n';
+
+            if ( ((i+1) % 10) == 0 ) {
                 var m = await channel.fetchMessage(messages[j]);
                 m.edit(msg + '```');
                 msg = '```js\n';
@@ -290,6 +343,70 @@ class C6Leaderboard
         if (msg != '```js\n') {
             m = await channel.fetchMessage(messages[j]);
             m.edit(msg + '```');
+        }
+    }
+
+    async publishTeamCivsLeaderboard( bbg ) {
+        var channel = null;
+        var messages = null;
+        if ( !bbg ) {
+            this.glickoLb = await mongoUtil.getTeamCivsLeaderboard();
+            channel = util.getChannel(745897804362416189);
+            messages = [
+                '745900029751066686',
+                '745900030476419092',
+                '745900031541772378',
+                '745900032506724372',
+                '745900032909377547',
+                '745900057043271710'
+            ];
+        }
+        else {
+            this.glickoLb = await mongoUtil.getTeamCivsBBGLeaderboard();
+            channel = util.getChannel(745900185032589383);
+            messages = [
+                '745905509411979294',
+                '745905510024478751',
+                '745905511227981914',
+                '745905512130019368',
+                '747893771525685370',
+                '747893772389449859'
+            ]
+        }
+
+        //actual leaderboard message
+        let msg = '```js\n'
+        let j = 0;
+        for ( var i = 0; i < this.glickoLb.length; i++ ) {
+            if ( i < 9 ) msg += '#0' + (i+1) + '   ';
+            else msg += '#' + (i+1) + '   ';
+
+            let name = this.glickoLb[i].name;
+            if ( name == 'Catherine The Magnificent' ) name = 'Catherine M'
+            else if ( name == 'Catherine Black Queen' ) name = 'Catherine BQ'
+            else if ( name == 'Teddy Rough Rider' ) name = 'Teddy RR'
+            else if ( name == 'Teddy Bull Moose' ) name = 'Teddy BM'
+            let avgP = this.glickoLb[i].avgPlace.toFixed(2);
+            let avgS = Math.round(this.glickoLb[i].avgSkill);
+            let games = this.glickoLb[i].games;
+
+            msg += name;
+            let spaces = 16 - name.length;
+            for ( let k = 0; k < spaces; k++ ) {
+                msg += ' ';
+            }
+            msg += 'Avg Place: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '\n';
+
+            if ( ((i+1) % 10) == 0 ) {
+                var m = await channel.fetchMessage(messages[j]);
+                m.edit(msg + '```')
+                msg = '```js\n';
+                j++;
+            }
+        }
+        if (msg != '```js\n') {
+            m = await channel.fetchMessage(messages[j]);
+            m.edit(msg + '```')
         }
     }
 
