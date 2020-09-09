@@ -275,8 +275,12 @@ class RegisterModule
 		if ( message.author.bot ) return;
 		
         if ( content.toLowerCase() == '!egs' ) {
-            message.member.addRole('714869858885697648')
-            message.reply('you have been given the EGS role. Please proceed to <#714870286171766876>. You do not need to register.')
+            if (!message.member) {
+                message.send('Make sure you are not invisible or set as offline, so that I can see you')
+                return
+            }
+            message.member.addRole('615780983047979008')
+            message.reply('you have been registered successfully.\nPlease download the mods from <#715528304672636943> and then read <#550251325724557322> and <#553224175398158346>.');
             return
         }
 
@@ -408,7 +412,7 @@ class RegisterModule
                             //.setImage(target.user.avatarURL)
                             .setTimestamp();
                         GetChannelSteamLog().send(embed);
-                        message.channel.send(target + ', you have been registered with default stats and given the steam role. Please read <#550251325724557322>.');
+                        message.channel.send(target + ', you have been registered with default stats and given the ranked role. Please read <#550251325724557322>.');
 			            await target.addRole(steam).catch(console.error);
 			            await target.addRole(settler).catch(console.error);
                     }
