@@ -242,7 +242,7 @@ class ParseMessage
                             return;
                         }
                         else if (civsMatched == "india") {
-                            this.error.add('\n`India` is too ambiguous on line:\n' + line + '\n\nPlease use `Ghandi` or `Chandragupta`');
+                            this.error.add('\n`India` is too ambiguous on line:\n' + line + '\n\nPlease use `Gandhi` or `Chandragupta`');
                             this.abort = true;
                             this.error.send(this.message.channel, 60);
                             return;
