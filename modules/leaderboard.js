@@ -293,6 +293,12 @@ class C6Leaderboard
         if (msg != '```js\n') {
             m = await channel.fetchMessage(messages[j]);
             m.edit(msg + '```');
+            j++
+        }
+        while ( j < messages.length ) {
+            m = await channel.fetchMessage(messages[j]);
+            m.edit('_Placeholder_');
+            j++
         }
     }
 
@@ -343,6 +349,12 @@ class C6Leaderboard
         if (msg != '```js\n') {
             m = await channel.fetchMessage(messages[j]);
             m.edit(msg + '```');
+            j++
+        }
+        while ( j < messages.length ) {
+            m = await channel.fetchMessage(messages[j]);
+            m.edit('_Placeholder_');
+            j++
         }
     }
 
@@ -407,6 +419,12 @@ class C6Leaderboard
         if (msg != '```js\n') {
             m = await channel.fetchMessage(messages[j]);
             m.edit(msg + '```')
+            j++
+        }
+        while ( j < messages.length ) {
+            m = await channel.fetchMessage(messages[j]);
+            m.edit('_Placeholder_');
+            j++
         }
     }
 
