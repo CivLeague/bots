@@ -925,5 +925,19 @@ module.exports = {
             let result =  await _susp.findOne({ _id: memberId })
             return result.major.tier
         }
+    },
+
+    isGoodyTwoShoes: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId } )
+        if ( !member || member === undefined ) return true
+        if ( member.major ) 
+            if ( member.major.tier > 0 ) return false
+        if ( member.moderate ) 
+            if ( member.moderate.tier > 0 ) return false
+        if ( member.minor ) 
+            if ( member.minor.tier > 0 ) return false
+        if ( member.quit ) 
+            if ( member.quit.tier > 0 ) return false
+        return true
     }
 }

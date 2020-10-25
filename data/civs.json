@@ -163,5 +163,15 @@
 		"dbid": 51,
 		"id": "739534442716200970",
 		"tag": ":CatherineFranceMagnificent:"
+	},
+	"Gaul" : {
+		"dbid": 52,
+		"id": "758774414035910676",
+		"tag": ":AmbiorixGaul:"
+	},
+	"Byzantium" : {
+		"dbid": 53,
+		"id": "758774382054080553",
+		"tag": ":BasilByzantium:"
 	}
 }

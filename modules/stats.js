@@ -39,7 +39,11 @@ class StatsBotModule
 	}
 
     getRank(rating) {
-        if ( rating < 1500 )
+        if ( rating < 1300 )
+            return 'Scout';
+        else if ( rating < 1400 )
+            return 'Builder';
+        else if ( rating < 1500 )
             return 'Settler';
         else if ( rating < 1600 )
             return 'Chieftain';
@@ -335,7 +339,7 @@ class StatsBotModule
             let msg = '';
             if ( content.includes('team') )
                 mongoUtil.useStatsColl('team');
-            if ( content.includes('pbc') )
+            else if ( content.includes('pbc') )
                 mongoUtil.useStatsColl('pbc');
             else mongoUtil.useStatsColl('ffa');
 

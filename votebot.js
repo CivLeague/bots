@@ -333,14 +333,10 @@ util.client.on('message', message =>
 		bot_vote.showChoice(message.channel, '**__Map Type__**\t',
 			new Map([
 				["🇵", "Pangaea"],
-				["🇫", "Fractal"],
-				["🇨", "Continents"],
 				["🗺️", "Small Continents"],
 				["🏝", "Continents and Islands"],
-				["🇦", "Archipelago"],
-				["🇮", "Islands"],
-				["7⃣", "Seven Seas"],
-				["🔀", "Shuffle"]
+				["🇭", "Highlands"],
+				["7⃣", "Seven Seas"]
 			]), {} );
 
         bot_vote.showChoice(message.channel, '**__World Age__**\t',

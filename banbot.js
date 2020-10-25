@@ -23,6 +23,7 @@ const botTesting   = '351127558143868928'
 const suspended    = '291753513749577734'
 const suspendedId  = '294099361053540353'
 const moderatorId  = '291753249361625089'
+const goldStar     = '761095033738362921'
 
 function isSuspended( member ) {
     return member.roles.has( suspendedId )
@@ -87,6 +88,16 @@ bot.on('message', async ( message ) => {
 
     let content = message.content
 
+    if ( content.startsWith( '.goldstar' ) ) {
+        let members = message.mentions.members
+        members.forEach( member => {
+            if (  member && !member.roles.has( goldStar) && mongo.isGoodyTwoShoes( member.id ) ) {
+                member.addRole ( goldStar ).then( message.channel.send ( member.displayName + ' gets a Gold Star!') ) 
+            }
+        })
+        return
+    }
+
     if ( content.startsWith( '.quit' ) ) {
         message.delete()
         let target = message.mentions.members.array().shift()
@@ -128,6 +139,8 @@ bot.on('message', async ( message ) => {
                     msg += 'This is in addition to your current suspension. '
                 else
                     target.addRole( suspendedId )
+                if ( target.roles.has( goldStar ) )
+                    target.removeRole( goldStar )
             }
             msg += '\n**ENDS:** ' + player.ends + '.'
             message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => { 
@@ -190,6 +203,8 @@ bot.on('message', async ( message ) => {
                     target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
                     if ( !target.roles.has( suspendedId ) )
                         target.addRole( suspendedId )
+                    if ( target.roles.has( goldStar ) )
+                        target.removeRole( goldStar )
                 }
                 else mongo.suspensionDue( id )
             }
@@ -241,6 +256,8 @@ bot.on('message', async ( message ) => {
             message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
                 target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
             })
+            if ( target.roles.has( goldStar ) )
+                target.removeRole( goldStar )
         }
         else {
             msg += '\n**ENDS:** ' + player.ends + '.'
@@ -292,6 +309,8 @@ bot.on('message', async ( message ) => {
                     target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
                     if ( !target.roles.has( suspendedId ) )
                         target.addRole( suspendedId )
+                    if ( target.roles.has( goldStar ) )
+                        target.removeRole( goldStar )
                 }
                 else mongo.suspensionDue( id )
             }
@@ -311,6 +330,9 @@ bot.on('message', async ( message ) => {
             message.channel.send( adddays ).then( msg => { msg.delete( 30000 ) } )
             return
         }
+        if ( target.roles.has( goldStar ) )
+            target.removeRole( goldStar )
+
         let reason = message.content.split(' ').slice(3).join(' ')
         let num = message.content.split(' ')[2]
         if ( isNaN( num ) ) {
@@ -365,6 +387,7 @@ bot.on('message', async ( message ) => {
             message.channel.send( oversub ).then( msg => { msg.delete( 30000 ) } )
             return
         }
+
         let ends = await mongo.subSuspension( id )
         let msg = '\n**[ EXCESSIVE SUB INFRACTION ]**'
         msg += '\n**RESULT:** Each sub after the 3rd in a month is a 3 day suspension.'
@@ -376,8 +399,11 @@ bot.on('message', async ( message ) => {
         }
         msg += '\n**ENDS:** ' + ends + '.'
         message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
-            if ( !leftServer )
+            if ( !leftServer ) {
                 target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
+                if ( target.roles.has( goldStar ) )
+                    target.removeRole( goldStar )
+            }
             else mongo.suspensionDue( id )
         })
     }
@@ -396,6 +422,7 @@ bot.on('message', async ( message ) => {
             message.channel.send( smurf ).then( msg => { msg.delete( 30000 ) } )
             return
         }
+
         let ends = await mongo.smurfSuspension( id )
         let msg = '\n**[ ATTEMPTED SMURF INFRACTION ]**'
         msg += '\n**RESULT:** 30 day suspension.'
@@ -407,8 +434,11 @@ bot.on('message', async ( message ) => {
         }
         msg += '\n**ENDS:** ' + ends + '.'
         message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
-            if ( !leftServer )
+            if ( !leftServer ) {
                 target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
+                if ( target.roles.has( goldStar ) )
+                    target.removeRole( goldStar )
+            }
             else mongo.suspensionDue( id )
         })
     }

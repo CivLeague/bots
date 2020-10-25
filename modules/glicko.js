@@ -17,7 +17,9 @@ const prince       = '628464428593184778';
 const warlord      = '628464457491939339';
 const chieftain    = '628464491129995264';
 const settler      = '628464552882995200';
-const difficulties = [settler, chieftain, warlord, prince, king, emperor, immortal, deity];
+const builder      = '753375839726469190';
+const scout        = '753376211769623001';
+const difficulties = [scout, builder, settler, chieftain, warlord, prince, king, emperor, immortal, deity];
 
 const glicko2 = require('glicko2');
 const settings = {
@@ -1067,7 +1069,17 @@ async function checkTags(players)
         if (!skill)
             continue;
 
-        if (skill < 1500)
+        if (skill < 1300)
+        {
+            if ( !player.roles.has(scout) )
+                await swapTags(player, scout);
+        }
+        else if (skill >= 1300 && skill < 1400)
+        {
+            if ( !player.roles.has(builder) )
+                await swapTags(player, builder);
+        }
+        else if (skill >= 1400 && skill < 1500)
         {
             if ( !player.roles.has(settler) )
                 await swapTags(player, settler);
@@ -1394,6 +1406,17 @@ function checkCivs(civs) {
             case "kristina":
                 result.push('Sweden');
                 break;
+            case "gual":
+            case "gaul":
+            case "ambiorix":
+                result.push('Gaul');
+                break;
+            case "byzantium":
+            case "byzantine":
+            case "basil":
+                result.push('Byzantium');
+                break;
+            // ambiguous
             case "eleanor":
                 return "eleanor";
                 break;
