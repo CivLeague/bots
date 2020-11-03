@@ -320,6 +320,12 @@ util.client.on('message', message =>
 				["🚫", "Disabled"]
 			]), {} );
 
+			bot_vote.showChoice(message.channel, '**__Military Alliance__**\t',
+			new Map([
+				["✅", "Allowed"],
+				["🚫", "Banned"]
+			]), {} );
+
             bot_vote.showChoice(message.channel, '**__Game Duration__**\t',
                 new Map([
                     ["4⃣", "4 Hours"],
