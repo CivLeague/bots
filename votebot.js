@@ -312,7 +312,19 @@ util.client.on('message', message =>
 		    		["🚫", "Not Allowed"],
 		    		["🇫", "Friends & Allies"],
 		    		["🇦", "Allies Only"]
-		    	]), {} );
+				]), {} );
+				
+			bot_vote.showChoice(message.channel, '**__Barbarians Enabled/Disabled__**\t',
+			new Map([
+				["✅", "Enabled"],
+				["🚫", "Disabled"]
+			]), {} );
+
+			bot_vote.showChoice(message.channel, '**__Military Alliance__**\t',
+			new Map([
+				["✅", "Allowed"],
+				["🚫", "Banned"]
+			]), {} );
 
             bot_vote.showChoice(message.channel, '**__Game Duration__**\t',
                 new Map([
@@ -336,14 +348,15 @@ util.client.on('message', message =>
 				["🗺️", "Small Continents"],
 				["🏝", "Continents and Islands"],
 				["🇭", "Highlands"],
-				["7⃣", "Seven Seas"]
+				["7⃣", "Seven Seas"],
+				["🌋", "Primordial"]
 			]), {} );
 
-        bot_vote.showChoice(message.channel, '**__World Age__**\t',
-            new Map([
-				["🇸", "Standard Age"],
-                ["🇳", "New Age (more mountains/hills)"]
-            ]), {} );
+        // bot_vote.showChoice(message.channel, '**__World Age__**\t',
+        //     new Map([
+		// 		["🇸", "Standard Age"],
+        //         ["🇳", "New Age (more mountains/hills)"]
+        //     ]), {} );
 
         bot_vote.showChoice(message.channel, '**__Resources__**\t',
             new Map([
