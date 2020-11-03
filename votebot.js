@@ -348,7 +348,7 @@ util.client.on('message', message =>
 				["🗺️", "Small Continents"],
 				["🏝", "Continents and Islands"],
 				["🇭", "Highlands"],
-				["7⃣", "Seven Seas"]
+				["7⃣", "Seven Seas"],
 				["🌋", "Primordial"]
 			]), {} );
 
