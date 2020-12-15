@@ -377,7 +377,7 @@ util.client.on('message', message =>
                 ["🇮", "Impenetrable"]
             ]), {} );
 
-		bot_vote.showChoice(message.channel, '**__Disasters__**\t',
+	    bot_vote.showChoice(message.channel, '**__Disasters__**\t',
             new Map([
 				["1⃣", "One"],
 				["2⃣", "Two"],
