@@ -18,6 +18,7 @@ class C6Leaderboard
             if (message.content == '.reloadlb') {
                 message.delete();
 
+                var max_civs = 55
                 var channel = null;
                 var messages = null;
                 var db = null;
@@ -82,7 +83,8 @@ class C6Leaderboard
                         '628117032432566273',
                         '628117033443262464',
                         '628117034173202435',
-                        '628117034948886529'
+                        '628117034948886529',
+                        '745894579227590656'
                     ];
 
                     let msg = '```js\n'
@@ -111,7 +113,7 @@ class C6Leaderboard
                         }
                     }
 
-                    for ( let x = this.glickoLb.length; x < 46; x++ ) {
+                    for ( let x = this.glickoLb.length; x < max_civs; x++ ) {
                         msg += '#' + (x+1) + '\n';
                         if ( ((x+1) % 10) == 0 ) {
                             var m = await channel.fetchMessage(messages[j]);
@@ -136,7 +138,8 @@ class C6Leaderboard
                         '702405043848085564',
                         '702405044540276771',
                         '702405044951187507',
-                        '702405045957951499'
+                        '702405045957951499',
+                        '776589075809042453'
                     ];
 
                     let msg = '```js\n'
@@ -165,7 +168,117 @@ class C6Leaderboard
                         }
                     }
 
-                    for ( let x = this.glickoLb.length; x < 46; x++ ) {
+                    for ( let x = this.glickoLb.length; x < max_civs; x++ ) {
+                        msg += '#' + (x+1) + '\n';
+                        if ( ((x+1) % 10) == 0 ) {
+                            var m = await channel.fetchMessage(messages[j]);
+                            m.edit(msg + '```');
+                            msg = '```js\n';
+                            j++;
+                        }
+                    }
+
+                    if (msg != '```js\n') {
+                        m = await channel.fetchMessage(messages[j]);
+                        m.edit(msg + '```');
+                    }
+
+                    return;
+                }
+                else if ( message.channel == util.getChannel(745900185032589383) ) {
+                    this.glickoLb = await mongoUtil.getTeamCivsBBGLeaderboard();
+                    channel = util.getChannel(745900185032589383);
+                    messages = [
+                        '745905509411979294',
+                        '745905510024478751',
+                        '745905511227981914',
+                        '745905512130019368',
+                        '747893771525685370',
+                        '747893772389449859'
+                    ];
+
+                    let msg = '```js\n'
+                    let j = 0;
+                    for ( var i = 0; i < this.glickoLb.length ; i++ ) {
+                        if ( i < 9 ) msg += '#0' + (i+1) + '   ';
+                        else msg += '#' + (i+1) + '   ';
+
+                        let name = this.glickoLb[i].name;
+                        let avgP = this.glickoLb[i].avgPlace.toFixed(2);
+                        let avgS = Math.round(this.glickoLb[i].avgSkill);
+                        let games = this.glickoLb[i].games;
+
+                        msg += name;
+                        let spaces = 14 - name.length;
+                        for ( let k = 0; k < spaces; k++ ) {
+                            msg += ' ';
+                        }
+                        msg += 'Avg Place: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '\n';
+
+                        if ( ((i+1) % 10) == 0 ) {
+                            var m = await channel.fetchMessage(messages[j]);
+                            m.edit(msg + '```');
+                            msg = '```js\n';
+                            j++;
+                        }
+                    }
+
+                    for ( let x = this.glickoLb.length; x < max_civs; x++ ) {
+                        msg += '#' + (x+1) + '\n';
+                        if ( ((x+1) % 10) == 0 ) {
+                            var m = await channel.fetchMessage(messages[j]);
+                            m.edit(msg + '```');
+                            msg = '```js\n';
+                            j++;
+                        }
+                    }
+
+                    if (msg != '```js\n') {
+                        m = await channel.fetchMessage(messages[j]);
+                        m.edit(msg + '```');
+                    }
+
+                    return;
+                }
+                else if ( message.channel == util.getChannel(745907056015442000) ) {
+                    this.glickoLb = await mongoUtil.getCivsPrinceLeaderboard();
+                    channel = util.getChannel(745907056015442000);
+                    messages = [
+                        '745909457636294656',
+                        '745909458458378300',
+                        '745909459129335818',
+                        '745909459787710474',
+                        '745909460446216212',
+                        '745909484257542144'
+                    ];
+
+                    let msg = '```js\n'
+                    let j = 0;
+                    for ( var i = 0; i < this.glickoLb.length ; i++ ) {
+                        if ( i < 9 ) msg += '#0' + (i+1) + '   ';
+                        else msg += '#' + (i+1) + '   ';
+
+                        let name = this.glickoLb[i].name;
+                        let avgP = this.glickoLb[i].avgPlace.toFixed(2);
+                        let avgS = Math.round(this.glickoLb[i].avgSkill);
+                        let games = this.glickoLb[i].games;
+
+                        msg += name;
+                        let spaces = 14 - name.length;
+                        for ( let k = 0; k < spaces; k++ ) {
+                            msg += ' ';
+                        }
+                        msg += 'Avg Place: ' + avgP + '\tAvg Skill: ' + avgS + '\tGames: ' + games + '\n';
+
+                        if ( ((i+1) % 10) == 0 ) {
+                            var m = await channel.fetchMessage(messages[j]);
+                            m.edit(msg + '```');
+                            msg = '```js\n';
+                            j++;
+                        }
+                    }
+
+                    for ( let x = this.glickoLb.length; x < max_civs; x++ ) {
                         msg += '#' + (x+1) + '\n';
                         if ( ((x+1) % 10) == 0 ) {
                             var m = await channel.fetchMessage(messages[j]);
@@ -244,7 +357,8 @@ class C6Leaderboard
                 '702405043848085564',
                 '702405044540276771',
                 '702405044951187507',
-                '702405045957951499'
+                '702405045957951499',
+                '776589075809042453'
             ];
         }
         else {
