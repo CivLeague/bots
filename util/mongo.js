@@ -620,7 +620,7 @@ module.exports = {
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
         let decays = new Date()
-        decays.setDate( decays.getDate() + ( tier * 90 ) )
+        decays.setDate( decays.getDate() + 90 )
         if ( tier == 1 )
             ends.setDate( ends.getDate() + 1 )
         else if ( tier == 2 )
@@ -660,7 +660,7 @@ module.exports = {
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
         let decays = new Date()
-        decays.setDate( decays.getDate() + ( tier * 30 ) )
+        decays.setDate( decays.getDate() + 30 )
         //if ( tier == 1 )
             //warning
         if ( tier == 2 )
@@ -704,7 +704,7 @@ module.exports = {
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
         let decays = new Date()
-        decays.setDate( decays.getDate() + ( tier * 60 ) )
+        decays.setDate( decays.getDate() + 60 )
         if ( tier == 1 )
             ends.setDate( ends.getDate() + 3 )
         else if ( tier == 2 )
@@ -742,7 +742,7 @@ module.exports = {
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
         let decays = new Date()
-        decays.setDate( decays.getDate() + ( tier * 90 ) )
+        decays.setDate( decays.getDate() + 90 )
         if ( tier == 1 )
             ends.setDate( ends.getDate() + 7 )
         else if ( tier == 2 )
