@@ -294,16 +294,14 @@ util.client.on('message', message =>
 		    	new Map([
 		    		["✅", "Allowed"],
 		    		["🚫", "Not Allowed"],
-		    		["🇫", "Friends & Allies"],
-		    		["🇦", "Allies Only"]
+		    		["🇫", "Friends & Allies"]
 		    	]), {} );
 
 		    bot_vote.showChoice(message.channel, '**__Luxuries Gifting/Trading__**\t',
 		    	new Map([
 		    		["✅", "Allowed"],
 		    		["🚫", "Not Allowed"],
-		    		["🇫", "Friends & Allies"],
-		    		["🇦", "Allies Only"]
+		    		["🇫", "Friends & Allies"]
 		    	]), {} );
 
 		    bot_vote.showChoice(message.channel, '**__Strategics Gifting/Trading__**\t',
@@ -311,14 +309,13 @@ util.client.on('message', message =>
 		    		["✅", "Allowed"],
 		    		["🚫", "Not Allowed"],
 		    		["🇫", "Friends & Allies"],
-		    		["🇦", "Allies Only"]
 				]), {} );
 				
-			bot_vote.showChoice(message.channel, '**__Barbarians Enabled/Disabled__**\t',
-			new Map([
-				["✅", "Enabled"],
-				["🚫", "Disabled"]
-			]), {} );
+			// bot_vote.showChoice(message.channel, '**__Barbarians Enabled/Disabled__**\t',
+			// new Map([
+			// 	["✅", "Enabled"],
+			// 	["🚫", "Disabled"]
+			// ]), {} );
 
 			bot_vote.showChoice(message.channel, '**__Military Alliance__**\t',
 			new Map([
@@ -347,7 +344,7 @@ util.client.on('message', message =>
 				["🇵", "Pangaea"],
 				["🗺️", "Small Continents"],
 				["🏝", "Continents and Islands"],
-				["🇭", "Highlands"],
+				["🌊", "Inland Sea"],
 				["7⃣", "Seven Seas"],
 				["🌋", "Primordial"]
 			]), {} );
@@ -380,17 +377,31 @@ util.client.on('message', message =>
                 ["🇮", "Impenetrable"]
             ]), {} );
 
-        bot_vote.showChoice(message.channel, '**__Disasters__**\t',
+			bot_vote.showChoice(message.channel, '**__Disasters__**\t',
             new Map([
 				["1⃣", "One"],
 				["2⃣", "Two"],
 				["3⃣", "Three"],
                 ["4⃣", "Four"]
+			]), {} );        
+			
+			bot_vote.showChoice(message.channel, '**__Wonders__**\t',
+            new Map([
+				["1⃣", "Scarse"],
+				["2⃣", "Standard"],
+				["3⃣", "Abundant"]
             ]), {} );
 
 		if ( !isTeamVote )
 		{
-		    bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
+		    bot_vote.showChoice(message.channel, '**__CC Vote Timing (BETA)__**\t',
+		    	new Map([
+		    		["7⃣", "10 Turns Earlier"],
+		    		["🚫", "No Change"],
+					["9⃣", "10 Turns Later"]
+				]), {} );		    
+				
+			bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
 		    	new Map([
 		    		["✅", "Allowed"],
 		    		["🚫", "Not Allowed"],
