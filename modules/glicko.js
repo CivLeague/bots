@@ -1416,6 +1416,10 @@ function checkCivs(civs) {
             case "basil":
                 result.push('Byzantium');
                 break;
+            case "babylon":
+            case "hammurabi":
+                result.push('Babylon');
+                break;
             // ambiguous
             case "eleanor":
                 return "eleanor";
