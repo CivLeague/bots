@@ -377,7 +377,7 @@ util.client.on('message', message =>
                 ["🇮", "Impenetrable"]
             ]), {} );
 
-			bot_vote.showChoice(message.channel, '**__Disasters__**\t',
+		bot_vote.showChoice(message.channel, '**__Disasters__**\t',
             new Map([
 				["1⃣", "One"],
 				["2⃣", "Two"],
@@ -385,7 +385,7 @@ util.client.on('message', message =>
                 ["4⃣", "Four"]
 			]), {} );        
 			
-			bot_vote.showChoice(message.channel, '**__Wonders__**\t',
+		bot_vote.showChoice(message.channel, '**__Wonders__**\t',
             new Map([
 				["1⃣", "Scarse"],
 				["2⃣", "Standard"],
