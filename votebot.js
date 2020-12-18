@@ -387,18 +387,19 @@ util.client.on('message', message =>
 			
 		bot_vote.showChoice(message.channel, '**__Wonders__**\t',
             new Map([
-				["1⃣", "Scarse"],
-				["2⃣", "Standard"],
-				["3⃣", "Abundant"]
+				["⬇️", "Scarse"],
+				["🟦", "Standard"],
+				["⬆️", "Abundant"]
             ]), {} );
 
 		if ( !isTeamVote )
 		{
-		    bot_vote.showChoice(message.channel, '**__CC Vote Timing (BETA)__**\t',
+		    bot_vote.showChoice(message.channel, '**__CC Vote Timing__**\t',
 		    	new Map([
-		    		["7⃣", "10 Turns Earlier"],
-		    		["🚫", "No Change"],
-					["9⃣", "10 Turns Later"]
+		    		["⬇️", "10 Turns Earlier"],
+		    		["🟦", "No Change"],
+					["⬆️", "10 Turns Later"],
+					["⏫", "20 Turns Later"]
 				]), {} );		    
 				
 			bot_vote.showChoice(message.channel, '**__Draft Trading__**\t',
