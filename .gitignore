@@ -1,8 +1,6 @@
 #files
 package-lock.json
 package.json
-tokens.json
+config.json
 #dirs
-logs
 node_modules
-splunk
