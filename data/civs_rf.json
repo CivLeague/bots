@@ -1,0 +1,47 @@
+{
+	"Chandragupta" : {
+		"dbid": 7,
+		"id": "426041149195812865",
+		"tag": ":IndiaChandragupta:"
+	},
+	"Cree" : {
+		"dbid": 9,
+		"id": "426041086423859220",
+		"tag": ":CreePoundmaker:"
+	},
+	"Georgia" : {
+		"dbid": 15,
+		"id": "545422246714540035",
+		"tag": ":GeorgiaTamar:"
+	},
+	"Korea" : {
+		"dbid": 24,
+		"id": "426041251310075904",
+		"tag": ":KoreaSeondeok:"
+	},
+	"Mapuche" : {
+		"dbid": 28,
+		"id": "545422347104944128",
+		"tag": ":MapucheLautaro:"
+	},
+	"Mongolia" : {
+		"dbid": 29,
+		"id": "545421928857468948",
+		"tag": ":MongoliaGenghisKhan:"
+	},
+	"Netherlands" : {
+		"dbid": 30,
+		"id": "545422790535151618",
+		"tag": ":DutchWilhelmina:"
+	},
+	"Scotland" : {
+		"dbid": 40,
+		"id": "545422636642074644",
+		"tag": ":ScotlandRobertTheBruce:"
+	},
+	"Zulu" : {
+		"dbid": 45,
+		"id": "426041205428846602",
+		"tag": ":ZuluShaka:"
+	}
+}

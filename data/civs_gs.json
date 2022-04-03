@@ -1,0 +1,47 @@
+{
+	"Canada" : {
+		"dbid": 6,
+		"id": "545420369235017738",
+		"tag": ":CanadaWilfrid:"
+	},
+	"Eleanor England" : {
+		"dbid": 11,
+		"id": "739534288873193512",
+		"tag": ":EleanorEngland:"
+	},
+	"Hungary" : {
+		"dbid": 18,
+		"id": "537030165570519061",
+		"tag": ":HungaryMatthias:"
+	},
+	"Inca" : {
+		"dbid": 19,
+		"id": "545420029659840533",
+		"tag": ":IncaPachacuti:"
+	},
+	"Mali" : {
+		"dbid": 26,
+		"id": "537788707260989440",
+		"tag": ":MaliMansa:"
+	},
+	"Maori" : {
+		"dbid": 27,
+		"id": "537787852667486218",
+		"tag": ":MaoriKupe:"
+	},
+	"Ottomans" : {
+		"dbid": 33,
+		"id": "545419326950342659",
+		"tag": ":OttomanSuleiman:"
+	},
+	"Phoenicia" : {
+		"dbid": 36,
+		"id": "545418674824151041",
+		"tag": ":PhoeniciaDido:"
+	},
+	"Sweden" : {
+		"dbid": 44,
+		"id": "537787897353601045",
+		"tag": ":SwedenKristina:"
+	}
+}
