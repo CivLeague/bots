@@ -589,6 +589,19 @@ module.exports = {
                     majorDecays = player.major.decays
             }
 
+            let extremeTier = player.extreme ? player.extreme.tier : 0
+            let extremeDecays = null
+            if ( player.extreme && player.extreme.tier && player.extreme.decays ) {
+                if ( new Date() > new Date( player.extreme.decays ) && extremeTier > 0 ) {
+                    extremeTier-- 
+                    extremeDecays = new Date()
+                    extremeDecays.setDate( extremeDecays.getDate() + 90 )
+                    update = true
+                }
+                else
+                extremeDecays = player.extreme.decays
+            }
+
             if ( update ) {
                 _susp.updateOne(
                     { _id: player._id },
@@ -603,7 +616,9 @@ module.exports = {
                             "moderate.tier": moderateTier,
                             "moderate.decays": moderateDecays,
                             "major.tier": majorTier,
-                            "major.decays": majorDecays
+                            "major.decays": majorDecays,
+                            "extreme.tier": extremeTier,
+                            "extreme.decays": extremeDecays
                         }
                     }
                 )
@@ -630,10 +645,8 @@ module.exports = {
         else if ( tier == 4 )
             ends.setDate( ends.getDate() + 14 )
         else if ( tier == 5 )
-            ends.setDate( ends.getDate() + 21 )
-        else if ( tier == 6 )
             ends.setDate( ends.getDate() + 30 )
-        else if ( tier > 6 )
+        else if ( tier >= 6 )
             ends.setDate( ends.getDate() + 180 )
 
         _susp.updateOne(
@@ -660,7 +673,7 @@ module.exports = {
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
         let decays = new Date()
-        decays.setDate( decays.getDate() + 30 )
+        decays.setDate( decays.getDate() + 90 )
         //if ( tier == 1 )
             //warning
         if ( tier == 2 )
@@ -704,19 +717,19 @@ module.exports = {
 
         let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
         let decays = new Date()
-        decays.setDate( decays.getDate() + 60 )
+        decays.setDate( decays.getDate() + 90 )
         if ( tier == 1 )
-            ends.setDate( ends.getDate() + 3 )
+            ends.setDate( ends.getDate() + 1 )
         else if ( tier == 2 )
-            ends.setDate( ends.getDate() + 5 )
+            ends.setDate( ends.getDate() + 4 )
         else if ( tier == 3 )
             ends.setDate( ends.getDate() + 7 )
         else if ( tier == 4 )
-            ends.setDate( ends.getDate() + 10 )
-        else if ( tier == 5 )
             ends.setDate( ends.getDate() + 14 )
+        else if ( tier == 5 )
+            ends.setDate( ends.getDate() + 30 )
         else if ( tier >= 6 )
-            ends.setDate( ends.getDate() + 21 )
+            ends.setDate( ends.getDate() + 180 )
 
         _susp.updateOne(
             { _id: memberId },
@@ -749,11 +762,7 @@ module.exports = {
             ends.setDate( ends.getDate() + 14 )
         else if ( tier == 3 )
             ends.setDate( ends.getDate() + 30 )
-        else if ( tier == 4 )
-            ends.setDate( ends.getDate() + 60 )
-        else if ( tier == 5 )
-            ends.setDate( ends.getDate() + 90 )
-        else if ( tier >= 6 )
+        else if ( tier >= 4 )
             ends.setDate( ends.getDate() + 180 )
 
         _susp.updateOne(
@@ -762,6 +771,36 @@ module.exports = {
                 $set: {
                     "major.tier": tier,
                     "major.decays": decays,
+                    suspended: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+
+        return { tier: tier, ends: ends }
+    },
+
+    extreme: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let tier = member && member.major ? member.major.tier : 0
+        if ( tier < 0 ) tier = 0
+        tier++
+
+        let ends = member && member.ends && member.ends > new Date() ? new Date( member.ends ) : new Date()
+        let decays = new Date()
+        decays.setDate( decays.getDate() + 1460 )
+        if ( tier == 1 )
+            ends.setDate( ends.getDate() + 7 )
+        else if ( tier == 2 )
+            ends.setDate( ends.getDate() + 180 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    "extreme.tier": tier,
+                    "extreme.decays": decays,
                     suspended: true,
                     ends: ends
                 }
@@ -851,6 +890,26 @@ module.exports = {
         return ends
     },
 
+    compSuspension: async function ( memberId ) {
+        let member = await _susp.findOne({ _id: memberId })
+        let ends = new Date()
+        if ( member && member.ends && member.ends > ends )
+            ends = new Date( member.ends )
+        ends.setDate( ends.getDate() + 7 )
+
+        _susp.updateOne(
+            { _id: memberId },
+            {
+                $set: {
+                    suspended: true,
+                    ends: ends
+                }
+            },
+            { upsert: true }
+        )
+        return ends
+    },
+
     unsuspend: async function ( memberId ) {
         _susp.updateOne(
             { _id: memberId },
@@ -925,11 +984,20 @@ module.exports = {
             let result =  await _susp.findOne({ _id: memberId })
             return result.major.tier
         }
+        else if ( category == 'extreme' ) {
+            let member = await _susp.findOne({ _id: memberId } )
+            if ( member.extreme.tier < 1 ) return -1
+            await _susp.updateOne({ _id: memberId }, { $inc: { "extreme.tier": -1 }} )
+            let result =  await _susp.findOne({ _id: memberId })
+            return result.extreme.tier
+        }
     },
 
     isGoodyTwoShoes: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId } )
         if ( !member || member === undefined ) return true
+        if ( member.extreme)
+            if (member.extreme.tier > 0 ) return false
         if ( member.major ) 
             if ( member.major.tier > 0 ) return false
         if ( member.moderate ) 

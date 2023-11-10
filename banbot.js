@@ -6,14 +6,16 @@ require('log-timestamp')
 
 const usage     = 'Commands that Ban Bot can handle:\n' +
                   '_Type a command with no args to get its usage statement_\n' +
-                  '`.quit | .minor | .moderate | .major | .adddays | .rmdays | .oversub | .smurf | .unsuspend`'
+                  '`.quit | .minor | .moderate | .major | .extreme |.adddays | .rmdays | .oversub | .comp | .smurf | .unsuspend`'
 const quit      = '`Usage: .quit <member>`'
 const minor     = '`Usage: .minor <member> [reason]`'
 const moderate  = '`Usage: .moderate <member> [reason]`'
 const major     = '`Usage: .major <member> [reason]`'
+const extreme   = '`Usage: .extreme <member> [reason]`'
 const adddays   = '`Usage: .adddays <member> <number> [reason]`'
 const rmdays    = '`Usage: .rmdays <member> <number> [reason]`'
 const oversub   = '`Usage: .oversub <member>`'
+const comp      = '`Usage: .comp <member>`'
 const smurf     = '`Usage: .smurf <member>`'
 const unsuspend = '`Usage: .unsuspend <member> [reason]`'
 const rmtier    = '`Usage: .rmtier <category> <member>`'
@@ -125,40 +127,33 @@ bot.on('message', async ( message ) => {
         else if ( player.tier == 4 )
             msg += '14 day suspension. '
         else if ( player.tier == 5 )
-            msg += '21 day suspension. '
+            msg += '30 day suspension. '
         else if ( player.tier == 6 )
             msg += '30 day suspension. '
-        else if ( player.tier > 6 ) {
+        else if ( player.tier >= 6 ) {
             let displayName = leftServer ? await mongo.getDisplayName( id ) : target.displayName
             msg += displayName + ' banned from server. '
         }
 
-        if ( player.tier < 7 ) {
-            if ( !leftServer ) {
-                if ( target.roles.has( suspendedId ) )
-                    msg += 'This is in addition to your current suspension. '
-                else
-                    target.addRole( suspendedId )
-                if ( target.roles.has( goldStar ) )
-                    target.removeRole( goldStar )
-            }
-            msg += '\n**ENDS:** ' + player.ends + '.'
-            message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => { 
-                if ( !leftServer )
-                    target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
-                else mongo.suspensionDue( id )
-            })
-        }
-        else {
-            message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
+            if ( player.tier < 6 ) {
                 if ( !leftServer ) {
-                    target.user.send( 'You\'ve been banned in the CPL Discord server. If you believe this to be an error, please send an email to civplayersleagues@gmail.com' ).then( () => {
-                        target.ban( 'Tier 7 quit' )
-                    })
+                    target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
+                    if ( !target.roles.has( suspendedId ) )
+                        target.addRole( suspendedId )
+                    if ( target.roles.has( goldStar ) )
+                        target.removeRole( goldStar )
+                }
+                else mongo.suspensionDue( id )
+            }
+            else {
+                if ( !leftServer ) {
+                    target.user.send( 'You\'ve been banned in the CPL Discord server. If you believe this to be an error, please send an email to civplayersleagues@gmail.com' )
+                    target.ban( 'Tier 6 Quit' )
                 }
                 else mongo.banDue( id )
-            })
-        }
+            }
+        })
     }
     else if ( content.startsWith( '.minor' ) ) {
         message.delete()
@@ -236,34 +231,41 @@ bot.on('message', async ( message ) => {
         if ( reason.length > 0 )
             msg += '\n**REASON:** ' + reason + '.'
         if ( player.tier == 1 )
-            msg += '\n**RESULT:** 3 day suspension.'
+            msg += '\n**RESULT:** 1 day suspension.'
         else if ( player.tier == 2 )
-            msg += '\n**RESULT:** 5 day suspension.'
+            msg += '\n**RESULT:** 4 day suspension.'
         else if ( player.tier == 3 )
             msg += '\n**RESULT:** 7 day suspension.'
         else if ( player.tier == 4 )
-            msg += '\n**RESULT:** 10 day suspension.'
-        else if ( player.tier == 5 )
             msg += '\n**RESULT:** 14 day suspension.'
+        else if ( player.tier == 5 )
+            msg += '\n**RESULT:** 30 day suspension.'
         else if ( player.tier >= 6 )
-            msg += '\n**RESULT:** 21 day suspension.'
+            msg += '\n**RESULT:** ' + target.displayName + ' banned from server. '
+        if ( !leftServer && target.roles.has( suspendedId ) && player.tier < 6 )
+            msg += ' This is in addition to your current suspension.'
+        if ( player.tier < 6 )
+            msg += '\n**ENDS:** ' + player.ends + '.'
 
-        if ( !leftServer ) {
-            if ( target.roles.has( suspendedId ) )
-                msg += ' This is in addition to your current suspension.'
-            else target.addRole( suspendedId )
-            msg += '\n**ENDS:** ' + player.ends + '.'
-            message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
-                target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
-            })
-            if ( target.roles.has( goldStar ) )
-                target.removeRole( goldStar )
-        }
-        else {
-            msg += '\n**ENDS:** ' + player.ends + '.'
-            message.channel.send( '<@' + id + '>' + msg )
-            mongo.suspensionDue( id )
-        }
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
+            if ( player.tier < 6 ) {
+                if ( !leftServer ) {
+                    target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
+                    if ( !target.roles.has( suspendedId ) )
+                        target.addRole( suspendedId )
+                    if ( target.roles.has( goldStar ) )
+                        target.removeRole( goldStar )
+                }
+                else mongo.suspensionDue( id )
+            }
+            else {
+                if ( !leftServer ) {
+                    target.user.send( 'You\'ve been banned in the CPL Discord server. If you believe this to be an error, please send an email to civplayersleagues@gmail.com' )
+                    target.ban( 'Tier 6 moderate' )
+                }
+                else mongo.banDue( id )
+            }
+        })
     }
     else if ( content.startsWith( '.major' ) ) {
         message.delete()
@@ -292,19 +294,15 @@ bot.on('message', async ( message ) => {
             msg += '\n**RESULT:** 14 day suspension.'
         else if ( player.tier == 3 )
             msg += '\n**RESULT:** 30 day suspension.'
-        else if ( player.tier == 4 )
-            msg += '\n**RESULT:** 60 day suspension.'
-        else if ( player.tier == 5 )
-            msg += '\n**RESULT:** 90 day suspension.'
-        else if ( player.tier >= 6 )
+        else if ( player.tier >= 4 )
             msg += '\n**RESULT:** ' + target.displayName + ' banned from server. '
-        if ( !leftServer && target.roles.has( suspendedId ) && player.tier < 6 )
+        if ( !leftServer && target.roles.has( suspendedId ) && player.tier < 4 )
             msg += ' This is in addition to your current suspension.'
-        if ( player.tier < 6 )
+        if ( player.tier < 4 )
             msg += '\n**ENDS:** ' + player.ends + '.'
 
         message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
-            if ( player.tier < 6 ) {
+            if ( player.tier < 4 ) {
                 if ( !leftServer ) {
                     target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
                     if ( !target.roles.has( suspendedId ) )
@@ -317,7 +315,57 @@ bot.on('message', async ( message ) => {
             else {
                 if ( !leftServer ) {
                     target.user.send( 'You\'ve been banned in the CPL Discord server. If you believe this to be an error, please send an email to civplayersleagues@gmail.com' )
-                    target.ban( 'Tier 6 major' )
+                    target.ban( 'Tier 4 major' )
+                }
+                else mongo.banDue( id )
+            }
+        })
+    }
+    else if ( content.startsWith( '.extreme' ) ) {
+        message.delete()
+        let target = message.mentions.members.array().shift()
+        let id = target ? target.id : null
+        if ( !target ) {
+            if ( content.split( ' ' ).length > 1 ) {
+                target = content.split(' ')[1]
+                id  = target.replace( /\D*/g, '' )
+                var leftServer = true
+            }
+        }
+        if ( !target || !id ) {
+            message.channel.send( extreme ).then( msg => { msg.delete( 30000 ) } )
+            return
+        }
+        let reason = content.split(' ').slice(2).join(' ')
+
+        let player = await mongo.extreme( id )
+        let msg = '\n**[ TIER ' + player.tier + ' EXTREME INFRACTION ]**'
+        if ( reason.length > 0 )
+            msg += '\n**REASON:** ' + reason + '.'
+        if ( player.tier == 1 )
+            msg += '\n**RESULT:** 30 day suspension.'
+        else if ( player.tier >= 2 )
+            msg += '\n**RESULT:** ' + target.displayName + ' banned from server. '
+        if ( !leftServer && target.roles.has( suspendedId ) && player.tier < 4 )
+            msg += ' This is in addition to your current suspension.'
+        if ( player.tier < 2 )
+            msg += '\n**ENDS:** ' + player.ends + '.'
+
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
+            if ( player.tier < 2 ) {
+                if ( !leftServer ) {
+                    target.user.send( 'You\'ve been suspended in the CPL Discord server\n' + msg.url )
+                    if ( !target.roles.has( suspendedId ) )
+                        target.addRole( suspendedId )
+                    if ( target.roles.has( goldStar ) )
+                        target.removeRole( goldStar )
+                }
+                else mongo.suspensionDue( id )
+            }
+            else {
+                if ( !leftServer ) {
+                    target.user.send( 'You\'ve been banned in the CPL Discord server. If you believe this to be an error, please send an email to civplayersleagues@gmail.com' )
+                    target.ban( 'Tier 2 extreme' )
                 }
                 else mongo.banDue( id )
             }
@@ -391,6 +439,41 @@ bot.on('message', async ( message ) => {
         let ends = await mongo.subSuspension( id )
         let msg = '\n**[ EXCESSIVE SUB INFRACTION ]**'
         msg += '\n**RESULT:** Each sub after the 3rd in a month is a 3 day suspension.'
+        if ( !leftServer ) {
+            if ( target.roles.has( suspendedId ) )
+                msg += ' This is in addition to your current suspension.'
+            else
+                target.addRole( suspendedId )
+        }
+        msg += '\n**ENDS:** ' + ends + '.'
+        message.channel.send( '<@' + id + '>' + msg ).then( ( msg ) => {
+            if ( !leftServer ) {
+                target.user.send( 'You\'ve been suspended in the CPL discord server\n' + msg.url )
+                if ( target.roles.has( goldStar ) )
+                    target.removeRole( goldStar )
+            }
+            else mongo.suspensionDue( id )
+        })
+    }
+    else if ( content.startsWith( '.comp' ) ) {
+        message.delete()
+        let target = message.mentions.members.array().shift()
+        let id = target ? target.id : null
+        if ( !target ) {
+            if ( content.split( ' ' ).length == 2 ) {
+                target = content.split(' ').pop()
+                id  = target.replace( /\D*/g, '' )
+                var leftServer = true
+            }
+        }
+        if ( !target || !id ) {
+            message.channel.send( comp ).then( msg => { msg.delete( 30000 ) } )
+            return
+        }
+
+        let ends = await mongo.compSuspension( id )
+        let msg = '\n**[ COMPETITION  INFRACTION ]**'
+        msg += '\n**RESULT:** 7 day suspension.'
         if ( !leftServer ) {
             if ( target.roles.has( suspendedId ) )
                 msg += ' This is in addition to your current suspension.'
