@@ -128,7 +128,7 @@ bot.on('message', async ( message ) => {
             msg += '14 day suspension. '
         else if ( player.tier == 5 )
             msg += '30 day suspension. '
-            else if ( player.tier >= 6 )
+        else if ( player.tier >= 6 )
             msg += '\n**RESULT:** ' + target.displayName + ' banned from server. '
         if ( !leftServer && target.roles.has( suspendedId ) && player.tier < 6 )
             msg += ' This is in addition to your current suspension.'
