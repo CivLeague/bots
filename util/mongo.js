@@ -996,8 +996,8 @@ module.exports = {
     isGoodyTwoShoes: async function ( memberId ) {
         let member = await _susp.findOne({ _id: memberId } )
         if ( !member || member === undefined ) return true
-        if ( member.extreme)
-            if (member.extreme.tier > 0 ) return false
+        if ( member.extreme )
+            if ( member.extreme.tier > 0 ) return false
         if ( member.major ) 
             if ( member.major.tier > 0 ) return false
         if ( member.moderate ) 
