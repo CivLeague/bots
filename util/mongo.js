@@ -994,18 +994,20 @@ module.exports = {
     },
 
     isGoodyTwoShoes: async function ( memberId ) {
-        let member = await _susp.findOne({ _id: memberId } )
-        if ( !member || member === undefined ) return true
-        if ( member.extreme )
-            if ( member.extreme.tier > 0 ) return false
-        if ( member.major ) 
-            if ( member.major.tier > 0 ) return false
-        if ( member.moderate ) 
-            if ( member.moderate.tier > 0 ) return false
-        if ( member.minor ) 
-            if ( member.minor.tier > 0 ) return false
-        if ( member.quit ) 
-            if ( member.quit.tier > 0 ) return false
-        return true
+        let member = await _susp.findOne({ _id: memberId });
+    
+        if (!member || member === undefined) {
+            return true;
+        }
+        
+        let infractionCount = 0;
+        // Check each severity level and increment the count if it has a tier greater than 0.
+        ['extreme', 'major', 'moderate', 'minor', 'quit'].forEach(severity => {
+            if (member[severity] && member[severity].tier > 0) {
+                infractionCount++;
+            }
+        });
+        // Return true if the count is 0, indicating no infractions.
+        return infractionCount === 0;
     }
 }
